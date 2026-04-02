@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  forged-db:
+    image: postgres:16-alpine
+    container_name: forged-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: forged
+      POSTGRES_USER: forged_admin
+      POSTGRES_PASSWORD: changeme_in_production
+    volumes:
+      - forged_pgdata:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - forged-net
+
+  forged-api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: forged-api
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:5000
+      ConnectionStrings__DefaultConnection: "Host=forged-db;Port=5432;Database=forged;Username=forged_admin;Password=changeme_in_production"
+    depends_on:
+      - forged-db
+    networks:
+      - forged-net
+
+  forged-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: forged-frontend
+    restart: unless-stopped
+    networks:
+      - forged-net
+    
+  forged-nginx:
+    image: nginx:alpine
+    container_name: forged-nginx
+    restart: unless-stopped
+    ports:
+      - "3001:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - forged-api
+      - forged-frontend
+    networks:
+      - forged-net
+
+volumes:
+  forged_pgdata:
+
+networks:
+  forged-net:
+    driver: bridge
