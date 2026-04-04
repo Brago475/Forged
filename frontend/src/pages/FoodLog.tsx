@@ -295,7 +295,7 @@ export default function FoodLog() {
       <h1 className="text-2xl font-black text-forged-text">Food Log</h1>
 
       {/* ── Date selector with calendar ── */}
-      <div className="flex items-center justify-center gap-3">
+      <div className="flex items-center justify-center gap-2">
         <button onClick={() => shiftDate(-1)}
           className="w-9 h-9 rounded-xl bg-forged-surface border border-forged-border
             flex items-center justify-center text-forged-text2
@@ -303,16 +303,11 @@ export default function FoodLog() {
           <Icon d={I.chevL} size={16} />
         </button>
 
-        {/* Tap date to open calendar */}
-        <button onClick={() => setShowCalendar(true)}
-          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all
-            ${isToday
-              ? 'bg-forged-purple/15 text-forged-purple'
-              : 'bg-forged-surface border border-forged-border text-forged-text hover:border-forged-purple/30'
-            }`}>
-          <Icon d={I.calendar} size={14} sw={2} />
+        {/* Date label */}
+        <span className={`px-4 py-2 rounded-xl text-sm font-bold
+          ${isToday ? 'text-forged-purple' : 'text-forged-text'}`}>
           {fmtDate(date)}
-        </button>
+        </span>
 
         <button onClick={() => shiftDate(1)}
           className={`w-9 h-9 rounded-xl bg-forged-surface border border-forged-border
@@ -320,6 +315,14 @@ export default function FoodLog() {
             ${isToday ? 'text-forged-text2/30 cursor-not-allowed' : 'text-forged-text2 hover:text-forged-text hover:border-forged-purple/30 active:scale-95'}`}
           disabled={isToday}>
           <Icon d={I.chevR} size={16} />
+        </button>
+
+        {/* Dedicated calendar button -- clearly visible */}
+        <button onClick={() => setShowCalendar(true)}
+          className="w-9 h-9 rounded-xl bg-forged-purple/15 border border-forged-purple/30
+            flex items-center justify-center text-forged-purple
+            hover:bg-forged-purple/25 active:scale-95 transition-all">
+          <Icon d={I.calendar} size={16} sw={2} />
         </button>
       </div>
 
