@@ -167,7 +167,9 @@ function SegmentedControl({ options, active, onChange }: {
 // ══════════════════════════════════
 // 3-DOT SETTINGS DROPDOWN
 // ══════════════════════════════════
-function SettingsDropdown({ onLogout, dropUp = false }: { onLogout: () => void; dropUp?: boolean }) {
+function SettingsDropdown({ onLogout, onProfile, dropUp = false }: {
+  onLogout: () => void; onProfile?: () => void; dropUp?: boolean
+}) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const { theme, toggleTheme } = useTheme()
@@ -187,9 +189,16 @@ function SettingsDropdown({ onLogout, dropUp = false }: { onLogout: () => void; 
           rounded-xl shadow-xl overflow-hidden z-[60]
           ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'}`}
           style={{ animation: 'fadeSlide 0.15s ease-out' }}>
+          {onProfile && (
+            <button onClick={() => { onProfile(); setOpen(false) }}
+              className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text
+                hover:bg-forged-surface2 transition-colors text-left font-semibold">
+              <Icon d={I.profile} size={16} /><span>Profile</span>
+            </button>
+          )}
           <button onClick={() => { toggleTheme(); setOpen(false) }}
             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
-              hover:bg-forged-surface2 transition-colors text-left">
+              hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
             <Icon d={theme === 'dark' ? I.sun : I.moon} size={16} />
             <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
@@ -218,7 +227,6 @@ const NAV: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'workouts', label: 'Workouts', icon: I.workout },
   { id: 'dashboard', label: 'Home', icon: I.dashboard },
   { id: 'progress', label: 'Progress', icon: I.progress },
-  { id: 'profile', label: 'Profile', icon: I.profile },
 ]
 
 // ══════════════════════════════════
@@ -288,8 +296,8 @@ function Sidebar({ active, onChange, collapsed, onToggle, onLogout }: {
 // ══════════════════════════════════
 // BOTTOM NAV — mobile + 3-dot next to it
 // ══════════════════════════════════
-function BottomNav({ active, onChange, onLogout }: {
-  active: TabId; onChange: (t: TabId) => void; onLogout: () => void
+function BottomNav({ active, onChange, onLogout, onProfile }: {
+  active: TabId; onChange: (t: TabId) => void; onLogout: () => void; onProfile: () => void
 }) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden
@@ -323,7 +331,7 @@ function BottomNav({ active, onChange, onLogout }: {
         })}
       </div>
       <div className="pr-2 pb-2">
-        <SettingsDropdown onLogout={onLogout} dropUp />
+        <SettingsDropdown onLogout={onLogout} onProfile={onProfile} dropUp />
       </div>
     </nav>
   )
@@ -397,7 +405,7 @@ export default function Dashboard({ onLogout }: Props) {
           </div>
         )}
       </main>
-      {!isDesktop && <BottomNav active={tab} onChange={setTab} onLogout={onLogout} />}
+      {!isDesktop && <BottomNav active={tab} onChange={setTab} onLogout={onLogout} onProfile={() => setTab('profile')} />}
       <style>{`@keyframes fadeSlide{from{opacity:0;transform:translateY(4px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}`}</style>
     </div>
   )
@@ -519,27 +527,17 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
   return (
     <div className="flex flex-col gap-4">
 
-      {/* ── HEADER — avatar links to profile ── */}
+      {/* ── HEADER ── */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <button onClick={() => onTabChange('profile')}
-            className="w-12 h-12 rounded-full bg-forged-purple/20 border-2 border-forged-purple
-              flex items-center justify-center shadow-md shadow-forged-purple/10
-              hover:scale-105 active:scale-95 transition-all">
-            <span className="text-lg font-black text-forged-purple">
-              {(user?.displayName || user?.username || '?')[0].toUpperCase()}
-            </span>
-          </button>
-          <div>
-            <p className="text-lg font-bold text-forged-text">
-              {getGreeting()}, {user?.displayName || user?.username || 'Athlete'}
-            </p>
-            <p className="text-xs text-forged-text3 font-medium">
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-            </p>
-          </div>
+        <div>
+          <p className="text-lg font-bold text-forged-text">
+            {getGreeting()}, {user?.displayName || user?.username || 'Athlete'}
+          </p>
+          <p className="text-xs text-forged-text2 font-medium">
+            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+          </p>
         </div>
-        <div className="hidden md:block"><SettingsDropdown onLogout={onLogout} /></div>
+        <div className="hidden md:block"><SettingsDropdown onLogout={onLogout} onProfile={() => onTabChange('profile')} /></div>
       </div>
 
       {/* ══ HERO: CALORIE CARD ══ */}
