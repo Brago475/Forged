@@ -206,7 +206,7 @@ export default function ProgressPage() {
             </button>
           ))}
         </div>
-        <WeightChart data={filtered} goalWeight={dashStats?.currentWeight ? undefined : undefined} />
+        <WeightChart data={filtered} />
       </Card>
 
       {/* ── Weekly Nutrition ── */}

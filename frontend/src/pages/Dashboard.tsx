@@ -228,7 +228,7 @@ function SettingsDropdown({ onLogout, onProfile, onSettings, dropUp = false }: {
 // ══════════════════════════════════
 // NAV — Dashboard in center
 // ══════════════════════════════════
-type TabId = 'food' | 'workouts' | 'dashboard' | 'progress' | 'profile'
+type TabId = 'food' | 'workouts' | 'dashboard' | 'progress' | 'profile' | 'settings'
 
 const NAV: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'food', label: 'Food', icon: I.food },
