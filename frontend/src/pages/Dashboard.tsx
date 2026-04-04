@@ -145,7 +145,7 @@ function Card({ children, className = '', delay = 0, hero = false }: {
 }
 
 function SectionLabel({ children }: { children: string }) {
-  return <h3 className="text-[11px] font-bold text-forged-text3 uppercase tracking-widest mb-3">{children}</h3>
+  return <h3 className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-3">{children}</h3>
 }
 
 function SegmentedControl({ options, active, onChange }: {
@@ -156,7 +156,7 @@ function SegmentedControl({ options, active, onChange }: {
       {options.map(o => (
         <button key={o} onClick={() => onChange(o)}
           className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200
-            ${active === o ? 'bg-forged-surface text-forged-text shadow-sm' : 'text-forged-text3 hover:text-forged-text2'}`}>
+            ${active === o ? 'bg-forged-surface text-forged-text shadow-sm' : 'text-forged-text2 hover:text-forged-text2'}`}>
           {o}
         </button>
       ))}
@@ -179,7 +179,7 @@ function SettingsDropdown({ onLogout, onProfile, dropUp = false }: {
     <div className="relative" ref={ref}>
       <button onClick={() => setOpen(!open)}
         className="w-9 h-9 rounded-xl bg-forged-surface border border-forged-border
-          flex items-center justify-center text-forged-text3
+          flex items-center justify-center text-forged-text2
           hover:text-forged-text hover:border-forged-purple/30 hover:bg-forged-surface2
           active:scale-95 transition-all">
         <Icon d={I.dots} size={16} />
@@ -227,6 +227,7 @@ const NAV: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'workouts', label: 'Workouts', icon: I.workout },
   { id: 'dashboard', label: 'Home', icon: I.dashboard },
   { id: 'progress', label: 'Progress', icon: I.progress },
+  { id: 'profile', label: 'Profile', icon: I.profile },
 ]
 
 // ══════════════════════════════════
@@ -240,53 +241,76 @@ function Sidebar({ active, onChange, collapsed, onToggle, onLogout }: {
   return (
     <aside className={`fixed left-0 top-0 h-full bg-forged-surface border-r border-forged-border
       flex flex-col z-50 transition-all duration-300
-      ${collapsed ? 'w-[68px]' : 'w-[220px]'}`}>
+      ${collapsed ? 'w-[68px]' : 'w-[240px]'}`}>
 
-      {/* Logo — ring outline, inverted in dark mode */}
+      {/* Logo */}
       <div className={`flex items-center h-16 px-4 border-b border-forged-border
         ${collapsed ? 'justify-center' : 'gap-3'}`}>
-        <div className="w-9 h-9 rounded-lg border-2 border-forged-red flex items-center justify-center flex-shrink-0 overflow-hidden">
+        <div className="w-10 h-10 rounded-xl border-2 border-forged-red/80 bg-forged-bg
+          flex items-center justify-center flex-shrink-0 overflow-hidden">
           <img src={logo} alt="FORGED"
-            className={`w-6 h-6 object-contain ${theme === 'dark' ? 'invert brightness-200' : ''}`} />
+            className={`w-7 h-7 object-contain ${theme === 'dark' ? 'invert brightness-200 contrast-150' : ''}`} />
         </div>
-        {!collapsed && <span className="text-base font-black text-forged-text tracking-wide">FORGED</span>}
+        {!collapsed && (
+          <div>
+            <span className="text-base font-black text-forged-text tracking-wide block">FORGED</span>
+            <span className="text-[9px] text-forged-text2 font-medium -mt-0.5 block">Fitness Tracker</span>
+          </div>
+        )}
       </div>
 
-      <nav className="flex-1 py-3 px-2 flex flex-col gap-1">
+      {/* Nav */}
+      <nav className="flex-1 py-4 px-3 flex flex-col gap-1.5">
+        {!collapsed && <p className="text-[10px] text-forged-text2 font-bold uppercase tracking-widest px-3 mb-2">Menu</p>}
         {NAV.map(item => {
           const isA = active === item.id
           return (
             <button key={item.id} onClick={() => onChange(item.id)}
-              className={`flex items-center gap-3 rounded-xl transition-all duration-200
-                ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-2.5'}
-                ${isA ? 'bg-forged-purple/15 text-forged-purple' : 'text-forged-text3 hover:text-forged-text hover:bg-forged-surface2'}`}>
+              className={`flex items-center gap-3 rounded-xl transition-all duration-200 relative
+                ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-3'}
+                ${isA
+                  ? 'bg-forged-purple/15 text-forged-purple shadow-sm'
+                  : 'text-forged-text2 hover:text-forged-text hover:bg-forged-surface2'
+                }`}>
+              {isA && !collapsed && (
+                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 bg-forged-purple rounded-r-full" />
+              )}
               <Icon d={item.icon} size={20} sw={isA ? 2.2 : 1.6} className="flex-shrink-0" />
-              {!collapsed && <span className={`text-sm ${isA ? 'font-bold' : 'font-medium'}`}>{item.label}</span>}
+              {!collapsed && (
+                <span className={`text-sm ${isA ? 'font-black' : 'font-semibold'}`}>
+                  {item.label}
+                </span>
+              )}
             </button>
           )
         })}
       </nav>
 
-      <div className="px-2 py-3 border-t border-forged-border flex flex-col gap-1">
+      {/* Bottom actions */}
+      <div className="px-3 py-3 border-t border-forged-border flex flex-col gap-1.5">
+        {!collapsed && <p className="text-[10px] text-forged-text2 font-bold uppercase tracking-widest px-3 mb-1">Settings</p>}
         <button onClick={toggleTheme}
-          className={`flex items-center gap-3 rounded-xl text-forged-text3
+          className={`flex items-center gap-3 rounded-xl text-forged-text2
             hover:text-forged-text hover:bg-forged-surface2 transition-all
             ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-2.5'}`}>
           <Icon d={theme === 'dark' ? I.sun : I.moon} size={18} className="flex-shrink-0" />
-          {!collapsed && <span className="text-sm font-medium">Theme</span>}
+          {!collapsed && <span className="text-sm font-semibold">
+            {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
+          </span>}
         </button>
         <button onClick={onLogout}
-          className={`flex items-center gap-3 rounded-xl text-forged-text3
+          className={`flex items-center gap-3 rounded-xl text-forged-text2
             hover:text-forged-red hover:bg-forged-red/5 transition-all
             ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-2.5'}`}>
           <Icon d={I.logout} size={18} className="flex-shrink-0" />
-          {!collapsed && <span className="text-sm font-medium">Sign Out</span>}
+          {!collapsed && <span className="text-sm font-semibold">Sign Out</span>}
         </button>
       </div>
 
+      {/* Collapse toggle */}
       <button onClick={onToggle}
         className="flex items-center justify-center h-10 border-t border-forged-border
-          text-forged-text3 hover:text-forged-text hover:bg-forged-surface2 transition-all">
+          text-forged-text2 hover:text-forged-text hover:bg-forged-surface2 transition-all">
         <Icon d={collapsed ? I.chevronsRight : I.chevronsLeft} size={16} />
       </button>
     </aside>
@@ -313,15 +337,15 @@ function BottomNav({ active, onChange, onLogout, onProfile }: {
               {isC ? (
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300
                   ${isA ? 'bg-forged-purple shadow-lg shadow-forged-purple/40' : 'bg-forged-surface2 border border-forged-border shadow-md'}`}>
-                  <Icon d={tab.icon} size={24} sw={2} className={isA ? 'text-white' : 'text-forged-text3'} />
+                  <Icon d={tab.icon} size={24} sw={2} className={isA ? 'text-white' : 'text-forged-text2'} />
                 </div>
               ) : (
                 <>
                   <div className={`px-3 py-1 rounded-xl transition-all duration-200 ${isA ? 'bg-forged-purple/15' : ''}`}>
                     <Icon d={tab.icon} size={20} sw={isA ? 2.2 : 1.5}
-                      className={isA ? 'text-forged-purple' : 'text-forged-text3'} />
+                      className={isA ? 'text-forged-purple' : 'text-forged-text2'} />
                   </div>
-                  <span className={`text-[9px] mt-0.5 ${isA ? 'font-bold text-forged-purple' : 'text-forged-text3'}`}>
+                  <span className={`text-[9px] mt-0.5 ${isA ? 'font-bold text-forged-purple' : 'text-forged-text2'}`}>
                     {tab.label}
                   </span>
                 </>
@@ -382,7 +406,7 @@ export default function Dashboard({ onLogout }: Props) {
     fiber: todayFood.reduce((s, l) => s + (l.food?.fiber ?? 0) * l.servings, 0),
   }
 
-  const sw = isDesktop ? (sidebarCollapsed ? 68 : 220) : 0
+  const sw = isDesktop ? (sidebarCollapsed ? 68 : 240) : 0
 
   return (
     <div className="min-h-screen bg-forged-bg">
@@ -439,7 +463,7 @@ function FastingTypeSelector() {
               hover:border-forged-green/30 hover:bg-forged-green/5
               active:scale-95 transition-all">
             <p className="text-sm font-black text-forged-text">{p.label}</p>
-            <p className="text-[9px] text-forged-text3">{p.desc}</p>
+            <p className="text-[9px] text-forged-text2">{p.desc}</p>
           </button>
         ))}
       </div>
@@ -449,7 +473,7 @@ function FastingTypeSelector() {
             <input type="number" placeholder="Hours" value={customHrs}
               onChange={e => setCustomHrs(e.target.value)}
               className="flex-1 px-3 py-2 bg-forged-bg border border-forged-border rounded-xl
-                text-forged-text text-sm placeholder:text-forged-text3
+                text-forged-text text-sm placeholder:text-forged-text2
                 focus:border-forged-purple/50 transition-colors" />
             <button onClick={() => {
               const h = parseInt(customHrs)
@@ -460,14 +484,14 @@ function FastingTypeSelector() {
               Start
             </button>
             <button onClick={() => { setCustom(false); setCustomHrs('') }}
-              className="px-3 py-2 rounded-xl text-xs font-bold text-forged-text3
+              className="px-3 py-2 rounded-xl text-xs font-bold text-forged-text2
                 hover:text-forged-text transition-colors">
               Cancel
             </button>
           </>
         ) : (
           <button onClick={() => setCustom(true)}
-            className="w-full py-2 rounded-xl text-xs font-bold text-forged-text3
+            className="w-full py-2 rounded-xl text-xs font-bold text-forged-text2
               border border-dashed border-forged-border
               hover:border-forged-purple/30 hover:text-forged-purple transition-all">
             Custom duration
@@ -487,7 +511,7 @@ function FastingMini({ fast }: { fast: FastingLog }) {
 
   const startMs = new Date(fast.startTime).getTime()
   if (isNaN(startMs)) {
-    return <div><p className="text-sm font-bold text-forged-text">Fasting</p><p className="text-xs text-forged-text3">Timer unavailable</p></div>
+    return <div><p className="text-sm font-bold text-forged-text">Fasting</p><p className="text-xs text-forged-text2">Timer unavailable</p></div>
   }
 
   const elapsed = Math.max((now - startMs) / 3600000, 0)
@@ -498,7 +522,7 @@ function FastingMini({ fast }: { fast: FastingLog }) {
   return (
     <div>
       <p className="text-sm font-black text-forged-green tabular-nums">{rH}h {rM}m remaining</p>
-      <p className="text-xs text-forged-text3">{eH}h {eM}m elapsed / {fast.targetHours}h window</p>
+      <p className="text-xs text-forged-text2">{eH}h {eM}m elapsed / {fast.targetHours}h window</p>
     </div>
   )
 }
@@ -548,7 +572,7 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
           <div className="flex-1 min-w-0">
             <p className="text-6xl font-black text-forged-text tabular-nums leading-none tracking-tighter">{animCal}</p>
             <p className="text-sm text-forged-text2 mt-1.5 font-medium">of <span className="font-black text-forged-text">{calGoal}</span> cal</p>
-            <p className="text-sm text-forged-text3">{calLeft} remaining</p>
+            <p className="text-sm text-forged-text2">{calLeft} remaining</p>
             <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black mt-3
               ${onTrack ? 'bg-forged-green/15 text-forged-green border border-forged-green/25' : 'bg-forged-red/15 text-forged-red border border-forged-red/25'}`}>
               <Icon d={onTrack ? I.check : I.x} size={13} sw={3} />
@@ -571,12 +595,12 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
             <div className="flex items-center gap-3">
               <div className={`w-9 h-9 rounded-lg flex items-center justify-center
                 ${activeFast ? 'bg-forged-green/15' : 'bg-forged-surface2'}`}>
-                <Icon d={I.clock} size={16} className={activeFast ? 'text-forged-green' : 'text-forged-text3'} />
+                <Icon d={I.clock} size={16} className={activeFast ? 'text-forged-green' : 'text-forged-text2'} />
               </div>
               {activeFast ? <FastingMini fast={activeFast} /> : (
                 <div>
                   <p className="text-sm font-bold text-forged-text">Fasting</p>
-                  <p className="text-xs text-forged-text3">Choose a window to start</p>
+                  <p className="text-xs text-forged-text2">Choose a window to start</p>
                 </div>
               )}
             </div>
@@ -668,7 +692,7 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
           <StatChip label="Streak" value={stats ? `${stats.currentStreak}` : '--'} unit="days" />
         </div>
         {stats?.recentWeights && stats.recentWeights.length >= 2 && (
-          <p className="text-[10px] text-forged-text3 mb-1">
+          <p className="text-[10px] text-forged-text2 mb-1">
             {new Date(stats.recentWeights[0].date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             {' -- '}
             {new Date(stats.recentWeights[stats.recentWeights.length - 1].date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
@@ -712,9 +736,9 @@ function MacroCard({ label, current, goal }: { label: string; current: number; g
   const pct = Math.min((current / goal) * 100, 100), over = current > goal, anim = useAnimNum(current, 800)
   return (
     <div className="bg-forged-bg border border-forged-border rounded-xl p-3 hover:border-forged-purple/30 hover:shadow-md hover:shadow-forged-purple/5 transition-all duration-200">
-      <p className="text-[10px] text-forged-text3 font-bold uppercase tracking-wider mb-1">{label}</p>
-      <p className="text-xl font-black text-forged-text tabular-nums leading-none">{anim}<span className="text-[11px] font-medium text-forged-text3 ml-0.5">g</span></p>
-      <p className="text-[10px] text-forged-text3 mt-0.5 mb-2">/ {goal}g</p>
+      <p className="text-[10px] text-forged-text2 font-bold uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-xl font-black text-forged-text tabular-nums leading-none">{anim}<span className="text-[11px] font-medium text-forged-text2 ml-0.5">g</span></p>
+      <p className="text-[10px] text-forged-text2 mt-0.5 mb-2">/ {goal}g</p>
       <div className="h-2 rounded-full bg-forged-surface2 overflow-hidden">
         <div className="h-full rounded-full bg-forged-purple transition-all duration-1000 ease-out" style={{ width: `${pct}%` }} />
       </div>
@@ -727,7 +751,7 @@ function MacroCardSmall({ label, value, pct }: { label: string; value: string; p
   return (
     <div className="bg-forged-bg border border-forged-border rounded-xl p-3 hover:border-forged-purple/30 transition-all duration-200">
       <div className="flex justify-between items-center mb-2">
-        <p className="text-[10px] text-forged-text3 font-bold uppercase tracking-wider">{label}</p>
+        <p className="text-[10px] text-forged-text2 font-bold uppercase tracking-wider">{label}</p>
         <p className="text-sm font-black text-forged-text tabular-nums">{value}</p>
       </div>
       <div className="h-1.5 rounded-full bg-forged-surface2 overflow-hidden">
@@ -743,7 +767,7 @@ function QuickAction({ icon, label, onClick }: { icon: React.ReactNode; label: s
       <div className="w-12 h-12 rounded-2xl bg-forged-purple/10 flex items-center justify-center group-hover:bg-forged-purple/20 group-hover:shadow-md group-hover:shadow-forged-purple/10 transition-all duration-200">
         <Icon d={icon} size={20} sw={2} className="text-forged-purple" />
       </div>
-      <span className="text-[10px] text-forged-text2 font-semibold text-center leading-tight">{label}</span>
+      <span className="text-[10px] text-forged-text font-semibold text-center leading-tight">{label}</span>
     </button>
   )
 }
@@ -755,7 +779,7 @@ function CheckItem({ done, label }: { done: boolean; label: string }) {
         ${done ? 'bg-forged-green shadow-sm shadow-forged-green/20' : 'border-2 border-forged-border'}`}>
         {done && <Icon d={I.check} size={11} sw={3} className="text-white" />}
       </div>
-      <span className={`text-sm font-medium ${done ? 'text-forged-text' : 'text-forged-text3'}`}>{label}</span>
+      <span className={`text-sm font-medium ${done ? 'text-forged-text' : 'text-forged-text2'}`}>{label}</span>
     </div>
   )
 }
@@ -763,9 +787,9 @@ function CheckItem({ done, label }: { done: boolean; label: string }) {
 function StatChip({ label, value, unit, accent }: { label: string; value: string; unit: string; accent?: boolean }) {
   return (
     <div className="bg-forged-bg border border-forged-border rounded-xl p-3 text-center hover:border-forged-purple/25 transition-all">
-      <p className="text-[10px] text-forged-text3 font-bold uppercase tracking-wider">{label}</p>
+      <p className="text-[10px] text-forged-text2 font-bold uppercase tracking-wider">{label}</p>
       <p className={`text-xl font-black tabular-nums mt-1 ${accent ? 'text-forged-green' : 'text-forged-text'}`}>{value}</p>
-      <p className="text-[10px] text-forged-text3">{unit}</p>
+      <p className="text-[10px] text-forged-text2">{unit}</p>
     </div>
   )
 }
@@ -782,7 +806,7 @@ function WorkoutSnapshot({ onGo }: { onGo: () => void }) {
         </div>
         <div>
           <p className="text-sm font-bold text-forged-text">{last?.dayName || last?.planType || 'No workout yet'}</p>
-          <p className="text-xs text-forged-text3">{last ? new Date(last.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Start your first'}</p>
+          <p className="text-xs text-forged-text2">{last ? new Date(last.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Start your first'}</p>
         </div>
       </div>
       <button onClick={onGo} className="px-4 py-2 rounded-xl text-xs font-black bg-forged-purple/10 text-forged-purple border border-forged-purple/20 hover:bg-forged-purple hover:text-white active:scale-95 transition-all">
@@ -803,7 +827,7 @@ function FoodSnapshot({ todayFood, proteinLeft, onGo }: { todayFood: FoodLog[]; 
           </div>
           <div>
             <p className="text-sm font-bold text-forged-text">{last?.food?.name || 'No meals yet'}</p>
-            <p className="text-xs text-forged-text3">{last ? `${last.mealType} - ${last.food?.calories ?? 0} cal` : 'Log your first meal'}</p>
+            <p className="text-xs text-forged-text2">{last ? `${last.mealType} - ${last.food?.calories ?? 0} cal` : 'Log your first meal'}</p>
           </div>
         </div>
         <button onClick={onGo} className="px-4 py-2 rounded-xl text-xs font-black bg-forged-purple/10 text-forged-purple border border-forged-purple/20 hover:bg-forged-purple hover:text-white active:scale-95 transition-all">
@@ -820,7 +844,7 @@ function FoodSnapshot({ todayFood, proteinLeft, onGo }: { todayFood: FoodLog[]; 
 function MiniWeightChart({ data }: { data: WeightEntry[] }) {
   const [drawn, setDrawn] = useState(false)
   useEffect(() => { const t = setTimeout(() => setDrawn(true), 300); return () => clearTimeout(t) }, [])
-  if (data.length < 2) return <p className="text-xs text-forged-text3 text-center py-2">Need 2+ entries for chart</p>
+  if (data.length < 2) return <p className="text-xs text-forged-text2 text-center py-2">Need 2+ entries for chart</p>
   const recent = data.slice(-10)
   const w = 500, h = 60, px = 10, py = 6
   const vals = recent.map(d => d.weight), mn = Math.min(...vals) - 0.5, mx = Math.max(...vals) + 0.5
@@ -863,7 +887,7 @@ function FoodTab() {
         <div className="flex flex-col items-center py-10 gap-3">
           <div className="w-14 h-14 rounded-2xl bg-forged-purple/10 flex items-center justify-center"><Icon d={I.food} size={28} className="text-forged-purple" /></div>
           <p className="text-base font-bold text-forged-text">Log your meals</p>
-          <p className="text-sm text-forged-text3 text-center max-w-[280px]">Search foods, log by meal type, track macros</p>
+          <p className="text-sm text-forged-text2 text-center max-w-[280px]">Search foods, log by meal type, track macros</p>
         </div>
       </Card>
     </div>
@@ -881,7 +905,7 @@ function WorkoutsTab() {
         <div className="flex flex-col items-center py-10 gap-3">
           <div className="w-14 h-14 rounded-2xl bg-forged-purple/10 flex items-center justify-center"><Icon d={I.workout} size={28} className="text-forged-purple" /></div>
           <p className="text-base font-bold text-forged-text">Workout Builder</p>
-          <p className="text-sm text-forged-text3 text-center max-w-[280px]">PPL plans, exercise logging, workout history</p>
+          <p className="text-sm text-forged-text2 text-center max-w-[280px]">PPL plans, exercise logging, workout history</p>
         </div>
       </Card>
     </div>
@@ -922,9 +946,9 @@ function ProgressTab() {
         <SectionLabel>Log weight</SectionLabel>
         <div className="flex gap-2">
           <input type="number" step="0.1" placeholder="e.g. 181.5" value={weight} onChange={e => setWeight(e.target.value)}
-            className="flex-1 px-4 py-2.5 bg-forged-bg border border-forged-border rounded-xl text-forged-text text-sm placeholder:text-forged-text3 focus:border-forged-purple/50 transition-colors" />
+            className="flex-1 px-4 py-2.5 bg-forged-bg border border-forged-border rounded-xl text-forged-text text-sm placeholder:text-forged-text2 focus:border-forged-purple/50 transition-colors" />
           <input type="text" placeholder="Notes" value={notes} onChange={e => setNotes(e.target.value)}
-            className="flex-1 px-4 py-2.5 bg-forged-bg border border-forged-border rounded-xl text-forged-text text-sm placeholder:text-forged-text3 focus:border-forged-purple/50 transition-colors" />
+            className="flex-1 px-4 py-2.5 bg-forged-bg border border-forged-border rounded-xl text-forged-text text-sm placeholder:text-forged-text2 focus:border-forged-purple/50 transition-colors" />
           <button onClick={handleLog} disabled={saving}
             className="px-5 py-2.5 bg-forged-purple text-white font-black rounded-xl text-sm hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50">
             {saving ? '...' : 'Log'}
@@ -938,14 +962,14 @@ function ProgressTab() {
       </Card>
       <Card delay={260}>
         <SectionLabel>History</SectionLabel>
-        {entries.length === 0 ? <p className="text-sm text-forged-text3 py-2">No entries yet</p> : (
+        {entries.length === 0 ? <p className="text-sm text-forged-text2 py-2">No entries yet</p> : (
           <div className="flex flex-col">
             {entries.slice(0, 20).map(e => (
               <div key={e.id} className="flex justify-between items-center py-3 border-b border-forged-border last:border-0">
                 <span className="text-sm text-forged-text2">{new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-black text-forged-text">{e.weight} lbs</span>
-                  {e.notes && <span className="text-[10px] text-forged-text3 bg-forged-surface2 px-2 py-0.5 rounded-full">{e.notes}</span>}
+                  {e.notes && <span className="text-[10px] text-forged-text2 bg-forged-surface2 px-2 py-0.5 rounded-full">{e.notes}</span>}
                 </div>
               </div>
             ))}
@@ -959,7 +983,7 @@ function ProgressTab() {
 function FullWeightChart({ data }: { data: WeightEntry[] }) {
   const [drawn, setDrawn] = useState(false)
   useEffect(() => { setDrawn(false); const t = setTimeout(() => setDrawn(true), 200); return () => clearTimeout(t) }, [data])
-  if (data.length < 2) return <p className="text-sm text-forged-text3 text-center py-4">Need 2+ entries</p>
+  if (data.length < 2) return <p className="text-sm text-forged-text2 text-center py-4">Need 2+ entries</p>
 
   const w = 600, h = 160, px = 44, py = 16
   const vals = data.map(d => d.weight), mn = Math.min(...vals) - 1, mx = Math.max(...vals) + 1
@@ -1002,16 +1026,16 @@ function ProfileTab({ user, onLogout }: { user: User | null; onLogout: () => voi
           </div>
           <div>
             <p className="text-xl font-black text-forged-text">{user?.displayName || user?.username}</p>
-            <p className="text-sm text-forged-text3">{user?.email}</p>
+            <p className="text-sm text-forged-text2">{user?.email}</p>
           </div>
         </div>
         <div className="flex flex-col">
           <div className="flex justify-between items-center py-3 border-b border-forged-border">
-            <span className="text-xs text-forged-text3 uppercase tracking-wide font-bold">Starting Weight</span>
+            <span className="text-xs text-forged-text2 uppercase tracking-wide font-bold">Starting Weight</span>
             <span className="text-sm text-forged-text font-bold">{user?.startingWeight ? `${user.startingWeight} lbs` : 'Not set'}</span>
           </div>
           <div className="flex justify-between items-center py-3">
-            <span className="text-xs text-forged-text3 uppercase tracking-wide font-bold">Goal Weight</span>
+            <span className="text-xs text-forged-text2 uppercase tracking-wide font-bold">Goal Weight</span>
             <span className="text-sm text-forged-text font-bold">{user?.goalWeight ? `${user.goalWeight} lbs` : 'Not set'}</span>
           </div>
         </div>
@@ -1021,10 +1045,10 @@ function ProfileTab({ user, onLogout }: { user: User | null; onLogout: () => voi
           <Card delay={160}>
             <button onClick={toggleTheme} className="w-full flex items-center justify-between p-3 rounded-xl bg-forged-bg border border-forged-border hover:border-forged-purple/30 transition-all">
               <div className="flex items-center gap-3"><Icon d={theme === 'dark' ? I.moon : I.sun} size={18} className="text-forged-text2" /><span className="text-sm text-forged-text font-medium">Theme</span></div>
-              <span className="text-xs text-forged-text3 capitalize font-bold">{theme}</span>
+              <span className="text-xs text-forged-text2 capitalize font-bold">{theme}</span>
             </button>
           </Card>
-          <button onClick={onLogout} className="w-full py-3 bg-forged-surface border border-forged-border rounded-xl text-forged-text3 text-sm font-bold hover:border-forged-red/30 hover:text-forged-red transition-all">Sign Out</button>
+          <button onClick={onLogout} className="w-full py-3 bg-forged-surface border border-forged-border rounded-xl text-forged-text2 text-sm font-bold hover:border-forged-red/30 hover:text-forged-red transition-all">Sign Out</button>
         </>
       )}
     </div>
