@@ -2,17 +2,37 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  .dark {
+    --bg: #050505;
+    --bg-surface: #111111;
+    --bg-surface2: #1a1a1a;
+    --bg-surface3: #222222;
+    --border: #2a2a2a;
+    --text: #f0f0f0;
+    --text2: #a0a0a0;
+    --text3: #666666;
+  }
+
+  .light {
+    --bg: #f5f5f7;
+    --bg-surface: #ffffff;
+    --bg-surface2: #f0f0f2;
+    --bg-surface3: #e8e8ea;
+    --border: #e0e0e0;
+    --text: #1a1a1a;
+    --text2: #555555;
+    --text3: #999999;
+  }
+}
+
 body {
   margin: 0;
-  font-family: -apple-system, 'Segoe UI', system-ui, sans-serif;
-  background-color: #0a0a0a;
-  color: #e8e8e8;
+  font-family: -apple-system, 'SF Pro Display', 'Segoe UI', system-ui, sans-serif;
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.3s, color 0.3s;
 }
 
-* {
-  -webkit-tap-highlight-color: transparent;
-}
-
-input:focus {
-  outline: none;
-}
+* { -webkit-tap-highlight-color: transparent; }
+input:focus, button:focus { outline: none; }
