@@ -246,10 +246,10 @@ function Sidebar({ active, onChange, collapsed, onToggle, onLogout }: {
       {/* Logo */}
       <div className={`flex items-center h-16 px-4 border-b border-forged-border
         ${collapsed ? 'justify-center' : 'gap-3'}`}>
-        <div className="w-10 h-10 rounded-xl border-2 border-forged-red/80 bg-forged-bg
-          flex items-center justify-center flex-shrink-0 overflow-hidden">
-          <img src={logo} alt="FORGED"
-            className={`w-7 h-7 object-contain ${theme === 'dark' ? 'invert brightness-200 contrast-150' : ''}`} />
+        <div className={`w-10 h-10 rounded-xl border-2 border-forged-red
+          flex items-center justify-center flex-shrink-0 overflow-hidden
+          ${theme === 'dark' ? 'bg-white' : 'bg-forged-surface'}`}>
+          <img src={logo} alt="FORGED" className="w-7 h-7 object-contain" />
         </div>
         {!collapsed && (
           <div>
@@ -333,17 +333,20 @@ function BottomNav({ active, onChange, onLogout, onProfile }: {
           const isC = tab.id === 'dashboard'
           return (
             <button key={tab.id} onClick={() => onChange(tab.id)}
-              className={`flex flex-col items-center min-w-[48px] ${isC ? '-mt-5 pb-0' : 'py-1'}`}>
+              className={`flex flex-col items-center min-w-[48px] transition-all duration-200
+                ${isC ? '-mt-5 pb-0' : 'py-1 hover:opacity-80 active:scale-95'}`}>
               {isC ? (
                 <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-300
-                  ${isA ? 'bg-forged-purple shadow-lg shadow-forged-purple/40' : 'bg-forged-surface2 border border-forged-border shadow-md'}`}>
+                  hover:scale-105 active:scale-95
+                  ${isA ? 'bg-forged-purple shadow-lg shadow-forged-purple/40' : 'bg-forged-surface2 border border-forged-border shadow-md hover:border-forged-purple/30'}`}>
                   <Icon d={tab.icon} size={24} sw={2} className={isA ? 'text-white' : 'text-forged-text2'} />
                 </div>
               ) : (
                 <>
-                  <div className={`px-3 py-1 rounded-xl transition-all duration-200 ${isA ? 'bg-forged-purple/15' : ''}`}>
+                  <div className={`px-3 py-1 rounded-xl transition-all duration-200
+                    ${isA ? 'bg-forged-purple/15' : 'hover:bg-forged-surface2'}`}>
                     <Icon d={tab.icon} size={20} sw={isA ? 2.2 : 1.5}
-                      className={isA ? 'text-forged-purple' : 'text-forged-text2'} />
+                      className={`transition-colors ${isA ? 'text-forged-purple' : 'text-forged-text2 group-hover:text-forged-text'}`} />
                   </div>
                   <span className={`text-[9px] mt-0.5 ${isA ? 'font-bold text-forged-purple' : 'text-forged-text2'}`}>
                     {tab.label}
@@ -774,12 +777,12 @@ function QuickAction({ icon, label, onClick }: { icon: React.ReactNode; label: s
 
 function CheckItem({ done, label }: { done: boolean; label: string }) {
   return (
-    <div className="flex items-center gap-3 py-2.5 border-b border-forged-border/50 last:border-0">
+    <div className="flex items-center gap-3 py-2.5 border-b border-forged-text2/20 last:border-0">
       <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all
-        ${done ? 'bg-forged-green shadow-sm shadow-forged-green/20' : 'border-2 border-forged-border'}`}>
+        ${done ? 'bg-forged-green shadow-sm shadow-forged-green/20' : 'border-2 border-forged-text2/40'}`}>
         {done && <Icon d={I.check} size={11} sw={3} className="text-white" />}
       </div>
-      <span className={`text-sm font-medium ${done ? 'text-forged-text' : 'text-forged-text2'}`}>{label}</span>
+      <span className={`text-sm font-medium text-forged-text ${done ? 'opacity-100' : 'opacity-80'}`}>{label}</span>
     </div>
   )
 }
