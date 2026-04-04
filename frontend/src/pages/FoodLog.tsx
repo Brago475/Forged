@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { api } from '../hooks/api'
-import type { FoodLog as FoodLogType, Food } from '../types'
+import type { FoodLog as FoodLogType, Food, FoodDaySummary } from '../types'
 
 // ══════════════════════════════════
 // ICONS
@@ -61,8 +61,15 @@ function useClickOutside(ref: React.RefObject<HTMLElement | null>, fn: () => voi
 }
 
 // ══════════════════════════════════
-// CALENDAR MODAL
+// CALENDAR MODAL — with meal icons + calories
 // ══════════════════════════════════
+const MEAL_ICONS: Record<string, React.ReactNode> = {
+  morning: <><path d="M17 18a5 5 0 00-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><polyline points="8 6 12 2 16 6"/></>,
+  afternoon: <><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></>,
+  evening: <><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></>,
+  snack: <><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/></>,
+}
+
 function CalendarModal({ selected, onSelect, onClose }: {
   selected: string; onSelect: (date: string) => void; onClose: () => void
 }) {
@@ -73,6 +80,21 @@ function CalendarModal({ selected, onSelect, onClose }: {
     const d = new Date(selected + 'T00:00:00')
     return { year: d.getFullYear(), month: d.getMonth() }
   })
+  const [summary, setSummary] = useState<FoodDaySummary[]>([])
+  const [loadingSummary, setLoadingSummary] = useState(false)
+
+  // Fetch monthly summary when month changes
+  useEffect(() => {
+    const fetchSummary = async () => {
+      setLoadingSummary(true)
+      try {
+        const data = await api.food.summary(viewDate.year, viewDate.month + 1)
+        setSummary(data ?? [])
+      } catch (e) { console.error(e); setSummary([]) }
+      finally { setLoadingSummary(false) }
+    }
+    fetchSummary()
+  }, [viewDate.year, viewDate.month])
 
   const todayStr = new Date().toISOString().split('T')[0]
   const daysInMonth = new Date(viewDate.year, viewDate.month + 1, 0).getDate()
@@ -95,22 +117,30 @@ function CalendarModal({ selected, onSelect, onClose }: {
     return `${viewDate.year}-${m}-${d}`
   }
 
+  const getDaySummary = (dateStr: string) =>
+    summary.find(s => s.date === dateStr)
+
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
       style={{ animation: 'fadeIn 0.15s ease-out' }}>
-      <div ref={ref} className="bg-forged-surface border border-forged-border rounded-2xl p-5 w-full max-w-sm shadow-2xl">
+      <div ref={ref} className="bg-forged-surface border border-forged-border rounded-2xl p-5 w-full max-w-md shadow-2xl">
 
         {/* Month nav */}
         <div className="flex items-center justify-between mb-4">
           <button onClick={() => shiftMonth(-1)}
             className="w-8 h-8 rounded-lg hover:bg-forged-surface2 flex items-center justify-center
-              text-forged-text2 hover:text-forged-text transition-all">
+              text-forged-text2 hover:text-forged-text active:scale-95 transition-all">
             <Icon d={I.chevL} size={16} />
           </button>
-          <span className="text-sm font-black text-forged-text">{monthLabel}</span>
+          <div className="text-center">
+            <span className="text-sm font-black text-forged-text">{monthLabel}</span>
+            {loadingSummary && (
+              <div className="w-3 h-3 border-2 border-forged-purple border-t-transparent rounded-full animate-spin mx-auto mt-1" />
+            )}
+          </div>
           <button onClick={() => shiftMonth(1)}
             className="w-8 h-8 rounded-lg hover:bg-forged-surface2 flex items-center justify-center
-              text-forged-text2 hover:text-forged-text transition-all">
+              text-forged-text2 hover:text-forged-text active:scale-95 transition-all">
             <Icon d={I.chevR} size={16} />
           </button>
         </div>
@@ -124,29 +154,82 @@ function CalendarModal({ selected, onSelect, onClose }: {
 
         {/* Days grid */}
         <div className="grid grid-cols-7 gap-1">
-          {Array.from({ length: firstDow }, (_, i) => (
-            <div key={`e${i}`} />
-          ))}
+          {Array.from({ length: firstDow }, (_, i) => <div key={`e${i}`} />)}
           {Array.from({ length: daysInMonth }, (_, i) => {
             const day = i + 1
             const dateStr = makeDate(day)
             const isSelected = dateStr === selected
             const isToday = dateStr === todayStr
             const isFuture = dateStr > todayStr
+            const daySummary = getDaySummary(dateStr)
+            const hasData = !!daySummary
+            const cals = daySummary?.totalCalories ?? 0
+            const meals = daySummary?.meals ?? []
 
             return (
-              <button key={day} onClick={() => { if (!isFuture) { onSelect(dateStr); onClose() } }}
+              <button key={day}
+                onClick={() => { if (!isFuture) { onSelect(dateStr); onClose() } }}
                 disabled={isFuture}
-                className={`h-9 rounded-lg text-sm font-semibold transition-all
-                  ${isFuture ? 'text-forged-text2/30 cursor-not-allowed' : 'hover:bg-forged-surface2 active:scale-95'}
+                className={`min-h-[52px] rounded-xl text-center flex flex-col items-center justify-start pt-1.5 gap-0.5
+                  transition-all relative
+                  ${isFuture ? 'opacity-30 cursor-not-allowed' : 'hover:bg-forged-surface2 active:scale-95'}
                   ${isSelected ? 'bg-forged-purple text-white hover:bg-forged-purple' : ''}
-                  ${isToday && !isSelected ? 'border border-forged-purple/40 text-forged-purple' : ''}
-                  ${!isSelected && !isToday && !isFuture ? 'text-forged-text' : ''}
+                  ${isToday && !isSelected ? 'border border-forged-purple/40' : ''}
+                  ${!isSelected && !isToday ? 'text-forged-text' : ''}
                 `}>
-                {day}
+                {/* Day number */}
+                <span className={`text-xs font-bold leading-none
+                  ${isSelected ? 'text-white' : isToday ? 'text-forged-purple' : ''}`}>
+                  {day}
+                </span>
+
+                {/* Meal icons row */}
+                {hasData && meals.length > 0 && (
+                  <div className="flex items-center justify-center gap-px mt-0.5">
+                    {meals.slice(0, 3).map((meal, mi) => (
+                      <svg key={mi} width="8" height="8" viewBox="0 0 24 24" fill="none"
+                        stroke={isSelected ? 'white' : '#9b59b6'}
+                        strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                        className="opacity-80">
+                        {MEAL_ICONS[meal] || MEAL_ICONS.snack}
+                      </svg>
+                    ))}
+                    {meals.length > 3 && (
+                      <span className={`text-[6px] font-bold ${isSelected ? 'text-white/70' : 'text-forged-purple/60'}`}>
+                        +{meals.length - 3}
+                      </span>
+                    )}
+                  </div>
+                )}
+
+                {/* Calorie count */}
+                {hasData && cals > 0 && (
+                  <span className={`text-[7px] font-bold leading-none tabular-nums
+                    ${isSelected ? 'text-white/80' : 'text-forged-text2'}`}>
+                    {Math.round(cals)}
+                  </span>
+                )}
               </button>
             )
           })}
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-forged-border">
+          {[
+            { key: 'morning', label: 'Morning' },
+            { key: 'afternoon', label: 'Afternoon' },
+            { key: 'evening', label: 'Evening' },
+            { key: 'snack', label: 'Snack' },
+          ].map(m => (
+            <div key={m.key} className="flex items-center gap-1">
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                stroke="#9b59b6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                {MEAL_ICONS[m.key]}
+              </svg>
+              <span className="text-[9px] text-forged-text2">{m.label}</span>
+            </div>
+          ))}
         </div>
 
         {/* Jump to today */}
