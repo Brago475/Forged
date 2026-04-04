@@ -90,6 +90,9 @@ export const api = {
       request<any>('/food/log', { method: 'POST', body: JSON.stringify(data) }),
 
     getLogs: (date: string) => request<any[]>(`/food/log/${date}`),
+
+    summary: (year: number, month: number) =>
+      request<any[]>(`/food/summary?year=${year}&month=${month}`),
   },
 
   fasting: {

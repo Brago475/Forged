@@ -178,6 +178,10 @@ public class FoodController : BaseController
     [HttpGet("log/{date}")]
     public async Task<IActionResult> GetFoodLogs(DateOnly date)
         => Ok(await _svc.GetFoodLogs(GetUserId(), date));
+
+    [HttpGet("summary")]
+    public async Task<IActionResult> GetFoodSummary([FromQuery] int year, [FromQuery] int month)
+        => Ok(await _svc.GetFoodSummary(GetUserId(), year, month));
 }
 
 // ══════════════════════════════════

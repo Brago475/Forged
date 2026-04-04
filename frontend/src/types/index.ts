@@ -74,6 +74,12 @@ export interface FoodLog {
   food: Food
 }
 
+export interface FoodDaySummary {
+  date: string
+  totalCalories: number
+  meals: string[]
+}
+
 export interface FastingLog {
   id: string
   startTime: string

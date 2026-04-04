@@ -210,6 +210,28 @@ public class WorkoutService
             .ToListAsync();
     }
 
+    // ── Food Summary (monthly calendar) ──
+    public async Task<List<FoodDaySummaryDto>> GetFoodSummary(Guid userId, int year, int month)
+    {
+        var startDate = new DateOnly(year, month, 1);
+        var endDate = startDate.AddMonths(1).AddDays(-1);
+
+        var logs = await _db.FoodLogs
+            .Where(f => f.UserId == userId && f.Date >= startDate && f.Date <= endDate)
+            .Include(f => f.Food)
+            .ToListAsync();
+
+        return logs
+            .GroupBy(f => f.Date)
+            .Select(g => new FoodDaySummaryDto(
+                g.Key,
+                g.Sum(f => (f.Food?.Calories ?? 0) * f.Servings),
+                g.Select(f => f.MealType).Distinct().ToList()
+            ))
+            .OrderBy(d => d.Date)
+            .ToList();
+    }
+
     // ── Fasting ──
     public async Task<FastingLogDto?> StartFast(Guid userId, StartFastRequest request)
     {

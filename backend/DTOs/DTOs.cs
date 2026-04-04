@@ -45,6 +45,9 @@ public record FoodLogDto(Guid Id, DateOnly Date, string MealType, decimal Servin
 public record CreateFoodLogRequest(Guid FoodId, DateOnly Date, string MealType,
     decimal Servings, decimal? FoodWeightGrams);
 
+// Food Summary (monthly calendar)
+public record FoodDaySummaryDto(DateOnly Date, decimal TotalCalories, List<string> Meals);
+
 // Fasting
 public record FastingLogDto(Guid Id, DateTime StartTime, DateTime? EndTime,
     int TargetHours, bool Completed, string? Notes);
