@@ -4,6 +4,7 @@ import { useTheme } from '../hooks/useTheme'
 import type { DashboardStats, User, WeightEntry, FastingLog, FoodLog } from '../types'
 import logo from '../public/logo.png'
 import FoodLogPage from './FoodLog'
+import WorkoutPage from './WorkoutPage'
 
 // ══════════════════════════════════
 // ICONS
@@ -427,7 +428,7 @@ export default function Dashboard({ onLogout }: Props) {
                 onRefresh={loadData} onTabChange={setTab} onLogout={onLogout} />
             )}
             {tab === 'food' && <FoodLogPage />}
-            {tab === 'workouts' && <WorkoutsTab />}
+            {tab === 'workouts' && <WorkoutPage />}
             {tab === 'progress' && <ProgressTab />}
             {tab === 'profile' && <ProfileTab user={user} onLogout={onLogout} />}
           </div>
@@ -880,24 +881,6 @@ function InsightCard({ macros, streak, proteinGoal }: { macros: Macros; streak: 
   )
 }
 
-
-// ══════════════════════════════════
-// WORKOUTS TAB — scaffold
-// ══════════════════════════════════
-function WorkoutsTab() {
-  return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-black text-forged-text">Workouts</h1>
-      <Card delay={60}>
-        <div className="flex flex-col items-center py-10 gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-forged-purple/10 flex items-center justify-center"><Icon d={I.workout} size={28} className="text-forged-purple" /></div>
-          <p className="text-base font-bold text-forged-text">Workout Builder</p>
-          <p className="text-sm text-forged-text2 text-center max-w-[280px]">PPL plans, exercise logging, workout history</p>
-        </div>
-      </Card>
-    </div>
-  )
-}
 
 // ══════════════════════════════════
 // PROGRESS TAB
