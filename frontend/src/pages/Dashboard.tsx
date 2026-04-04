@@ -5,6 +5,11 @@ import type { DashboardStats, User, WeightEntry, FastingLog, FoodLog } from '../
 import logo from '../public/logo.png'
 import FoodLogPage from './FoodLog'
 import WorkoutPage from './WorkoutPage'
+import ProgressPage from './ProgressPage'
+import ProfilePage from './ProfilePage'
+import SettingsPage from './SettingsPage'
+
+
 
 // ══════════════════════════════════
 // ICONS
@@ -169,8 +174,8 @@ function SegmentedControl({ options, active, onChange }: {
 // ══════════════════════════════════
 // 3-DOT SETTINGS DROPDOWN
 // ══════════════════════════════════
-function SettingsDropdown({ onLogout, onProfile, dropUp = false }: {
-  onLogout: () => void; onProfile?: () => void; dropUp?: boolean
+function SettingsDropdown({ onLogout, onProfile, onSettings, dropUp = false }: {
+  onLogout: () => void; onProfile?: () => void; onSettings?: () => void; dropUp?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -204,10 +209,11 @@ function SettingsDropdown({ onLogout, onProfile, dropUp = false }: {
             <Icon d={theme === 'dark' ? I.sun : I.moon} size={16} />
             <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
-          <button className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
-            hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
-            <Icon d={I.settings} size={16} /><span>Settings</span>
-          </button>
+ <button onClick={() => { onSettings?.(); setOpen(false) }}
+  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+    hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+  <Icon d={I.settings} size={16} /><span>Settings</span>
+</button>
           <button onClick={onLogout}
             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-red
               hover:bg-forged-red/5 transition-colors text-left border-t border-forged-border">
@@ -429,8 +435,9 @@ export default function Dashboard({ onLogout }: Props) {
             )}
             {tab === 'food' && <FoodLogPage />}
             {tab === 'workouts' && <WorkoutPage />}
-            {tab === 'progress' && <ProgressTab />}
-            {tab === 'profile' && <ProfileTab user={user} onLogout={onLogout} />}
+            {tab === 'progress' && <ProgressPage />}
+            {tab === 'profile' && <ProfilePage user={user} onLogout={onLogout} />}
+            {tab === 'settings' && <SettingsPage onBack={() => setTab('dashboard')} />}
           </div>
         )}
       </main>
