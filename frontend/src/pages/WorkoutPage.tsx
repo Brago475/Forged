@@ -18,6 +18,7 @@ const I = {
   edit: <><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
   flag: <><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></>,
   layers: <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
+  calendar: <><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
 }
 
 function Icon({ d, size = 20, className = '', sw = 1.8 }: {
@@ -166,6 +167,7 @@ function WorkoutHome({ routines, onStart, onNewRoutine, onEditRoutine, onDeleteR
   const [logs, setLogs] = useState<WorkoutLog[]>([])
   const [loading, setLoading] = useState(true)
   const [expandedRoutine, setExpandedRoutine] = useState<string | null>(null)
+  const [showCalendar, setShowCalendar] = useState(false)
 
   useEffect(() => {
     api.workout.getLogs(10).then(setLogs).catch(console.error).finally(() => setLoading(false))
@@ -190,13 +192,26 @@ function WorkoutHome({ routines, onStart, onNewRoutine, onEditRoutine, onDeleteR
           <h1 className="text-2xl font-black text-forged-text">Workouts</h1>
           <p className="text-xs text-forged-text2 font-medium mt-0.5">{todayStr}</p>
         </div>
-        <button onClick={onNewRoutine}
-          className="px-4 py-2 rounded-xl text-xs font-black
-            bg-forged-purple/10 text-forged-purple border border-forged-purple/20
-            hover:bg-forged-purple hover:text-white active:scale-95 transition-all">
-          + New Routine
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setShowCalendar(true)}
+            className="w-9 h-9 rounded-xl bg-forged-purple/15 border border-forged-purple/30
+              flex items-center justify-center text-forged-purple
+              hover:bg-forged-purple/25 active:scale-95 transition-all">
+            <Icon d={I.calendar} size={16} sw={2} />
+          </button>
+          <button onClick={onNewRoutine}
+            className="px-4 py-2 rounded-xl text-xs font-black
+              bg-forged-purple/10 text-forged-purple border border-forged-purple/20
+              hover:bg-forged-purple hover:text-white active:scale-95 transition-all">
+            + New Routine
+          </button>
+        </div>
       </div>
+
+      {/* Workout Calendar */}
+      {showCalendar && (
+        <WorkoutCalendar logs={logs} onClose={() => setShowCalendar(false)} />
+      )}
 
       {/* Quick start */}
       <Card delay={60} className="!p-6">
@@ -307,7 +322,7 @@ function WorkoutHome({ routines, onStart, onNewRoutine, onEditRoutine, onDeleteR
             {logs.slice(0, 5).map(log => (
               <div key={log.id}
                 className="flex items-center justify-between p-3 rounded-xl
-                  bg-forged-bg border border-forged-border">
+                  bg-forged-bg border border-forged-border group">
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center
                     ${log.completed ? 'bg-forged-green/10' : 'bg-forged-surface2'}`}>
@@ -326,10 +341,18 @@ function WorkoutHome({ routines, onStart, onNewRoutine, onEditRoutine, onDeleteR
                     </p>
                   </div>
                 </div>
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full
-                  ${log.completed ? 'bg-forged-green/10 text-forged-green' : 'bg-forged-surface2 text-forged-text2'}`}>
-                  {log.completed ? 'Done' : 'Incomplete'}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full
+                    ${log.completed ? 'bg-forged-green/10 text-forged-green' : 'bg-forged-surface2 text-forged-text2'}`}>
+                    {log.completed ? 'Done' : 'Incomplete'}
+                  </span>
+                  <button onClick={() => setLogs(prev => prev.filter(l => l.id !== log.id))}
+                    className="w-7 h-7 rounded-lg flex items-center justify-center
+                      opacity-0 group-hover:opacity-100 transition-all
+                      text-forged-text2 hover:text-forged-red hover:bg-forged-red/10">
+                    <Icon d={I.x} size={12} />
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -375,13 +398,18 @@ function ActiveWorkout({ workoutId, preloadedDay, onFinish, onBack }: {
   const [addingExercise, setAddingExercise] = useState(false)
   const [newEx, setNewEx] = useState({ name: '', sets: '3', reps: '10', intensity: 'moderate', notes: '' })
   const [timer, setTimer] = useState(0)
+  const [timerRunning, setTimerRunning] = useState(true)
   const [saving, setSaving] = useState(false)
   const timerRef = useRef<number>(0)
 
   useEffect(() => {
-    timerRef.current = window.setInterval(() => setTimer(t => t + 1), 1000)
+    if (timerRunning) {
+      timerRef.current = window.setInterval(() => setTimer(t => t + 1), 1000)
+    } else {
+      clearInterval(timerRef.current)
+    }
     return () => clearInterval(timerRef.current)
-  }, [])
+  }, [timerRunning])
 
   const fmtTimer = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
@@ -464,7 +492,19 @@ function ActiveWorkout({ workoutId, preloadedDay, onFinish, onBack }: {
         </button>
         <div className="text-center">
           <p className="text-sm font-black text-forged-text">Active Workout</p>
-          <p className="text-2xl font-black text-forged-purple tabular-nums">{fmtTimer(timer)}</p>
+          <div className="flex items-center justify-center gap-2 mt-0.5">
+            <button onClick={() => setTimerRunning(!timerRunning)}
+              className={`w-8 h-8 rounded-lg flex items-center justify-center transition-all active:scale-90
+                ${timerRunning
+                  ? 'bg-forged-purple/10 text-forged-purple hover:bg-forged-purple/20'
+                  : 'bg-forged-green/10 text-forged-green hover:bg-forged-green/20'}`}>
+              {timerRunning
+                ? <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16" rx="1"/><rect x="14" y="4" width="4" height="16" rx="1"/></svg>
+                : <Icon d={I.play} size={14} sw={2.5} />
+              }
+            </button>
+            <p className="text-2xl font-black text-forged-purple tabular-nums">{fmtTimer(timer)}</p>
+          </div>
         </div>
         <div className="w-5" />
       </div>
@@ -907,5 +947,143 @@ function DayCard({ day, dayIdx, onRemoveDay, onAddExercise, onRemoveExercise, on
         </button>
       )}
     </Card>
+  )
+}
+
+// ══════════════════════════════════
+// useClickOutside
+// ══════════════════════════════════
+function useClickOutside(ref: React.RefObject<HTMLElement | null>, fn: () => void) {
+  useEffect(() => {
+    const l = (e: MouseEvent) => { if (!ref.current || ref.current.contains(e.target as Node)) return; fn() }
+    document.addEventListener('mousedown', l); return () => document.removeEventListener('mousedown', l)
+  }, [ref, fn])
+}
+
+// ══════════════════════════════════
+// WORKOUT CALENDAR
+// ══════════════════════════════════
+function WorkoutCalendar({ logs, onClose }: { logs: WorkoutLog[]; onClose: () => void }) {
+  const ref = useRef<HTMLDivElement>(null)
+  useClickOutside(ref, onClose)
+
+  const [viewDate, setViewDate] = useState(() => {
+    const now = new Date()
+    return { year: now.getFullYear(), month: now.getMonth() }
+  })
+
+  const todayStr = new Date().toISOString().split('T')[0]
+  const daysInMonth = new Date(viewDate.year, viewDate.month + 1, 0).getDate()
+  const firstDow = new Date(viewDate.year, viewDate.month, 1).getDay()
+  const monthLabel = new Date(viewDate.year, viewDate.month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+
+  const shiftMonth = (dir: number) => {
+    setViewDate(prev => {
+      let m = prev.month + dir, y = prev.year
+      if (m < 0) { m = 11; y-- }
+      if (m > 11) { m = 0; y++ }
+      return { year: y, month: m }
+    })
+  }
+
+  const makeDate = (day: number) => {
+    const m = String(viewDate.month + 1).padStart(2, '0')
+    const d = String(day).padStart(2, '0')
+    return `${viewDate.year}-${m}-${d}`
+  }
+
+  // Map logs by date
+  const logsByDate: Record<string, WorkoutLog[]> = {}
+  logs.forEach(log => {
+    if (!logsByDate[log.date]) logsByDate[log.date] = []
+    logsByDate[log.date].push(log)
+  })
+
+  return (
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm px-3"
+      style={{ animation: 'fadeIn 0.15s ease-out' }}>
+      <div ref={ref} className="bg-forged-surface border border-forged-border rounded-2xl p-5 w-full max-w-lg shadow-2xl">
+
+        {/* Month nav */}
+        <div className="flex items-center justify-between mb-4">
+          <button onClick={() => shiftMonth(-1)}
+            className="w-9 h-9 rounded-xl hover:bg-forged-surface2 flex items-center justify-center
+              text-forged-text2 hover:text-forged-text active:scale-95 transition-all">
+            <Icon d={I.chevL} size={18} />
+          </button>
+          <span className="text-base font-black text-forged-text">{monthLabel}</span>
+          <button onClick={() => shiftMonth(1)}
+            className="w-9 h-9 rounded-xl hover:bg-forged-surface2 flex items-center justify-center
+              text-forged-text2 hover:text-forged-text active:scale-95 transition-all">
+            <Icon d={I.chevR} size={18} />
+          </button>
+        </div>
+
+        {/* Day headers */}
+        <div className="grid grid-cols-7 gap-1.5 mb-1">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
+            <div key={i} className="text-center text-[10px] font-bold text-forged-text2 py-1">{d}</div>
+          ))}
+        </div>
+
+        {/* Days grid */}
+        <div className="grid grid-cols-7 gap-1.5">
+          {Array.from({ length: firstDow }, (_, i) => <div key={`e${i}`} />)}
+          {Array.from({ length: daysInMonth }, (_, i) => {
+            const day = i + 1
+            const dateStr = makeDate(day)
+            const isToday = dateStr === todayStr
+            const isFuture = dateStr > todayStr
+            const dayLogs = logsByDate[dateStr] || []
+            const hasWorkout = dayLogs.length > 0
+            const isCompleted = dayLogs.some(l => l.completed)
+
+            return (
+              <div key={day}
+                className={`min-h-[52px] rounded-xl flex flex-col items-center justify-start pt-1.5 gap-0.5
+                  border transition-all
+                  ${isFuture ? 'opacity-25 border-transparent' : 'border-transparent'}
+                  ${isToday ? 'border-forged-purple/40 bg-forged-purple/5' : ''}
+                  ${hasWorkout && !isToday ? 'bg-forged-bg' : ''}
+                `}>
+                <span className={`text-xs font-bold leading-none
+                  ${isToday ? 'text-forged-purple' : 'text-forged-text'}`}>
+                  {day}
+                </span>
+
+                {hasWorkout && (
+                  <>
+                    <div className={`w-2 h-2 rounded-full mt-1
+                      ${isCompleted ? 'bg-forged-green' : 'bg-forged-purple/40'}`} />
+                    <span className="text-[7px] font-bold text-forged-text2 leading-none mt-0.5">
+                      {dayLogs[0]?.dayName?.substring(0, 6) || 'Workout'}
+                    </span>
+                  </>
+                )}
+              </div>
+            )
+          })}
+        </div>
+
+        {/* Legend */}
+        <div className="flex items-center justify-center gap-6 mt-4 pt-3 border-t border-forged-border">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-forged-green" />
+            <span className="text-[10px] text-forged-text2">Completed</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2.5 h-2.5 rounded-full bg-forged-purple/40" />
+            <span className="text-[10px] text-forged-text2">Incomplete</span>
+          </div>
+        </div>
+
+        {/* Close */}
+        <button onClick={onClose}
+          className="w-full mt-3 py-2 text-xs font-bold text-forged-text2
+            hover:text-forged-text hover:bg-forged-surface2 rounded-xl transition-all">
+          Close
+        </button>
+      </div>
+    </div>
   )
 }
