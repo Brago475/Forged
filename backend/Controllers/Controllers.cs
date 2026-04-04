@@ -182,15 +182,16 @@ public class FoodController : BaseController
     [HttpGet("summary")]
     public async Task<IActionResult> GetFoodSummary([FromQuery] int year, [FromQuery] int month)
         => Ok(await _svc.GetFoodSummary(GetUserId(), year, month));
-}
 
-[HttpDelete("log/{id}")]
+    [HttpDelete("log/{id}")]
     public async Task<IActionResult> DeleteFoodLog(Guid id)
     {
         var success = await _svc.DeleteFoodLog(GetUserId(), id);
         if (!success) return NotFound();
         return NoContent();
     }
+}
+
 // ══════════════════════════════════
 // FASTING — /api/fasting
 // ══════════════════════════════════

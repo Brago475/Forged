@@ -58,9 +58,6 @@ export const api = {
   workout: {
     getLogs: (limit = 30) => request<any[]>(`/workout?limit=${limit}`),
 
-    deleteFoodLog: (id: string) =>
-      request<void>(`/food/log/${id}`, { method: 'DELETE' }),
-
     create: (data: { date: string; planType?: string; dayName?: string; durationMinutes?: number; notes?: string }) =>
       request<any>('/workout', { method: 'POST', body: JSON.stringify(data) }),
 
@@ -93,6 +90,9 @@ export const api = {
       request<any>('/food/log', { method: 'POST', body: JSON.stringify(data) }),
 
     getLogs: (date: string) => request<any[]>(`/food/log/${date}`),
+
+    deleteFoodLog: (id: string) =>
+      request<void>(`/food/log/${id}`, { method: 'DELETE' }),
 
     summary: (year: number, month: number) =>
       request<any[]>(`/food/summary?year=${year}&month=${month}`),

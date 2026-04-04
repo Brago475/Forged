@@ -210,6 +210,7 @@ public class WorkoutService
             .ToListAsync();
     }
 
+    // ── Delete Food Log ──
     public async Task<bool> DeleteFoodLog(Guid userId, Guid logId)
     {
         var log = await _db.FoodLogs
