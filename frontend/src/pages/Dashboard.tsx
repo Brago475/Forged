@@ -229,7 +229,6 @@ function SettingsDropdown({ onLogout, onProfile, onSettings, dropUp = false }: {
 // NAV — Dashboard in center
 // ══════════════════════════════════
 type TabId = 'food' | 'workouts' | 'dashboard' | 'progress' | 'profile' | 'settings'
-
 const NAV: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'food', label: 'Food', icon: I.food },
   { id: 'workouts', label: 'Workouts', icon: I.workout },
@@ -366,7 +365,7 @@ function BottomNav({ active, onChange, onLogout, onProfile }: {
         })}
       </div>
       <div className="pr-2 pb-2">
-        <SettingsDropdown onLogout={onLogout} onProfile={onProfile} dropUp />
+        <SettingsDropdown onLogout={onLogout} onProfile={onProfile} onSettings={() => onChange('settings')} dropUp />
       </div>
     </nav>
   )
@@ -573,8 +572,8 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
           </p>
         </div>
-        <div className="hidden md:block"><SettingsDropdown onLogout={onLogout} onProfile={() => onTabChange('profile')} /></div>
-      </div>
+        <div className="hidden md:block"><SettingsDropdown onLogout={onLogout} onProfile={() => onTabChange('profile')} onSettings={() => onTabChange('settings')} /> </div>
+        </div>
 
       {/* ══ HERO: CALORIE CARD ══ */}
       <Card delay={60} hero className="!p-6 relative overflow-hidden">
@@ -615,7 +614,7 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
                   <p className="text-xs text-forged-text2">Choose a window to start</p>
                 </div>
               )}
-            </div>
+</div>
             {activeFast && (
               <button onClick={async () => {
                 try { await api.fasting.end(activeFast.id, {}); window.location.reload() } catch {}
