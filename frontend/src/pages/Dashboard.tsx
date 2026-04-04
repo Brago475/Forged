@@ -214,6 +214,31 @@ function SettingsDropdown({ onLogout, onProfile, onSettings, dropUp = false }: {
     hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
   <Icon d={I.settings} size={16} /><span>Settings</span>
 </button>
+<button onClick={() => setOpen(false)}
+  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+    hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+  <Icon d={I.scale} size={16} /><span>Weekly Summary</span>
+</button>
+<button onClick={() => setOpen(false)}
+  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+    hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+  <Icon d={I.heart} size={16} /><span>Progress Photos</span>
+</button>
+<button onClick={() => setOpen(false)}
+  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+    hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+  <Icon d={I.flame} size={16} /><span>Streaks</span>
+</button>
+<button onClick={() => setOpen(false)}
+  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+    hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+  <Icon d={I.target} size={16} /><span>Privacy</span>
+</button>
+<button onClick={() => setOpen(false)}
+  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+    hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+  <Icon d={I.food} size={16} /><span>Recipes</span>
+</button>
           <button onClick={onLogout}
             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-red
               hover:bg-forged-red/5 transition-colors text-left border-t border-forged-border">
