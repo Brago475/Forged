@@ -3,6 +3,7 @@ import { api } from '../hooks/api'
 import { useTheme } from '../hooks/useTheme'
 import type { DashboardStats, User, WeightEntry, FastingLog, FoodLog } from '../types'
 import logo from '../public/logo.png'
+import FoodLogPage from './FoodLog'
 
 // ══════════════════════════════════
 // ICONS
@@ -425,7 +426,7 @@ export default function Dashboard({ onLogout }: Props) {
                 macros={macros} todayFood={todayFood}
                 onRefresh={loadData} onTabChange={setTab} onLogout={onLogout} />
             )}
-            {tab === 'food' && <FoodTab />}
+            {tab === 'food' && <FoodLogPage />}
             {tab === 'workouts' && <WorkoutsTab />}
             {tab === 'progress' && <ProgressTab />}
             {tab === 'profile' && <ProfileTab user={user} onLogout={onLogout} />}
@@ -879,23 +880,6 @@ function InsightCard({ macros, streak, proteinGoal }: { macros: Macros; streak: 
   )
 }
 
-// ══════════════════════════════════
-// FOOD TAB — scaffold
-// ══════════════════════════════════
-function FoodTab() {
-  return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-black text-forged-text">Food Log</h1>
-      <Card delay={60}>
-        <div className="flex flex-col items-center py-10 gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-forged-purple/10 flex items-center justify-center"><Icon d={I.food} size={28} className="text-forged-purple" /></div>
-          <p className="text-base font-bold text-forged-text">Log your meals</p>
-          <p className="text-sm text-forged-text2 text-center max-w-[280px]">Search foods, log by meal type, track macros</p>
-        </div>
-      </Card>
-    </div>
-  )
-}
 
 // ══════════════════════════════════
 // WORKOUTS TAB — scaffold
