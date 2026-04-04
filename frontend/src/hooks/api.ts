@@ -58,6 +58,9 @@ export const api = {
   workout: {
     getLogs: (limit = 30) => request<any[]>(`/workout?limit=${limit}`),
 
+    deleteFoodLog: (id: string) =>
+      request<void>(`/food/log/${id}`, { method: 'DELETE' }),
+
     create: (data: { date: string; planType?: string; dayName?: string; durationMinutes?: number; notes?: string }) =>
       request<any>('/workout', { method: 'POST', body: JSON.stringify(data) }),
 

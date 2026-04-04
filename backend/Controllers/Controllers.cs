@@ -184,6 +184,13 @@ public class FoodController : BaseController
         => Ok(await _svc.GetFoodSummary(GetUserId(), year, month));
 }
 
+[HttpDelete("log/{id}")]
+    public async Task<IActionResult> DeleteFoodLog(Guid id)
+    {
+        var success = await _svc.DeleteFoodLog(GetUserId(), id);
+        if (!success) return NotFound();
+        return NoContent();
+    }
 // ══════════════════════════════════
 // FASTING — /api/fasting
 // ══════════════════════════════════

@@ -61,8 +61,15 @@ function useClickOutside(ref: React.RefObject<HTMLElement | null>, fn: () => voi
 }
 
 // ══════════════════════════════════
-// CALENDAR MODAL — with meal icons + calories
+// CALENDAR MODAL — bigger, meal breakdown popup
 // ══════════════════════════════════
+const MEAL_LABELS: Record<string, string> = {
+  morning: 'Morning',
+  afternoon: 'Afternoon',
+  evening: 'Evening',
+  snack: 'Snacks',
+}
+
 const MEAL_ICONS: Record<string, React.ReactNode> = {
   morning: <><path d="M17 18a5 5 0 00-10 0"/><line x1="12" y1="2" x2="12" y2="9"/><polyline points="8 6 12 2 16 6"/></>,
   afternoon: <><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/></>,
@@ -82,10 +89,10 @@ function CalendarModal({ selected, onSelect, onClose }: {
   })
   const [summary, setSummary] = useState<FoodDaySummary[]>([])
   const [loadingSummary, setLoadingSummary] = useState(false)
+  const [detailDay, setDetailDay] = useState<string | null>(null)
 
-  // Fetch monthly summary when month changes
   useEffect(() => {
-    const fetchSummary = async () => {
+    const fetch = async () => {
       setLoadingSummary(true)
       try {
         const data = await api.food.summary(viewDate.year, viewDate.month + 1)
@@ -93,7 +100,7 @@ function CalendarModal({ selected, onSelect, onClose }: {
       } catch (e) { console.error(e); setSummary([]) }
       finally { setLoadingSummary(false) }
     }
-    fetchSummary()
+    fetch()
   }, [viewDate.year, viewDate.month])
 
   const todayStr = new Date().toISOString().split('T')[0]
@@ -103,12 +110,12 @@ function CalendarModal({ selected, onSelect, onClose }: {
 
   const shiftMonth = (dir: number) => {
     setViewDate(prev => {
-      let m = prev.month + dir
-      let y = prev.year
+      let m = prev.month + dir, y = prev.year
       if (m < 0) { m = 11; y-- }
       if (m > 11) { m = 0; y++ }
       return { year: y, month: m }
     })
+    setDetailDay(null)
   }
 
   const makeDate = (day: number) => {
@@ -117,43 +124,52 @@ function CalendarModal({ selected, onSelect, onClose }: {
     return `${viewDate.year}-${m}-${d}`
   }
 
-  const getDaySummary = (dateStr: string) =>
-    summary.find(s => s.date === dateStr)
+  const getDaySummary = (dateStr: string) => summary.find(s => s.date === dateStr)
+
+  const handleDayClick = (dateStr: string) => {
+    const daySummary = getDaySummary(dateStr)
+    if (daySummary && daySummary.meals.length > 0) {
+      setDetailDay(detailDay === dateStr ? null : dateStr)
+    } else {
+      onSelect(dateStr)
+      onClose()
+    }
+  }
 
   return (
-    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm px-4"
+    <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 backdrop-blur-sm px-3"
       style={{ animation: 'fadeIn 0.15s ease-out' }}>
-      <div ref={ref} className="bg-forged-surface border border-forged-border rounded-2xl p-5 w-full max-w-md shadow-2xl">
+      <div ref={ref} className="bg-forged-surface border border-forged-border rounded-2xl p-5 w-full max-w-lg shadow-2xl">
 
         {/* Month nav */}
         <div className="flex items-center justify-between mb-4">
           <button onClick={() => shiftMonth(-1)}
-            className="w-8 h-8 rounded-lg hover:bg-forged-surface2 flex items-center justify-center
+            className="w-9 h-9 rounded-xl hover:bg-forged-surface2 flex items-center justify-center
               text-forged-text2 hover:text-forged-text active:scale-95 transition-all">
-            <Icon d={I.chevL} size={16} />
+            <Icon d={I.chevL} size={18} />
           </button>
           <div className="text-center">
-            <span className="text-sm font-black text-forged-text">{monthLabel}</span>
+            <span className="text-base font-black text-forged-text">{monthLabel}</span>
             {loadingSummary && (
               <div className="w-3 h-3 border-2 border-forged-purple border-t-transparent rounded-full animate-spin mx-auto mt-1" />
             )}
           </div>
           <button onClick={() => shiftMonth(1)}
-            className="w-8 h-8 rounded-lg hover:bg-forged-surface2 flex items-center justify-center
+            className="w-9 h-9 rounded-xl hover:bg-forged-surface2 flex items-center justify-center
               text-forged-text2 hover:text-forged-text active:scale-95 transition-all">
-            <Icon d={I.chevR} size={16} />
+            <Icon d={I.chevR} size={18} />
           </button>
         </div>
 
         {/* Day headers */}
-        <div className="grid grid-cols-7 gap-1 mb-1">
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((d, i) => (
+        <div className="grid grid-cols-7 gap-1.5 mb-1">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map((d, i) => (
             <div key={i} className="text-center text-[10px] font-bold text-forged-text2 py-1">{d}</div>
           ))}
         </div>
 
         {/* Days grid */}
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1.5">
           {Array.from({ length: firstDow }, (_, i) => <div key={`e${i}`} />)}
           {Array.from({ length: daysInMonth }, (_, i) => {
             const day = i + 1
@@ -163,50 +179,42 @@ function CalendarModal({ selected, onSelect, onClose }: {
             const isFuture = dateStr > todayStr
             const daySummary = getDaySummary(dateStr)
             const hasData = !!daySummary
-            const cals = daySummary?.totalCalories ?? 0
+            const cals = Math.round(daySummary?.totalCalories ?? 0)
             const meals = daySummary?.meals ?? []
 
             return (
               <button key={day}
-                onClick={() => { if (!isFuture) { onSelect(dateStr); onClose() } }}
+                onClick={() => { if (!isFuture) handleDayClick(dateStr) }}
                 disabled={isFuture}
-                className={`min-h-[52px] rounded-xl text-center flex flex-col items-center justify-start pt-1.5 gap-0.5
-                  transition-all relative
-                  ${isFuture ? 'opacity-30 cursor-not-allowed' : 'hover:bg-forged-surface2 active:scale-95'}
-                  ${isSelected ? 'bg-forged-purple text-white hover:bg-forged-purple' : ''}
-                  ${isToday && !isSelected ? 'border border-forged-purple/40' : ''}
-                  ${!isSelected && !isToday ? 'text-forged-text' : ''}
+                className={`min-h-[58px] rounded-xl flex flex-col items-center justify-start pt-1.5 gap-0.5
+                  transition-all border
+                  ${isFuture ? 'opacity-25 cursor-not-allowed border-transparent' : 'hover:bg-forged-surface2 active:scale-95 border-transparent hover:border-forged-purple/20'}
+                  ${isSelected ? 'bg-forged-purple border-forged-purple text-white hover:bg-forged-purple' : ''}
+                  ${isToday && !isSelected ? 'border-forged-purple/40 bg-forged-purple/5' : ''}
+                  ${hasData && !isSelected ? 'bg-forged-bg' : ''}
                 `}>
-                {/* Day number */}
                 <span className={`text-xs font-bold leading-none
-                  ${isSelected ? 'text-white' : isToday ? 'text-forged-purple' : ''}`}>
+                  ${isSelected ? 'text-white' : isToday ? 'text-forged-purple' : 'text-forged-text'}`}>
                   {day}
                 </span>
 
-                {/* Meal icons row */}
                 {hasData && meals.length > 0 && (
-                  <div className="flex items-center justify-center gap-px mt-0.5">
+                  <div className="flex items-center justify-center gap-0.5 mt-0.5">
                     {meals.slice(0, 3).map((meal, mi) => (
-                      <svg key={mi} width="8" height="8" viewBox="0 0 24 24" fill="none"
+                      <svg key={mi} width="9" height="9" viewBox="0 0 24 24" fill="none"
                         stroke={isSelected ? 'white' : '#9b59b6'}
                         strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
                         className="opacity-80">
                         {MEAL_ICONS[meal] || MEAL_ICONS.snack}
                       </svg>
                     ))}
-                    {meals.length > 3 && (
-                      <span className={`text-[6px] font-bold ${isSelected ? 'text-white/70' : 'text-forged-purple/60'}`}>
-                        +{meals.length - 3}
-                      </span>
-                    )}
                   </div>
                 )}
 
-                {/* Calorie count */}
                 {hasData && cals > 0 && (
-                  <span className={`text-[7px] font-bold leading-none tabular-nums
-                    ${isSelected ? 'text-white/80' : 'text-forged-text2'}`}>
-                    {Math.round(cals)}
+                  <span className={`text-[8px] font-bold leading-none tabular-nums mt-0.5
+                    ${isSelected ? 'text-white/80' : 'text-forged-purple'}`}>
+                    {cals}
                   </span>
                 )}
               </button>
@@ -214,27 +222,66 @@ function CalendarModal({ selected, onSelect, onClose }: {
           })}
         </div>
 
+        {/* Day detail popup */}
+        {detailDay && (() => {
+          const ds = getDaySummary(detailDay)
+          if (!ds) return null
+          const dayLabel = new Date(detailDay + 'T00:00:00').toLocaleDateString('en-US', {
+            weekday: 'short', month: 'short', day: 'numeric'
+          })
+          return (
+            <div className="mt-4 bg-forged-bg border border-forged-border rounded-xl p-4"
+              style={{ animation: 'fadeIn 0.12s ease-out' }}>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-sm font-black text-forged-text">{dayLabel}</span>
+                <button onClick={() => setDetailDay(null)}
+                  className="text-forged-text2 hover:text-forged-text transition-colors">
+                  <Icon d={I.x} size={14} />
+                </button>
+              </div>
+              {ds.meals.map(meal => {
+                const mealLabel = MEAL_LABELS[meal] || meal
+                return (
+                  <div key={meal} className="flex items-center justify-between py-2 border-b border-forged-text2/10 last:border-0">
+                    <div className="flex items-center gap-2">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                        stroke="#9b59b6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        {MEAL_ICONS[meal] || MEAL_ICONS.snack}
+                      </svg>
+                      <span className="text-sm text-forged-text font-medium">{mealLabel}</span>
+                    </div>
+                  </div>
+                )
+              })}
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-forged-text2/20">
+                <span className="text-sm font-black text-forged-text">Total</span>
+                <span className="text-sm font-black text-forged-purple tabular-nums">{Math.round(ds.totalCalories)} cal</span>
+              </div>
+              <button onClick={() => { onSelect(detailDay); onClose() }}
+                className="w-full mt-3 py-2 rounded-xl text-xs font-black
+                  bg-forged-purple text-white hover:brightness-110 active:scale-[0.98] transition-all">
+                View Full Log
+              </button>
+            </div>
+          )
+        })()}
+
         {/* Legend */}
-        <div className="flex items-center justify-center gap-4 mt-3 pt-3 border-t border-forged-border">
-          {[
-            { key: 'morning', label: 'Morning' },
-            { key: 'afternoon', label: 'Afternoon' },
-            { key: 'evening', label: 'Evening' },
-            { key: 'snack', label: 'Snack' },
-          ].map(m => (
-            <div key={m.key} className="flex items-center gap-1">
+        <div className="flex items-center justify-center gap-4 mt-4 pt-3 border-t border-forged-border">
+          {Object.entries(MEAL_LABELS).map(([key, label]) => (
+            <div key={key} className="flex items-center gap-1">
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
                 stroke="#9b59b6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                {MEAL_ICONS[m.key]}
+                {MEAL_ICONS[key]}
               </svg>
-              <span className="text-[9px] text-forged-text2">{m.label}</span>
+              <span className="text-[9px] text-forged-text2">{label}</span>
             </div>
           ))}
         </div>
 
         {/* Jump to today */}
         <button onClick={() => { onSelect(todayStr); onClose() }}
-          className="w-full mt-3 py-2 text-xs font-bold text-forged-purple
+          className="w-full mt-2 py-2 text-xs font-bold text-forged-purple
             hover:bg-forged-purple/5 rounded-xl transition-all">
           Jump to Today
         </button>
@@ -242,6 +289,7 @@ function CalendarModal({ selected, onSelect, onClose }: {
     </div>
   )
 }
+
 
 // ══════════════════════════════════
 // MEAL 3-DOT MENU
@@ -448,18 +496,27 @@ export default function FoodLog() {
         </div>
       </Card>
 
-      {/* ── Nutrition Detail ── */}
+      {/* ── Nutrition Graph ── */}
       {logs.length > 0 && (
         <Card delay={100}>
-          <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-3">Nutrition</p>
-          <div className="grid grid-cols-2 gap-x-6 gap-y-2">
-            <NutritionRow label="Calories" value={`${totals.cal}`} unit="cal" />
-            <NutritionRow label="Protein" value={`${totals.protein}`} unit="g" />
-            <NutritionRow label="Carbs" value={`${totals.carbs}`} unit="g" />
-            <NutritionRow label="Fat" value={`${totals.fat}`} unit="g" />
-            <NutritionRow label="Fiber" value={`${totals.fiber}`} unit="g" />
-            <NutritionRow label="Sugar" value={`${totals.sugar}`} unit="g" />
-            <NutritionRow label="Sodium" value={`${totals.sodium}`} unit="mg" />
+          <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-4">Nutrition Breakdown</p>
+
+          {/* Donut chart + legend */}
+          <div className="flex items-center gap-6">
+            <MacroDonut protein={totals.protein} carbs={totals.carbs} fat={totals.fat} />
+            <div className="flex-1 flex flex-col gap-2">
+              <NutritionBar label="Protein" value={totals.protein} goal={180} color="#9b59b6" unit="g" />
+              <NutritionBar label="Carbs" value={totals.carbs} goal={250} color="#3498db" unit="g" />
+              <NutritionBar label="Fat" value={totals.fat} goal={65} color="#e74c3c" unit="g" />
+            </div>
+          </div>
+
+          {/* Secondary nutrients */}
+          <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t border-forged-text2/10">
+            <NutrientChip label="Fiber" value={totals.fiber} unit="g" />
+            <NutrientChip label="Sugar" value={totals.sugar} unit="g" />
+            <NutrientChip label="Sodium" value={totals.sodium} unit="mg" />
+            <NutrientChip label="Calories" value={totals.cal} unit="cal" />
           </div>
         </Card>
       )}
@@ -531,7 +588,7 @@ export default function FoodLog() {
             ) : (
               <div className="flex flex-col">
                 {items.map(log => (
-                  <FoodLogRow key={log.id} log={log} />
+                  <FoodLogRow key={log.id} log={log} onDelete={loadLogs} />
                 ))}
               </div>
             )}
@@ -561,13 +618,79 @@ export default function FoodLog() {
 }
 
 // ══════════════════════════════════
-// NUTRITION ROW
+// MACRO DONUT (SVG pie chart)
 // ══════════════════════════════════
-function NutritionRow({ label, value, unit }: { label: string; value: string; unit: string }) {
+function MacroDonut({ protein, carbs, fat }: { protein: number; carbs: number; fat: number }) {
+  const total = protein * 4 + carbs * 4 + fat * 9
+  if (total === 0) {
+    return (
+      <div className="w-24 h-24 rounded-full border-4 border-forged-border flex items-center justify-center flex-shrink-0">
+        <span className="text-xs text-forged-text2">No data</span>
+      </div>
+    )
+  }
+
+  const pCal = protein * 4, cCal = carbs * 4, fCal = fat * 9
+  const pPct = pCal / total, cPct = cCal / total, fPct = fCal / total
+  const sz = 96, cx = sz / 2, cy = sz / 2, r = 36, sw = 14
+
+  const makeArc = (startPct: number, pct: number) => {
+    if (pct <= 0) return ''
+    const start = startPct * 2 * Math.PI - Math.PI / 2
+    const end = (startPct + pct) * 2 * Math.PI - Math.PI / 2
+    const large = pct > 0.5 ? 1 : 0
+    return `M ${cx + r * Math.cos(start)} ${cy + r * Math.sin(start)} A ${r} ${r} 0 ${large} 1 ${cx + r * Math.cos(end)} ${cy + r * Math.sin(end)}`
+  }
+
   return (
-    <div className="flex justify-between items-center py-1.5 border-b border-forged-text2/10 last:border-0">
-      <span className="text-sm text-forged-text2">{label}</span>
-      <span className="text-sm font-bold text-forged-text tabular-nums">{value} <span className="text-forged-text2 font-normal">{unit}</span></span>
+    <div className="relative flex-shrink-0" style={{ width: sz, height: sz }}>
+      <svg width={sz} height={sz}>
+        <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border)" strokeWidth={sw} opacity={0.3} />
+        {pPct > 0 && <path d={makeArc(0, pPct)} fill="none" stroke="#9b59b6" strokeWidth={sw} strokeLinecap="round" />}
+        {cPct > 0 && <path d={makeArc(pPct, cPct)} fill="none" stroke="#3498db" strokeWidth={sw} strokeLinecap="round" />}
+        {fPct > 0 && <path d={makeArc(pPct + cPct, fPct)} fill="none" stroke="#e74c3c" strokeWidth={sw} strokeLinecap="round" />}
+      </svg>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-lg font-black text-forged-text tabular-nums">{total}</span>
+        <span className="text-[9px] text-forged-text2">cal</span>
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════
+// NUTRITION BAR
+// ══════════════════════════════════
+function NutritionBar({ label, value, goal, color, unit }: {
+  label: string; value: number; goal: number; color: string; unit: string
+}) {
+  const pct = Math.min((value / goal) * 100, 100)
+  return (
+    <div>
+      <div className="flex justify-between items-center mb-1">
+        <div className="flex items-center gap-1.5">
+          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
+          <span className="text-xs text-forged-text font-semibold">{label}</span>
+        </div>
+        <span className="text-xs text-forged-text2 tabular-nums">{value}/{goal}{unit}</span>
+      </div>
+      <div className="h-2 rounded-full bg-forged-surface2 overflow-hidden">
+        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: color }} />
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════
+// NUTRIENT CHIP
+// ══════════════════════════════════
+function NutrientChip({ label, value, unit }: { label: string; value: number; unit: string }) {
+  return (
+    <div className="bg-forged-bg border border-forged-border rounded-xl p-2 text-center
+      hover:border-forged-purple/25 transition-all">
+      <p className="text-[9px] text-forged-text2 font-bold uppercase tracking-wider">{label}</p>
+      <p className="text-sm font-black text-forged-text tabular-nums mt-0.5">{Math.round(value)}</p>
+      <p className="text-[8px] text-forged-text2">{unit}</p>
     </div>
   )
 }
@@ -757,15 +880,22 @@ function QuickCreateFood({ mealType, date, onCreated, onCancel }: {
 // ══════════════════════════════════
 // FOOD LOG ROW
 // ══════════════════════════════════
-function FoodLogRow({ log }: { log: FoodLogType }) {
+function FoodLogRow({ log, onDelete }: { log: FoodLogType; onDelete: () => void }) {
+  const [deleting, setDeleting] = useState(false)
   const cals = (log.food?.calories ?? 0) * log.servings
   const p = (log.food?.protein ?? 0) * log.servings
   const c = (log.food?.carbs ?? 0) * log.servings
   const f = (log.food?.fat ?? 0) * log.servings
 
+  const handleDelete = async () => {
+    setDeleting(true)
+    try { await api.food.deleteFoodLog(log.id); onDelete() }
+    catch (e) { console.error(e); setDeleting(false) }
+  }
+
   return (
     <div className="flex items-center justify-between py-3 border-b border-forged-text2/10 last:border-0
-      hover:bg-forged-surface2/50 transition-colors rounded-lg px-2">
+      hover:bg-forged-surface2/50 transition-colors rounded-lg px-2 group">
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold text-forged-text">{log.food?.name || 'Food'}</p>
         <p className="text-[11px] text-forged-text2">
@@ -773,7 +903,18 @@ function FoodLogRow({ log }: { log: FoodLogType }) {
           {log.servings !== 1 && <span className="text-forged-purple font-bold"> &middot; {log.servings}x</span>}
         </p>
       </div>
-      <span className="text-sm font-black text-forged-text tabular-nums">{cals} cal</span>
+      <div className="flex items-center gap-2">
+        <span className="text-sm font-black text-forged-text tabular-nums">{cals} cal</span>
+        <button onClick={handleDelete} disabled={deleting}
+          className="w-7 h-7 rounded-lg flex items-center justify-center
+            opacity-0 group-hover:opacity-100 transition-all
+            text-forged-text2 hover:text-forged-red hover:bg-forged-red/10 active:scale-95">
+          {deleting
+            ? <div className="w-3 h-3 border-2 border-forged-red border-t-transparent rounded-full animate-spin" />
+            : <Icon d={I.x} size={14} sw={2} />
+          }
+        </button>
+      </div>
     </div>
   )
 }

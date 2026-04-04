@@ -210,6 +210,16 @@ public class WorkoutService
             .ToListAsync();
     }
 
+    public async Task<bool> DeleteFoodLog(Guid userId, Guid logId)
+    {
+        var log = await _db.FoodLogs
+            .FirstOrDefaultAsync(f => f.Id == logId && f.UserId == userId);
+        if (log == null) return false;
+        _db.FoodLogs.Remove(log);
+        await _db.SaveChangesAsync();
+        return true;
+    }
+
     // ── Food Summary (monthly calendar) ──
     public async Task<List<FoodDaySummaryDto>> GetFoodSummary(Guid userId, int year, int month)
     {
