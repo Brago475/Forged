@@ -4,9 +4,9 @@ import { useTheme } from '../hooks/useTheme'
 import type { DashboardStats, User, WeightEntry, FastingLog, FoodLog } from '../types'
 import logo from '../public/logo.png'
 
-// ──────────────────────────────────
+// ══════════════════════════════════
 // ICONS
-// ──────────────────────────────────
+// ══════════════════════════════════
 const I = {
   dashboard: <><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></>,
   food: <><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 002-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 00-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></>,
@@ -21,7 +21,6 @@ const I = {
   chevronsLeft: <><path d="M11 17l-5-5 5-5"/><path d="M18 17l-5-5 5-5"/></>,
   chevronsRight: <><path d="M13 17l5-5-5-5"/><path d="M6 17l5-5-5-5"/></>,
   trendDown: <><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></>,
-  play: <><polygon points="5 3 19 12 5 21 5 3"/></>,
   sun: <><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></>,
   moon: <><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></>,
   logout: <><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
@@ -32,7 +31,6 @@ const I = {
   x: <><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></>,
   zap: <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
   heart: <><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></>,
-  coffee: <><path d="M18 8h1a4 4 0 010 8h-1"/><path d="M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></>,
   target: <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></>,
 }
 
@@ -42,13 +40,15 @@ function Icon({ d, size = 20, className = '', sw = 1.8 }: {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
       stroke="currentColor" strokeWidth={sw} strokeLinecap="round"
-      strokeLinejoin="round" className={className}>{d}</svg>
+      strokeLinejoin="round" className={className}>
+      {d}
+    </svg>
   )
 }
 
-// ──────────────────────────────────
+// ══════════════════════════════════
 // HOOKS
-// ──────────────────────────────────
+// ══════════════════════════════════
 function useMediaQuery(q: string) {
   const [m, setM] = useState(false)
   useEffect(() => {
@@ -88,25 +88,74 @@ function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () =
   }, [ref, handler])
 }
 
-// ──────────────────────────────────
+// ══════════════════════════════════
+// SKELETON LOADING
+// ══════════════════════════════════
+function Sk({ className = '' }: { className?: string }) {
+  return <div className={`bg-forged-surface2 rounded-xl animate-pulse ${className}`} />
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="max-w-2xl mx-auto px-4 pt-4 flex flex-col gap-4">
+      <div className="flex items-center gap-3">
+        <Sk className="w-12 h-12 !rounded-full" />
+        <div className="flex-1 flex flex-col gap-2">
+          <Sk className="h-5 w-48" />
+          <Sk className="h-3 w-32" />
+        </div>
+      </div>
+      <Sk className="h-60 !rounded-2xl" />
+      <div className="grid grid-cols-3 gap-3">
+        <Sk className="h-28 !rounded-2xl" />
+        <Sk className="h-28 !rounded-2xl" />
+        <Sk className="h-28 !rounded-2xl" />
+      </div>
+      <div className="grid grid-cols-4 gap-3">
+        <Sk className="h-20 !rounded-2xl" />
+        <Sk className="h-20 !rounded-2xl" />
+        <Sk className="h-20 !rounded-2xl" />
+        <Sk className="h-20 !rounded-2xl" />
+      </div>
+      <Sk className="h-36 !rounded-2xl" />
+      <Sk className="h-28 !rounded-2xl" />
+      <Sk className="h-44 !rounded-2xl" />
+    </div>
+  )
+}
+
+// ══════════════════════════════════
 // SHARED UI
-// ──────────────────────────────────
-function Card({ children, className = '', delay = 0 }: {
-  children: React.ReactNode; className?: string; delay?: number
+// ══════════════════════════════════
+function Card({ children, className = '', delay = 0, hero = false }: {
+  children: React.ReactNode; className?: string; delay?: number; hero?: boolean
 }) {
   const [v, setV] = useState(false)
-  useEffect(() => { const t = setTimeout(() => setV(true), delay); return () => clearTimeout(t) }, [delay])
+  useEffect(() => {
+    const t = setTimeout(() => setV(true), delay)
+    return () => clearTimeout(t)
+  }, [delay])
+
   return (
-    <div className={`bg-forged-surface border border-forged-border rounded-2xl p-5
+    <div className={`
+      bg-forged-surface border border-forged-border rounded-2xl p-5
       transition-all duration-500 ease-out
-      ${v ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'} ${className}`}>
+      hover:border-forged-purple/20
+      ${hero ? 'shadow-lg shadow-forged-purple/5' : ''}
+      ${v ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'}
+      ${className}
+    `}>
       {children}
     </div>
   )
 }
 
 function SectionLabel({ children }: { children: string }) {
-  return <h3 className="text-xs font-semibold text-forged-text3 uppercase tracking-widest mb-3">{children}</h3>
+  return (
+    <h3 className="text-[11px] font-bold text-forged-text3 uppercase tracking-widest mb-3">
+      {children}
+    </h3>
+  )
 }
 
 function SegmentedControl({ options, active, onChange }: {
@@ -116,8 +165,11 @@ function SegmentedControl({ options, active, onChange }: {
     <div className="flex bg-forged-bg rounded-xl p-1 gap-0.5 mb-4">
       {options.map(o => (
         <button key={o} onClick={() => onChange(o)}
-          className={`flex-1 py-1.5 text-xs font-medium rounded-lg transition-all duration-200
-            ${active === o ? 'bg-forged-surface text-forged-text shadow-sm' : 'text-forged-text3 hover:text-forged-text2'}`}>
+          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200
+            ${active === o
+              ? 'bg-forged-surface text-forged-text shadow-sm'
+              : 'text-forged-text3 hover:text-forged-text2'
+            }`}>
           {o}
         </button>
       ))}
@@ -125,10 +177,10 @@ function SegmentedControl({ options, active, onChange }: {
   )
 }
 
-// ──────────────────────────────────
+// ══════════════════════════════════
 // 3-DOT SETTINGS DROPDOWN
-// ──────────────────────────────────
-function SettingsDropdown({ onLogout }: { onLogout: () => void }) {
+// ══════════════════════════════════
+function SettingsDropdown({ onLogout, dropUp = false }: { onLogout: () => void; dropUp?: boolean }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const { theme, toggleTheme } = useTheme()
@@ -139,28 +191,31 @@ function SettingsDropdown({ onLogout }: { onLogout: () => void }) {
       <button onClick={() => setOpen(!open)}
         className="w-9 h-9 rounded-xl bg-forged-surface border border-forged-border
           flex items-center justify-center text-forged-text3
-          hover:text-forged-text hover:border-forged-purple/30 transition-all">
-        <Icon d={I.dots} size={16}/>
+          hover:text-forged-text hover:border-forged-purple/30 hover:bg-forged-surface2
+          active:scale-95 transition-all">
+        <Icon d={I.dots} size={16} />
       </button>
       {open && (
-        <div className="absolute right-0 top-11 w-48 bg-forged-surface border border-forged-border
-          rounded-xl shadow-lg overflow-hidden z-50 animate-in">
+        <div className={`absolute right-0 w-48 bg-forged-surface border border-forged-border
+          rounded-xl shadow-xl overflow-hidden z-[60]
+          ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'}`}
+          style={{ animation: 'fadeSlide 0.15s ease-out' }}>
           <button onClick={() => { toggleTheme(); setOpen(false) }}
             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
-              hover:bg-forged-bg transition-colors text-left">
-            <Icon d={theme === 'dark' ? I.sun : I.moon} size={16}/>
+              hover:bg-forged-surface2 transition-colors text-left">
+            <Icon d={theme === 'dark' ? I.sun : I.moon} size={16} />
             <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
           <button onClick={() => setOpen(false)}
             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
-              hover:bg-forged-bg transition-colors text-left border-t border-forged-border">
-            <Icon d={I.settings} size={16}/>
+              hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+            <Icon d={I.settings} size={16} />
             <span>Settings</span>
           </button>
           <button onClick={onLogout}
             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-red
               hover:bg-forged-red/5 transition-colors text-left border-t border-forged-border">
-            <Icon d={I.logout} size={16}/>
+            <Icon d={I.logout} size={16} />
             <span>Sign Out</span>
           </button>
         </div>
@@ -169,111 +224,149 @@ function SettingsDropdown({ onLogout }: { onLogout: () => void }) {
   )
 }
 
-// ──────────────────────────────────
-// NAV CONFIG (Dashboard in center)
-// ──────────────────────────────────
+// ══════════════════════════════════
+// NAV CONFIG — Dashboard in center
+// ══════════════════════════════════
 type TabId = 'food' | 'workouts' | 'dashboard' | 'progress' | 'profile'
 
 const NAV: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'food', label: 'Food', icon: I.food },
   { id: 'workouts', label: 'Workouts', icon: I.workout },
-  { id: 'dashboard', label: 'Dashboard', icon: I.dashboard },
+  { id: 'dashboard', label: 'Home', icon: I.dashboard },
   { id: 'progress', label: 'Progress', icon: I.progress },
   { id: 'profile', label: 'Profile', icon: I.profile },
 ]
 
-// ──────────────────────────────────
-// SIDEBAR (desktop)
-// ──────────────────────────────────
+// ══════════════════════════════════
+// SIDEBAR — desktop
+// ══════════════════════════════════
 function Sidebar({ active, onChange, collapsed, onToggle, onLogout }: {
   active: TabId; onChange: (t: TabId) => void
   collapsed: boolean; onToggle: () => void; onLogout: () => void
 }) {
   const { theme, toggleTheme } = useTheme()
+
   return (
     <aside className={`fixed left-0 top-0 h-full bg-forged-surface border-r border-forged-border
       flex flex-col z-50 transition-all duration-300
       ${collapsed ? 'w-[68px]' : 'w-[220px]'}`}>
-      <div className={`flex items-center h-16 px-4 border-b border-forged-border ${collapsed ? 'justify-center' : 'gap-3'}`}>
-        <img src={logo} alt="FORGED" className="w-8 h-8 rounded-lg object-contain flex-shrink-0"/>
-        {!collapsed && <span className="text-base font-bold text-forged-text tracking-wide">FORGED</span>}
+
+      {/* Logo */}
+      <div className={`flex items-center h-16 px-4 border-b border-forged-border
+        ${collapsed ? 'justify-center' : 'gap-3'}`}>
+        <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden
+          ${theme === 'light' ? 'bg-gray-900' : 'bg-white/10'}`}>
+          <img src={logo} alt="F"
+            className={`w-6 h-6 object-contain ${theme === 'light' ? '' : 'brightness-200'}`} />
+        </div>
+        {!collapsed && (
+          <span className="text-base font-black text-forged-text tracking-wide">FORGED</span>
+        )}
       </div>
+
+      {/* Nav */}
       <nav className="flex-1 py-3 px-2 flex flex-col gap-1">
         {NAV.map(item => {
-          const isA = active === item.id
+          const isActive = active === item.id
           return (
             <button key={item.id} onClick={() => onChange(item.id)}
               className={`flex items-center gap-3 rounded-xl transition-all duration-200
                 ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-2.5'}
-                ${isA ? 'bg-forged-purple/10 text-forged-purple' : 'text-forged-text3 hover:text-forged-text hover:bg-forged-bg'}`}>
-              <Icon d={item.icon} size={20} sw={isA ? 2.2 : 1.6} className="flex-shrink-0"/>
-              {!collapsed && <span className={`text-sm ${isA ? 'font-semibold' : 'font-medium'}`}>{item.label}</span>}
+                ${isActive
+                  ? 'bg-forged-purple/15 text-forged-purple'
+                  : 'text-forged-text3 hover:text-forged-text hover:bg-forged-surface2'
+                }`}>
+              <Icon d={item.icon} size={20} sw={isActive ? 2.2 : 1.6} className="flex-shrink-0" />
+              {!collapsed && (
+                <span className={`text-sm ${isActive ? 'font-bold' : 'font-medium'}`}>
+                  {item.label}
+                </span>
+              )}
             </button>
           )
         })}
       </nav>
+
+      {/* Bottom */}
       <div className="px-2 py-3 border-t border-forged-border flex flex-col gap-1">
         <button onClick={toggleTheme}
           className={`flex items-center gap-3 rounded-xl text-forged-text3
-            hover:text-forged-text hover:bg-forged-bg transition-all
+            hover:text-forged-text hover:bg-forged-surface2 transition-all
             ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-2.5'}`}>
-          <Icon d={theme === 'dark' ? I.sun : I.moon} size={18} className="flex-shrink-0"/>
+          <Icon d={theme === 'dark' ? I.sun : I.moon} size={18} className="flex-shrink-0" />
           {!collapsed && <span className="text-sm font-medium">Theme</span>}
         </button>
         <button onClick={onLogout}
           className={`flex items-center gap-3 rounded-xl text-forged-text3
             hover:text-forged-red hover:bg-forged-red/5 transition-all
             ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-2.5'}`}>
-          <Icon d={I.logout} size={18} className="flex-shrink-0"/>
+          <Icon d={I.logout} size={18} className="flex-shrink-0" />
           {!collapsed && <span className="text-sm font-medium">Sign Out</span>}
         </button>
       </div>
+
       <button onClick={onToggle}
         className="flex items-center justify-center h-10 border-t border-forged-border
-          text-forged-text3 hover:text-forged-text transition-colors">
-        <Icon d={collapsed ? I.chevronsRight : I.chevronsLeft} size={16}/>
+          text-forged-text3 hover:text-forged-text hover:bg-forged-surface2 transition-all">
+        <Icon d={collapsed ? I.chevronsRight : I.chevronsLeft} size={16} />
       </button>
     </aside>
   )
 }
 
-// ──────────────────────────────────
-// BOTTOM NAV (mobile, dashboard centered + highlighted)
-// ──────────────────────────────────
-function BottomNav({ active, onChange }: { active: TabId; onChange: (t: TabId) => void }) {
+// ══════════════════════════════════
+// BOTTOM NAV — mobile + 3-dot
+// ══════════════════════════════════
+function BottomNav({ active, onChange, onLogout }: {
+  active: TabId; onChange: (t: TabId) => void; onLogout: () => void
+}) {
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden
-      bg-forged-bg/90 backdrop-blur-xl border-t border-forged-border
-      flex justify-around items-end"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 8px)', paddingTop: '6px' }}>
-      {NAV.map(tab => {
-        const isA = active === tab.id
-        const isCenter = tab.id === 'dashboard'
-        return (
-          <button key={tab.id} onClick={() => onChange(tab.id)}
-            className={`flex flex-col items-center gap-1 min-w-[52px]
-              ${isCenter ? '-mt-4' : 'py-1'}`}>
-            {isCenter ? (
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center
-                transition-all duration-300 shadow-lg
-                ${isA ? 'bg-forged-purple shadow-forged-purple/30' : 'bg-forged-surface border border-forged-border'}`}>
-                <Icon d={tab.icon} size={24} sw={2}
-                  className={isA ? 'text-white' : 'text-forged-text3'}/>
-              </div>
-            ) : (
-              <>
-                <div className={`px-3 py-1 rounded-xl transition-all duration-300
-                  ${isA ? 'bg-forged-purple/15' : ''}`}>
-                  <Icon d={tab.icon} size={21} sw={isA ? 2.2 : 1.6}
-                    className={`transition-colors ${isA ? 'text-forged-purple' : 'text-forged-text3'}`}/>
+      bg-forged-surface/95 backdrop-blur-xl border-t border-forged-border
+      flex items-end"
+      style={{ paddingBottom: 'env(safe-area-inset-bottom, 6px)', paddingTop: '4px' }}>
+
+      <div className="flex-1 flex justify-around items-end">
+        {NAV.map(tab => {
+          const isActive = active === tab.id
+          const isCenter = tab.id === 'dashboard'
+
+          return (
+            <button key={tab.id} onClick={() => onChange(tab.id)}
+              className={`flex flex-col items-center min-w-[48px]
+                ${isCenter ? '-mt-5 pb-0' : 'py-1'}`}>
+              {isCenter ? (
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center
+                  transition-all duration-300
+                  ${isActive
+                    ? 'bg-forged-purple shadow-lg shadow-forged-purple/40'
+                    : 'bg-forged-surface2 border border-forged-border shadow-md'
+                  }`}>
+                  <Icon d={tab.icon} size={24} sw={2}
+                    className={isActive ? 'text-white' : 'text-forged-text3'} />
                 </div>
-                <span className={`text-[10px] ${isA ? 'font-semibold text-forged-purple' : 'text-forged-text3'}`}>
-                  {tab.label}</span>
-              </>
-            )}
-          </button>
-        )
-      })}
+              ) : (
+                <>
+                  <div className={`px-3 py-1 rounded-xl transition-all duration-200
+                    ${isActive ? 'bg-forged-purple/15' : ''}`}>
+                    <Icon d={tab.icon} size={20} sw={isActive ? 2.2 : 1.5}
+                      className={isActive ? 'text-forged-purple' : 'text-forged-text3'} />
+                  </div>
+                  <span className={`text-[9px] mt-0.5
+                    ${isActive ? 'font-bold text-forged-purple' : 'text-forged-text3'}`}>
+                    {tab.label}
+                  </span>
+                </>
+              )}
+            </button>
+          )
+        })}
+      </div>
+
+      {/* 3-dot next to nav */}
+      <div className="pr-2 pb-2">
+        <SettingsDropdown onLogout={onLogout} dropUp />
+      </div>
     </nav>
   )
 }
@@ -297,15 +390,23 @@ export default function Dashboard({ onLogout }: Props) {
     try {
       const today = new Date().toISOString().split('T')[0]
       const [d, u, f, fd] = await Promise.allSettled([
-        api.workout.dashboard(), api.auth.me(),
-        api.fasting.getActive(), api.food.getLogs(today),
+        api.workout.dashboard(),
+        api.auth.me(),
+        api.fasting.getActive(),
+        api.food.getLogs(today),
       ])
       if (d.status === 'fulfilled') setStats(d.value)
       if (u.status === 'fulfilled') setUser(u.value)
-      if (f.status === 'fulfilled' && f.value) setActiveFast(f.value)
+      // NaN guard: only set if startTime is a valid date
+      if (f.status === 'fulfilled' && f.value && f.value.startTime && !isNaN(new Date(f.value.startTime).getTime())) {
+        setActiveFast(f.value)
+      }
       if (fd.status === 'fulfilled') setTodayFood(fd.value)
-    } catch (e) { console.error(e) }
-    finally { setLoading(false) }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { loadData() }, [loadData])
@@ -318,38 +419,40 @@ export default function Dashboard({ onLogout }: Props) {
     fiber: todayFood.reduce((s, l) => s + (l.food?.fiber ?? 0) * l.servings, 0),
   }
 
-  if (loading) return (
-    <div className="min-h-screen bg-forged-bg flex items-center justify-center">
-      <div className="flex flex-col items-center gap-3">
-        <div className="w-8 h-8 border-2 border-forged-purple border-t-transparent rounded-full animate-spin"/>
-        <p className="text-sm text-forged-text3">Loading...</p>
-      </div>
-    </div>
-  )
-
   const sw = isDesktop ? (sidebarCollapsed ? 68 : 220) : 0
 
   return (
     <div className="min-h-screen bg-forged-bg">
-      {isDesktop && <Sidebar active={tab} onChange={setTab} collapsed={sidebarCollapsed}
-        onToggle={() => setSC(!sidebarCollapsed)} onLogout={onLogout}/>}
+      {isDesktop && (
+        <Sidebar active={tab} onChange={setTab} collapsed={sidebarCollapsed}
+          onToggle={() => setSC(!sidebarCollapsed)} onLogout={onLogout} />
+      )}
 
       <main className="transition-all duration-300 pb-28 md:pb-6" style={{ marginLeft: sw }}>
-        <div className="max-w-2xl mx-auto px-4 pt-4">
-          {tab === 'dashboard' && <HomeTab stats={stats} user={user} activeFast={activeFast}
-            macros={macros} todayFood={todayFood} onRefresh={loadData} onTabChange={setTab} onLogout={onLogout}/>}
-          {tab === 'food' && <FoodTab />}
-          {tab === 'workouts' && <WorkoutsTab />}
-          {tab === 'progress' && <ProgressTab stats={stats} />}
-          {tab === 'profile' && <ProfileTab user={user} onLogout={onLogout} />}
-        </div>
+        {loading ? (
+          <DashboardSkeleton />
+        ) : (
+          <div className="max-w-2xl mx-auto px-4 pt-4">
+            {tab === 'dashboard' && (
+              <HomeTab stats={stats} user={user} activeFast={activeFast}
+                macros={macros} todayFood={todayFood}
+                onRefresh={loadData} onTabChange={setTab} onLogout={onLogout} />
+            )}
+            {tab === 'food' && <FoodTab />}
+            {tab === 'workouts' && <WorkoutsTab />}
+            {tab === 'progress' && <ProgressTab />}
+            {tab === 'profile' && <ProfileTab user={user} onLogout={onLogout} />}
+          </div>
+        )}
       </main>
 
-      {!isDesktop && <BottomNav active={tab} onChange={setTab}/>}
+      {!isDesktop && <BottomNav active={tab} onChange={setTab} onLogout={onLogout} />}
 
       <style>{`
-        @keyframes animate-in { from { opacity:0; transform:translateY(-4px) scale(0.97); } to { opacity:1; transform:translateY(0) scale(1); } }
-        .animate-in { animation: animate-in 0.15s ease-out; }
+        @keyframes fadeSlide {
+          from { opacity: 0; transform: translateY(4px) scale(0.97); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
       `}</style>
     </div>
   )
@@ -365,10 +468,14 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
   macros: Macros; todayFood: FoodLog[]
   onRefresh: () => void; onTabChange: (t: TabId) => void; onLogout: () => void
 }) {
-  const calGoal = 2400, pGoal = 180, cGoal = 250, fGoal = 65
+  const calGoal = 2400
+  const pGoal = 180
+  const cGoal = 250
+  const fGoal = 65
   const calLeft = Math.max(calGoal - macros.cal, 0)
   const calPct = Math.min(macros.cal / calGoal, 1)
   const onTrack = macros.cal <= calGoal
+  const animCal = useAnimNum(macros.cal, 1000)
 
   const getGreeting = () => {
     const h = new Date().getHours()
@@ -378,66 +485,83 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
   return (
     <div className="flex flex-col gap-4">
 
-      {/* ── HEADER ── */}
+      {/* ── HEADER with avatar + greeting + 3-dot (desktop only, mobile has it in nav) ── */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* User avatar */}
-          <div className="w-11 h-11 rounded-full bg-forged-purple/15 border-2 border-forged-purple/30
-            flex items-center justify-center overflow-hidden">
-            <span className="text-lg font-bold text-forged-purple">
-              {(user?.displayName || user?.username || '?')[0].toUpperCase()}</span>
+          <div className="w-12 h-12 rounded-full bg-forged-purple/20 border-2 border-forged-purple
+            flex items-center justify-center shadow-md shadow-forged-purple/10">
+            <span className="text-lg font-black text-forged-purple">
+              {(user?.displayName || user?.username || '?')[0].toUpperCase()}
+            </span>
           </div>
           <div>
-            <p className="text-base font-bold text-forged-text">
-              {getGreeting()}, {user?.displayName || user?.username || 'Athlete'}</p>
-            <p className="text-xs text-forged-text3">
-              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}</p>
+            <p className="text-lg font-bold text-forged-text">
+              {getGreeting()}, {user?.displayName || user?.username || 'Athlete'}
+            </p>
+            <p className="text-xs text-forged-text3 font-medium">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
+            </p>
           </div>
         </div>
-        <SettingsDropdown onLogout={onLogout}/>
+        <div className="hidden md:block">
+          <SettingsDropdown onLogout={onLogout} />
+        </div>
       </div>
 
-      {/* ── HERO: CALORIES + FASTING ── */}
-      <Card delay={60}>
-        {/* Calorie section */}
-        <div className="flex items-center gap-5 mb-4">
-          <CalorieRing pct={calPct} />
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-1">
-              <span className="text-3xl font-bold text-forged-text tabular-nums">{useAnimNum(macros.cal, 900)}</span>
-              <span className="text-xs text-forged-text3">/ {calGoal} cal</span>
-            </div>
-            <p className="text-sm text-forged-text2 mb-2">{calLeft} cal remaining</p>
-            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-semibold
-              ${onTrack ? 'bg-forged-green/10 text-forged-green' : 'bg-forged-red/10 text-forged-red'}`}>
-              <Icon d={onTrack ? I.check : I.x} size={12} sw={2.5}/>
+      {/* ══ HERO: CALORIE CARD ══ */}
+      <Card delay={60} hero className="!p-6 relative overflow-hidden">
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-br from-forged-purple/[0.07] via-transparent to-forged-purple/[0.03] pointer-events-none" />
+
+        <div className="relative flex items-center gap-6">
+          {/* Big calorie ring */}
+          <HeroCalorieRing pct={calPct} />
+
+          <div className="flex-1 min-w-0">
+            {/* HUGE number */}
+            <p className="text-6xl font-black text-forged-text tabular-nums leading-none tracking-tighter">
+              {animCal}
+            </p>
+            <p className="text-sm text-forged-text2 mt-1.5 font-medium">
+              of <span className="font-black text-forged-text">{calGoal}</span> cal
+            </p>
+            <p className="text-sm text-forged-text3">{calLeft} remaining</p>
+
+            {/* On Track / Over Goal badge */}
+            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black mt-3
+              ${onTrack
+                ? 'bg-forged-green/15 text-forged-green border border-forged-green/25'
+                : 'bg-forged-red/15 text-forged-red border border-forged-red/25'
+              }`}>
+              <Icon d={onTrack ? I.check : I.x} size={13} sw={3} />
               {onTrack ? 'On Track' : 'Over Goal'}
             </div>
           </div>
-          {/* + button to log food */}
-          <button onClick={() => onTabChange('food')}
-            className="w-11 h-11 rounded-xl bg-forged-purple flex items-center justify-center
-              text-white shadow-lg shadow-forged-purple/20
-              hover:opacity-90 active:scale-95 transition-all">
-            <Icon d={I.plus} size={20} sw={2.5}/>
-          </button>
         </div>
 
-        {/* Divider */}
-        <div className="border-t border-forged-border my-4"/>
+        {/* Add Meal button - full width, labeled */}
+        <button onClick={() => onTabChange('food')}
+          className="w-full mt-5 py-3.5 rounded-xl font-black text-sm
+            bg-forged-purple text-white shadow-lg shadow-forged-purple/30
+            hover:shadow-forged-purple/50 hover:brightness-110
+            active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+          <Icon d={I.plus} size={16} sw={2.5} />
+          Add Meal
+        </button>
 
-        {/* Fasting timer */}
-        <div className="flex items-center justify-between">
+        {/* Fasting strip */}
+        <div className="border-t border-forged-border mt-5 pt-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center
-              ${activeFast ? 'bg-forged-green/10' : 'bg-forged-surface2'}`}>
-              <Icon d={I.clock} size={18} className={activeFast ? 'text-forged-green' : 'text-forged-text3'}/>
+            <div className={`w-9 h-9 rounded-lg flex items-center justify-center
+              ${activeFast ? 'bg-forged-green/15' : 'bg-forged-surface2'}`}>
+              <Icon d={I.clock} size={16}
+                className={activeFast ? 'text-forged-green' : 'text-forged-text3'} />
             </div>
             {activeFast ? (
-              <FastingMini fast={activeFast}/>
+              <FastingMini fast={activeFast} />
             ) : (
               <div>
-                <p className="text-sm font-medium text-forged-text">Fasting</p>
+                <p className="text-sm font-bold text-forged-text">Fasting</p>
                 <p className="text-xs text-forged-text3">Not active</p>
               </div>
             )}
@@ -446,209 +570,229 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
             <button onClick={async () => {
               try { await api.fasting.end(activeFast.id, {}); window.location.reload() } catch {}
             }}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold
+              className="px-3 py-1.5 rounded-lg text-xs font-black
                 bg-forged-red/10 text-forged-red border border-forged-red/20
-                hover:bg-forged-red hover:text-white transition-all">
-              End Fast</button>
+                hover:bg-forged-red hover:text-white active:scale-95 transition-all">
+              End Fast
+            </button>
           ) : (
             <button onClick={async () => {
               try { await api.fasting.start({ targetHours: 16 }); window.location.reload() } catch {}
             }}
-              className="px-3 py-1.5 rounded-lg text-xs font-semibold
+              className="px-3 py-1.5 rounded-lg text-xs font-black
                 bg-forged-green/10 text-forged-green border border-forged-green/20
-                hover:bg-forged-green hover:text-white transition-all">
-              Start 16:8</button>
+                hover:bg-forged-green hover:text-white active:scale-95 transition-all">
+              Start 16:8
+            </button>
           )}
         </div>
       </Card>
 
-      {/* ── MACROS ── */}
-      <Card delay={140}>
+      {/* ══ MACROS — purple-primary ══ */}
+      <Card delay={160}>
         <SectionLabel>Macros</SectionLabel>
         <div className="grid grid-cols-3 gap-3">
-          <MacroCard label="Protein" current={macros.protein} goal={pGoal} color="blue" unit="g"/>
-          <MacroCard label="Carbs" current={macros.carbs} goal={cGoal} color="gold" unit="g"/>
-          <MacroCard label="Fat" current={macros.fat} goal={fGoal} color="red" unit="g"/>
+          <MacroCard label="Protein" current={macros.protein} goal={pGoal} />
+          <MacroCard label="Carbs" current={macros.carbs} goal={cGoal} />
+          <MacroCard label="Fat" current={macros.fat} goal={fGoal} />
         </div>
-        {/* Optional water/fiber row */}
         <div className="grid grid-cols-2 gap-3 mt-3">
-          <MiniStat label="Fiber" value={`${Math.round(macros.fiber)}g`} icon={I.heart} color="green"/>
-          <MiniStat label="Water" value="-- glasses" icon={I.droplet} color="blue"/>
+          <MacroCardSmall label="Fiber" value={`${Math.round(macros.fiber)}g`} pct={macros.fiber / 30} />
+          <MacroCardSmall label="Water" value="--" pct={0} />
         </div>
       </Card>
 
-      {/* ── QUICK ACTIONS ── */}
-      <Card delay={220}>
+      {/* ══ QUICK ACTIONS ══ */}
+      <Card delay={240}>
         <SectionLabel>Quick actions</SectionLabel>
         <div className="grid grid-cols-4 gap-2">
-          <QuickAction icon={I.plus} label="Add Meal" color="gold" onClick={() => onTabChange('food')}/>
-          <QuickAction icon={I.workout} label="Log Workout" color="purple" onClick={() => onTabChange('workouts')}/>
-          <QuickAction icon={I.droplet} label="Add Water" color="blue"/>
-          <QuickAction icon={I.clock} label="Start Fast" color="green" onClick={async () => {
+          <QuickAction icon={I.plus} label="Add Meal" onClick={() => onTabChange('food')} />
+          <QuickAction icon={I.workout} label="Log Workout" onClick={() => onTabChange('workouts')} />
+          <QuickAction icon={I.droplet} label="Add Water" />
+          <QuickAction icon={I.clock} label="Start Fast" onClick={async () => {
             if (activeFast) return
             try { await api.fasting.start({ targetHours: 16 }); window.location.reload() } catch {}
-          }}/>
+          }} />
         </div>
       </Card>
 
-      {/* ── TODAY'S SUMMARY ── */}
-      <Card delay={300}>
-        <SectionLabel>Today's checklist</SectionLabel>
-        <div className="flex flex-col gap-2">
-          <CheckItem done={todayFood.length > 0} label={todayFood.length > 0
-            ? `${todayFood.length} meal${todayFood.length > 1 ? 's' : ''} logged` : 'No meals logged'}/>
-          <CheckItem done={false} label="Workout not completed"/>
-          <CheckItem done={false} label="Water -- track coming soon"/>
-          <CheckItem done={activeFast !== null} label={activeFast ? 'Fasting active' : 'No fast today'}/>
-        </div>
+      {/* ══ TODAY'S CHECKLIST ══ */}
+      <Card delay={320}>
+        <SectionLabel>Today</SectionLabel>
+        <CheckItem done={todayFood.length > 0}
+          label={todayFood.length > 0 ? `${todayFood.length} meal${todayFood.length > 1 ? 's' : ''} logged` : 'No meals logged yet'} />
+        <CheckItem done={false} label="Workout not completed" />
+        <CheckItem done={activeFast !== null} label={activeFast ? 'Fasting active' : 'No fast started'} />
       </Card>
 
-      {/* ── WORKOUT SNAPSHOT ── */}
-      <Card delay={380}>
+      {/* ══ WORKOUT SNAPSHOT ══ */}
+      <Card delay={400}>
         <SectionLabel>Workout</SectionLabel>
-        <WorkoutSnapshot onGoToWorkouts={() => onTabChange('workouts')}/>
+        <WorkoutSnapshot onGo={() => onTabChange('workouts')} />
       </Card>
 
-      {/* ── FOOD SNAPSHOT ── */}
-      <Card delay={460}>
+      {/* ══ FOOD SNAPSHOT ══ */}
+      <Card delay={480}>
         <SectionLabel>Last meal</SectionLabel>
-        <FoodSnapshot todayFood={todayFood} macros={macros} proteinGoal={pGoal} onGoToFood={() => onTabChange('food')}/>
+        <FoodSnapshot todayFood={todayFood} proteinLeft={Math.max(pGoal - macros.protein, 0)}
+          onGo={() => onTabChange('food')} />
       </Card>
 
-      {/* ── PROGRESS PREVIEW ── */}
-      <Card delay={540}>
+      {/* ══ PROGRESS PREVIEW ══ */}
+      <Card delay={560}>
         <div className="flex justify-between items-center mb-3">
           <SectionLabel>Progress</SectionLabel>
           <button onClick={() => onTabChange('progress')}
-            className="text-xs text-forged-purple font-medium hover:text-forged-blue transition-colors -mt-2">
-            See all</button>
+            className="text-xs text-forged-purple font-black hover:text-forged-text transition-colors -mt-2">
+            See all
+          </button>
         </div>
-        <div className="grid grid-cols-3 gap-3 mb-4">
-          <MiniStat label="Weight" value={stats ? `${stats.currentWeight} lbs` : '--'} icon={I.scale} color="purple"/>
-          <MiniStat label="Lost" value={stats ? `${stats.weightLost} lbs` : '--'} icon={I.trendDown} color="green"/>
-          <MiniStat label="Streak" value={stats ? `${stats.currentStreak}d` : '--'} icon={I.flame} color="gold"/>
+        <div className="grid grid-cols-3 gap-3 mb-3">
+          <StatChip label="Weight" value={stats ? `${stats.currentWeight}` : '--'} unit="lbs" />
+          <StatChip label="Lost" value={stats?.weightLost ? `-${stats.weightLost}` : '--'} unit="lbs" accent />
+          <StatChip label="Streak" value={stats ? `${stats.currentStreak}` : '--'} unit="days" />
         </div>
-        <MiniWeightChart data={stats?.recentWeights ?? []}/>
+        <MiniWeightChart data={stats?.recentWeights ?? []} />
       </Card>
 
-      {/* ── MOTIVATION ── */}
-      <Card delay={620}>
-        <InsightCard macros={macros} stats={stats} streak={stats?.currentStreak ?? 0} proteinGoal={pGoal}/>
+      {/* ══ INSIGHT ══ */}
+      <Card delay={640}>
+        <InsightCard macros={macros} streak={stats?.currentStreak ?? 0} proteinGoal={pGoal} />
       </Card>
     </div>
   )
 }
 
-// ── CALORIE RING ──
-function CalorieRing({ pct }: { pct: number }) {
-  const sz = 80, s = 7, r = (sz - s) / 2, c = 2 * Math.PI * r
+// ── HERO CALORIE RING ──
+function HeroCalorieRing({ pct }: { pct: number }) {
+  const sz = 110
+  const s = 9
+  const r = (sz - s) / 2
+  const c = 2 * Math.PI * r
   const [off, setOff] = useState(c)
-  useEffect(() => { const t = setTimeout(() => setOff(c * (1 - pct)), 150); return () => clearTimeout(t) }, [pct, c])
+
+  useEffect(() => {
+    const t = setTimeout(() => setOff(c * (1 - pct)), 200)
+    return () => clearTimeout(t)
+  }, [pct, c])
 
   return (
     <div className="relative flex-shrink-0" style={{ width: sz, height: sz }}>
       <svg width={sz} height={sz} style={{ transform: 'rotate(-90deg)' }}>
-        <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="var(--border)" strokeWidth={s}/>
-        <circle cx={sz/2} cy={sz/2} r={r} fill="none" stroke="#9b59b6" strokeWidth={s}
-          strokeDasharray={c} strokeDashoffset={off} strokeLinecap="round"
-          style={{ transition: 'stroke-dashoffset 1.2s cubic-bezier(0.22,1,0.36,1)',
-            filter: 'drop-shadow(0 0 6px rgba(155,89,182,0.3))' }}/>
+        <circle cx={sz / 2} cy={sz / 2} r={r}
+          fill="none" stroke="var(--border)" strokeWidth={s} opacity={0.4} />
+        <circle cx={sz / 2} cy={sz / 2} r={r}
+          fill="none" stroke="#9b59b6" strokeWidth={s}
+          strokeDasharray={c} strokeDashoffset={off}
+          strokeLinecap="round"
+          style={{
+            transition: 'stroke-dashoffset 1.5s cubic-bezier(0.22, 1, 0.36, 1)',
+            filter: 'drop-shadow(0 0 12px rgba(155, 89, 182, 0.5))',
+          }} />
       </svg>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <Icon d={I.flame} size={20} className="text-forged-purple"/>
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <span className="text-2xl font-black text-forged-purple tabular-nums">
+          {Math.round(pct * 100)}%
+        </span>
       </div>
     </div>
   )
 }
 
-// ── FASTING MINI (inline) ──
+// ── FASTING MINI — NaN-safe ──
 function FastingMini({ fast }: { fast: FastingLog }) {
   const [now, setNow] = useState(Date.now())
-  useEffect(() => { const i = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(i) }, [])
-  const elapsed = (now - new Date(fast.startTime).getTime()) / 3600000
-  const rem = Math.max(fast.targetHours - elapsed, 0)
-  const h = Math.floor(rem), m = Math.floor((rem % 1) * 60)
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(i)
+  }, [])
+
+  const startMs = new Date(fast.startTime).getTime()
+  if (isNaN(startMs)) {
+    return (
+      <div>
+        <p className="text-sm font-bold text-forged-text">Fasting</p>
+        <p className="text-xs text-forged-text3">Timer unavailable</p>
+      </div>
+    )
+  }
+
+  const elapsed = Math.max((now - startMs) / 3600000, 0)
+  const remaining = Math.max(fast.targetHours - elapsed, 0)
+  const rH = Math.floor(remaining)
+  const rM = Math.floor((remaining % 1) * 60)
+  const eH = Math.floor(elapsed)
+  const eM = Math.floor((elapsed % 1) * 60)
+
   return (
     <div>
-      <p className="text-sm font-semibold text-forged-green tabular-nums">{h}h {m}m remaining</p>
+      <p className="text-sm font-black text-forged-green tabular-nums">
+        {rH}h {rM}m remaining
+      </p>
       <p className="text-xs text-forged-text3">
-        {Math.floor(elapsed)}h elapsed / {fast.targetHours}h window</p>
+        {eH}h {eM}m elapsed / {fast.targetHours}h window
+      </p>
     </div>
   )
 }
 
-// ── MACRO CARD ──
-function MacroCard({ label, current, goal, color, unit }: {
-  label: string; current: number; goal: number; color: string; unit: string
+// ── MACRO CARD — purple-primary, hover depth ──
+function MacroCard({ label, current, goal }: {
+  label: string; current: number; goal: number
 }) {
   const pct = Math.min((current / goal) * 100, 100)
   const over = current > goal
   const anim = useAnimNum(current, 800)
-  const cMap: Record<string, { bar: string; text: string; bg: string }> = {
-    blue: { bar: 'bg-forged-blue', text: 'text-forged-blue', bg: 'bg-forged-blue/10' },
-    gold: { bar: 'bg-forged-gold', text: 'text-forged-gold', bg: 'bg-forged-gold/10' },
-    red: { bar: 'bg-forged-red', text: 'text-forged-red', bg: 'bg-forged-red/10' },
-    green: { bar: 'bg-forged-green', text: 'text-forged-green', bg: 'bg-forged-green/10' },
-    purple: { bar: 'bg-forged-purple', text: 'text-forged-purple', bg: 'bg-forged-purple/10' },
-  }
-  const c = cMap[color] || cMap.gold
 
   return (
-    <div className="bg-forged-bg border border-forged-border rounded-xl p-3">
-      <p className="text-[11px] text-forged-text3 font-medium mb-1">{label}</p>
-      <p className="text-lg font-bold text-forged-text tabular-nums">{anim}<span className="text-xs font-normal text-forged-text3">{unit}</span></p>
-      <p className="text-[10px] text-forged-text3 mb-2">/ {goal}{unit}</p>
-      <div className={`h-1.5 rounded-full ${c.bg} overflow-hidden`}>
-        <div className={`h-full rounded-full ${c.bar} transition-all duration-1000 ease-out`} style={{ width: `${pct}%` }}/>
+    <div className="bg-forged-bg border border-forged-border rounded-xl p-3
+      hover:border-forged-purple/30 hover:shadow-md hover:shadow-forged-purple/5
+      transition-all duration-200">
+      <p className="text-[10px] text-forged-text3 font-bold uppercase tracking-wider mb-1">{label}</p>
+      <p className="text-xl font-black text-forged-text tabular-nums leading-none">
+        {anim}<span className="text-[11px] font-medium text-forged-text3 ml-0.5">g</span>
+      </p>
+      <p className="text-[10px] text-forged-text3 mt-0.5 mb-2">/ {goal}g</p>
+      <div className="h-2 rounded-full bg-forged-surface2 overflow-hidden">
+        <div className="h-full rounded-full bg-forged-purple transition-all duration-1000 ease-out"
+          style={{ width: `${pct}%` }} />
       </div>
-      {over && <p className={`text-[10px] ${c.text} font-semibold mt-1`}>+{current - goal}{unit} over</p>}
+      {over && <p className="text-[10px] text-forged-red font-black mt-1">+{current - goal}g over</p>}
     </div>
   )
 }
 
-// ── MINI STAT ──
-function MiniStat({ label, value, icon, color }: {
-  label: string; value: string; icon: React.ReactNode; color: string
-}) {
-  const cMap: Record<string, string> = {
-    blue: 'bg-forged-blue/10 text-forged-blue',
-    gold: 'bg-forged-gold/10 text-forged-gold',
-    red: 'bg-forged-red/10 text-forged-red',
-    green: 'bg-forged-green/10 text-forged-green',
-    purple: 'bg-forged-purple/10 text-forged-purple',
-  }
+// ── MACRO CARD SMALL — matching style ──
+function MacroCardSmall({ label, value, pct }: { label: string; value: string; pct: number }) {
   return (
-    <div className="bg-forged-bg border border-forged-border rounded-xl p-3 flex items-center gap-2.5">
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${cMap[color]}`}>
-        <Icon d={icon} size={15}/>
+    <div className="bg-forged-bg border border-forged-border rounded-xl p-3
+      hover:border-forged-purple/30 transition-all duration-200">
+      <div className="flex justify-between items-center mb-2">
+        <p className="text-[10px] text-forged-text3 font-bold uppercase tracking-wider">{label}</p>
+        <p className="text-sm font-black text-forged-text tabular-nums">{value}</p>
       </div>
-      <div>
-        <p className="text-[10px] text-forged-text3">{label}</p>
-        <p className="text-sm font-semibold text-forged-text tabular-nums">{value}</p>
+      <div className="h-1.5 rounded-full bg-forged-surface2 overflow-hidden">
+        <div className="h-full rounded-full bg-forged-purple/60 transition-all duration-700"
+          style={{ width: `${Math.min(pct * 100, 100)}%` }} />
       </div>
     </div>
   )
 }
 
-// ── QUICK ACTION ──
-function QuickAction({ icon, label, color, onClick }: {
-  icon: React.ReactNode; label: string; color: string; onClick?: () => void
+// ── QUICK ACTION — purple-only ──
+function QuickAction({ icon, label, onClick }: {
+  icon: React.ReactNode; label: string; onClick?: () => void
 }) {
-  const cMap: Record<string, string> = {
-    blue: 'bg-forged-blue/10 text-forged-blue',
-    gold: 'bg-forged-gold/10 text-forged-gold',
-    red: 'bg-forged-red/10 text-forged-red',
-    green: 'bg-forged-green/10 text-forged-green',
-    purple: 'bg-forged-purple/10 text-forged-purple',
-  }
   return (
     <button onClick={onClick}
       className="flex flex-col items-center gap-2 py-3 rounded-xl
-        hover:bg-forged-bg active:scale-95 transition-all">
-      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${cMap[color]}`}>
-        <Icon d={icon} size={20} sw={2}/>
+        hover:bg-forged-surface2 active:scale-95 transition-all duration-150 group">
+      <div className="w-12 h-12 rounded-2xl bg-forged-purple/10 flex items-center justify-center
+        group-hover:bg-forged-purple/20 group-hover:shadow-md group-hover:shadow-forged-purple/10
+        transition-all duration-200">
+        <Icon d={icon} size={20} sw={2} className="text-forged-purple" />
       </div>
-      <span className="text-[11px] text-forged-text2 font-medium text-center leading-tight">{label}</span>
+      <span className="text-[10px] text-forged-text2 font-semibold text-center leading-tight">{label}</span>
     </button>
   )
 }
@@ -656,108 +800,97 @@ function QuickAction({ icon, label, color, onClick }: {
 // ── CHECK ITEM ──
 function CheckItem({ done, label }: { done: boolean; label: string }) {
   return (
-    <div className="flex items-center gap-3 py-2">
-      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0
-        ${done ? 'bg-forged-green/20' : 'bg-forged-bg border border-forged-border'}`}>
-        {done && <Icon d={I.check} size={12} sw={2.5} className="text-forged-green"/>}
+    <div className="flex items-center gap-3 py-2.5 border-b border-forged-border/50 last:border-0">
+      <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all
+        ${done ? 'bg-forged-green shadow-sm shadow-forged-green/20' : 'border-2 border-forged-border'}`}>
+        {done && <Icon d={I.check} size={11} sw={3} className="text-white" />}
       </div>
-      <span className={`text-sm ${done ? 'text-forged-text2' : 'text-forged-text3'}`}>{label}</span>
+      <span className={`text-sm font-medium ${done ? 'text-forged-text' : 'text-forged-text3'}`}>{label}</span>
+    </div>
+  )
+}
+
+// ── STAT CHIP ──
+function StatChip({ label, value, unit, accent }: {
+  label: string; value: string; unit: string; accent?: boolean
+}) {
+  return (
+    <div className="bg-forged-bg border border-forged-border rounded-xl p-3 text-center
+      hover:border-forged-purple/25 transition-all">
+      <p className="text-[10px] text-forged-text3 font-bold uppercase tracking-wider">{label}</p>
+      <p className={`text-xl font-black tabular-nums mt-1
+        ${accent ? 'text-forged-green' : 'text-forged-text'}`}>
+        {value}
+      </p>
+      <p className="text-[10px] text-forged-text3">{unit}</p>
     </div>
   )
 }
 
 // ── WORKOUT SNAPSHOT ──
-function WorkoutSnapshot({ onGoToWorkouts }: { onGoToWorkouts: () => void }) {
+function WorkoutSnapshot({ onGo }: { onGo: () => void }) {
   const [logs, setLogs] = useState<any[]>([])
-  useEffect(() => { api.workout.getLogs(3).then(setLogs).catch(console.error) }, [])
-
-  if (logs.length === 0) return (
-    <div className="flex items-center justify-between py-2">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-forged-purple/10 flex items-center justify-center">
-          <Icon d={I.workout} size={18} className="text-forged-purple"/>
-        </div>
-        <div>
-          <p className="text-sm text-forged-text2">No workouts yet</p>
-          <p className="text-xs text-forged-text3">Start your first session</p>
-        </div>
-      </div>
-      <button onClick={onGoToWorkouts}
-        className="px-3 py-1.5 rounded-lg text-xs font-semibold
-          bg-forged-purple/10 text-forged-purple border border-forged-purple/20
-          hover:bg-forged-purple hover:text-white transition-all">
-        Start</button>
-    </div>
-  )
+  useEffect(() => { api.workout.getLogs(1).then(setLogs).catch(console.error) }, [])
 
   const last = logs[0]
   return (
     <div className="flex items-center justify-between">
       <div className="flex items-center gap-3">
         <div className="w-10 h-10 rounded-xl bg-forged-purple/10 flex items-center justify-center">
-          <Icon d={I.workout} size={18} className="text-forged-purple"/>
+          <Icon d={I.workout} size={18} className="text-forged-purple" />
         </div>
         <div>
-          <p className="text-sm font-semibold text-forged-text">{last.dayName || last.planType || 'Workout'}</p>
+          <p className="text-sm font-bold text-forged-text">
+            {last?.dayName || last?.planType || 'No workout yet'}
+          </p>
           <p className="text-xs text-forged-text3">
-            {new Date(last.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-            {last.durationMinutes ? ` \u00B7 ${last.durationMinutes}min` : ''}</p>
+            {last
+              ? new Date(last.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+              : 'Start your first'}
+          </p>
         </div>
       </div>
-      <button onClick={onGoToWorkouts}
-        className="px-3 py-1.5 rounded-lg text-xs font-semibold
+      <button onClick={onGo}
+        className="px-4 py-2 rounded-xl text-xs font-black
           bg-forged-purple/10 text-forged-purple border border-forged-purple/20
-          hover:bg-forged-purple hover:text-white transition-all">
-        Go</button>
+          hover:bg-forged-purple hover:text-white active:scale-95 transition-all">
+        {last ? 'Go' : 'Start'}
+      </button>
     </div>
   )
 }
 
 // ── FOOD SNAPSHOT ──
-function FoodSnapshot({ todayFood, macros, proteinGoal, onGoToFood }: {
-  todayFood: FoodLog[]; macros: Macros; proteinGoal: number; onGoToFood: () => void
+function FoodSnapshot({ todayFood, proteinLeft, onGo }: {
+  todayFood: FoodLog[]; proteinLeft: number; onGo: () => void
 }) {
-  const proteinLeft = Math.max(proteinGoal - macros.protein, 0)
-  if (todayFood.length === 0) return (
-    <div className="flex items-center justify-between py-2">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-xl bg-forged-gold/10 flex items-center justify-center">
-          <Icon d={I.food} size={18} className="text-forged-gold"/>
-        </div>
-        <div>
-          <p className="text-sm text-forged-text2">No meals logged</p>
-          <p className="text-xs text-forged-text3">Tap to add your first meal</p>
-        </div>
-      </div>
-      <button onClick={onGoToFood}
-        className="px-3 py-1.5 rounded-lg text-xs font-semibold
-          bg-forged-gold/10 text-forged-gold border border-forged-gold/20
-          hover:bg-forged-gold hover:text-white transition-all">
-        Add</button>
-    </div>
-  )
+  const last = todayFood[todayFood.length - 1]
 
-  const lastMeal = todayFood[todayFood.length - 1]
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-forged-gold/10 flex items-center justify-center">
-            <Icon d={I.food} size={18} className="text-forged-gold"/>
+          <div className="w-10 h-10 rounded-xl bg-forged-purple/10 flex items-center justify-center">
+            <Icon d={I.food} size={18} className="text-forged-purple" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-forged-text">{lastMeal.food?.name || 'Meal'}</p>
-            <p className="text-xs text-forged-text3">{lastMeal.mealType} - {lastMeal.food?.calories ?? 0} cal</p>
+            <p className="text-sm font-bold text-forged-text">
+              {last?.food?.name || 'No meals yet'}
+            </p>
+            <p className="text-xs text-forged-text3">
+              {last ? `${last.mealType} - ${last.food?.calories ?? 0} cal` : 'Log your first meal'}
+            </p>
           </div>
         </div>
-        <button onClick={onGoToFood}
-          className="px-3 py-1.5 rounded-lg text-xs font-semibold
-            bg-forged-gold/10 text-forged-gold border border-forged-gold/20
-            hover:bg-forged-gold hover:text-white transition-all">
-          Add</button>
+        <button onClick={onGo}
+          className="px-4 py-2 rounded-xl text-xs font-black
+            bg-forged-purple/10 text-forged-purple border border-forged-purple/20
+            hover:bg-forged-purple hover:text-white active:scale-95 transition-all">
+          Add
+        </button>
       </div>
-      {proteinLeft > 0 && (
-        <p className="text-xs text-forged-blue font-medium mt-2">{proteinLeft}g protein remaining today</p>
+      {proteinLeft > 0 && todayFood.length > 0 && (
+        <p className="text-xs text-forged-purple font-bold mt-2">{proteinLeft}g protein remaining</p>
       )}
     </div>
   )
@@ -766,85 +899,97 @@ function FoodSnapshot({ todayFood, macros, proteinGoal, onGoToFood }: {
 // ── MINI WEIGHT CHART ──
 function MiniWeightChart({ data }: { data: WeightEntry[] }) {
   const [drawn, setDrawn] = useState(false)
-  useEffect(() => { const t = setTimeout(() => setDrawn(true), 300); return () => clearTimeout(t) }, [])
-  if (data.length < 2) return <p className="text-xs text-forged-text3 text-center py-2">Need 2+ entries</p>
+  useEffect(() => {
+    const t = setTimeout(() => setDrawn(true), 300)
+    return () => clearTimeout(t)
+  }, [])
+
+  if (data.length < 2) {
+    return <p className="text-xs text-forged-text3 text-center py-2">Need 2+ entries for chart</p>
+  }
 
   const recent = data.slice(-10)
-  const w = 500, h = 80, px = 20, py = 8
+  const w = 500, h = 60, px = 10, py = 6
   const vals = recent.map(d => d.weight)
-  const mn = Math.min(...vals) - 0.5, mx = Math.max(...vals) + 0.5
+  const mn = Math.min(...vals) - 0.5
+  const mx = Math.max(...vals) + 0.5
   const pts = recent.map((d, i) => ({
     x: px + (i / (recent.length - 1)) * (w - 2 * px),
     y: py + ((mx - d.weight) / (mx - mn)) * (h - 2 * py),
   }))
   const pathD = pts.map((p, i) => {
     if (i === 0) return `M ${p.x} ${p.y}`
-    const prev = pts[i - 1], cpx = (prev.x + p.x) / 2
+    const prev = pts[i - 1]
+    const cpx = (prev.x + p.x) / 2
     return `C ${cpx} ${prev.y}, ${cpx} ${p.y}, ${p.x} ${p.y}`
   }).join(' ')
 
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto">
       <defs>
-        <linearGradient id="mg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#9b59b6" stopOpacity="0.2"/>
-          <stop offset="100%" stopColor="#9b59b6" stopOpacity="0"/>
+        <linearGradient id="mcg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="#9b59b6" stopOpacity="0.15" />
+          <stop offset="100%" stopColor="#9b59b6" stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={pathD + ` L ${pts[pts.length-1].x} ${h} L ${pts[0].x} ${h} Z`}
-        fill="url(#mg)" opacity={drawn ? 1 : 0} style={{ transition: 'opacity 0.6s ease' }}/>
-      <path d={pathD} fill="none" stroke="#9b59b6" strokeWidth="1.5" strokeLinecap="round"
-        opacity={drawn ? 1 : 0} style={{ transition: 'opacity 0.6s ease 0.2s' }}/>
+      <path d={pathD + ` L ${pts[pts.length - 1].x} ${h} L ${pts[0].x} ${h} Z`}
+        fill="url(#mcg)" opacity={drawn ? 1 : 0}
+        style={{ transition: 'opacity 0.5s ease' }} />
+      <path d={pathD} fill="none" stroke="#9b59b6" strokeWidth="2" strokeLinecap="round"
+        opacity={drawn ? 1 : 0}
+        style={{ transition: 'opacity 0.5s ease 0.2s' }} />
     </svg>
   )
 }
 
 // ── INSIGHT CARD ──
-function InsightCard({ macros, stats, streak, proteinGoal }: {
-  macros: Macros; stats: DashboardStats | null; streak: number; proteinGoal: number
+function InsightCard({ macros, streak, proteinGoal }: {
+  macros: Macros; streak: number; proteinGoal: number
 }) {
-  const proteinGap = proteinGoal - macros.protein
-  let msg = '', icon = I.zap, color = 'text-forged-purple'
+  const gap = proteinGoal - macros.protein
+  let msg: string
+  let icon = I.zap
 
   if (streak >= 3) {
-    msg = `${streak}-day streak! Keep it going.`
-    icon = I.flame; color = 'text-forged-gold'
-  } else if (proteinGap > 0 && proteinGap < 40) {
-    msg = `You're ${proteinGap}g short on protein today.`
-    icon = I.target; color = 'text-forged-blue'
+    msg = `${streak}-day streak! Keep pushing.`
+    icon = I.flame
+  } else if (gap > 0 && gap < 40) {
+    msg = `You're ${gap}g short on protein today.`
+    icon = I.target
   } else if (macros.cal > 0 && macros.cal <= 2400) {
-    msg = 'You\'re within your calorie goal. Nice work.'
-    icon = I.check; color = 'text-forged-green'
+    msg = 'Within your calorie goal. Solid work.'
+    icon = I.check
   } else {
-    msg = 'Log your meals and workouts to unlock insights.'
-    icon = I.zap; color = 'text-forged-purple'
+    msg = 'Log meals and workouts to unlock insights.'
+    icon = I.zap
   }
 
   return (
     <div className="flex items-center gap-3">
-      <div className={`w-10 h-10 rounded-xl flex items-center justify-center
-        ${color.replace('text-', 'bg-')}/10`}>
-        <Icon d={icon} size={18} className={color}/>
+      <div className="w-10 h-10 rounded-xl bg-forged-purple/10 flex items-center justify-center flex-shrink-0">
+        <Icon d={icon} size={18} className="text-forged-purple" />
       </div>
-      <p className="text-sm text-forged-text2 flex-1">{msg}</p>
+      <p className="text-sm text-forged-text2 font-medium flex-1">{msg}</p>
     </div>
   )
 }
 
 // ══════════════════════════════════
-// FOOD TAB (scaffold)
+// FOOD TAB — scaffold
 // ══════════════════════════════════
 function FoodTab() {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold text-forged-text">Food Log</h1>
+      <h1 className="text-2xl font-black text-forged-text">Food Log</h1>
       <Card delay={60}>
         <div className="flex flex-col items-center py-10 gap-3">
-          <div className="w-14 h-14 rounded-2xl bg-forged-gold/10 flex items-center justify-center">
-            <Icon d={I.food} size={28} className="text-forged-gold"/></div>
-          <p className="text-base font-semibold text-forged-text">Log your meals</p>
+          <div className="w-14 h-14 rounded-2xl bg-forged-purple/10 flex items-center justify-center">
+            <Icon d={I.food} size={28} className="text-forged-purple" />
+          </div>
+          <p className="text-base font-bold text-forged-text">Log your meals</p>
           <p className="text-sm text-forged-text3 text-center max-w-[280px]">
-            Search foods, log meals by type, and track your daily macros</p>
+            Search foods, log by meal type, track macros
+          </p>
         </div>
       </Card>
     </div>
@@ -852,19 +997,21 @@ function FoodTab() {
 }
 
 // ══════════════════════════════════
-// WORKOUTS TAB (scaffold)
+// WORKOUTS TAB — scaffold
 // ══════════════════════════════════
 function WorkoutsTab() {
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold text-forged-text">Workouts</h1>
+      <h1 className="text-2xl font-black text-forged-text">Workouts</h1>
       <Card delay={60}>
         <div className="flex flex-col items-center py-10 gap-3">
           <div className="w-14 h-14 rounded-2xl bg-forged-purple/10 flex items-center justify-center">
-            <Icon d={I.workout} size={28} className="text-forged-purple"/></div>
-          <p className="text-base font-semibold text-forged-text">Workout Builder</p>
+            <Icon d={I.workout} size={28} className="text-forged-purple" />
+          </div>
+          <p className="text-base font-bold text-forged-text">Workout Builder</p>
           <p className="text-sm text-forged-text3 text-center max-w-[280px]">
-            PPL plans, exercise logging, and workout history coming next</p>
+            PPL plans, exercise logging, workout history
+          </p>
         </div>
       </Card>
     </div>
@@ -874,7 +1021,7 @@ function WorkoutsTab() {
 // ══════════════════════════════════
 // PROGRESS TAB
 // ══════════════════════════════════
-function ProgressTab({ stats }: { stats: DashboardStats | null }) {
+function ProgressTab() {
   const [weight, setWeight] = useState('')
   const [notes, setNotes] = useState('')
   const [saving, setSaving] = useState(false)
@@ -882,6 +1029,7 @@ function ProgressTab({ stats }: { stats: DashboardStats | null }) {
   const [range, setRange] = useState('30d')
 
   useEffect(() => { loadWeights() }, [])
+
   const loadWeights = async () => {
     try { setEntries(await api.weight.getAll(90)) } catch (e) { console.error(e) }
   }
@@ -892,20 +1040,26 @@ function ProgressTab({ stats }: { stats: DashboardStats | null }) {
     setSaving(true)
     try {
       await api.weight.add({ weight: w, date: new Date().toISOString().split('T')[0], notes: notes || undefined })
-      setWeight(''); setNotes(''); await loadWeights()
-    } catch (e) { console.error(e) }
-    finally { setSaving(false) }
+      setWeight('')
+      setNotes('')
+      await loadWeights()
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setSaving(false)
+    }
   }
 
-  const filteredEntries = (() => {
+  const filtered = (() => {
     const days = range === '7d' ? 7 : range === '30d' ? 30 : 90
-    const cut = new Date(); cut.setDate(cut.getDate() - days)
+    const cut = new Date()
+    cut.setDate(cut.getDate() - days)
     return entries.filter(w => new Date(w.date) >= cut)
   })()
 
   return (
     <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-bold text-forged-text">Progress</h1>
+      <h1 className="text-2xl font-black text-forged-text">Progress</h1>
 
       <Card delay={60}>
         <SectionLabel>Log weight</SectionLabel>
@@ -913,35 +1067,48 @@ function ProgressTab({ stats }: { stats: DashboardStats | null }) {
           <input type="number" step="0.1" placeholder="e.g. 181.5" value={weight}
             onChange={e => setWeight(e.target.value)}
             className="flex-1 px-4 py-2.5 bg-forged-bg border border-forged-border rounded-xl
-              text-forged-text text-sm placeholder:text-forged-text3 focus:border-forged-purple/50 transition-colors"/>
+              text-forged-text text-sm placeholder:text-forged-text3
+              focus:border-forged-purple/50 transition-colors" />
           <input type="text" placeholder="Notes" value={notes}
             onChange={e => setNotes(e.target.value)}
             className="flex-1 px-4 py-2.5 bg-forged-bg border border-forged-border rounded-xl
-              text-forged-text text-sm placeholder:text-forged-text3 focus:border-forged-purple/50 transition-colors"/>
+              text-forged-text text-sm placeholder:text-forged-text3
+              focus:border-forged-purple/50 transition-colors" />
           <button onClick={handleLog} disabled={saving}
-            className="px-5 py-2.5 bg-forged-purple text-white font-semibold rounded-xl text-sm
-              hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50">
-            {saving ? '...' : 'Log'}</button>
+            className="px-5 py-2.5 bg-forged-purple text-white font-black rounded-xl text-sm
+              hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50">
+            {saving ? '...' : 'Log'}
+          </button>
         </div>
       </Card>
 
       <Card delay={160}>
         <SectionLabel>Weight trend</SectionLabel>
-        <SegmentedControl options={['7d', '30d', '90d']} active={range} onChange={setRange}/>
-        <FullWeightChart data={filteredEntries}/>
+        <SegmentedControl options={['7d', '30d', '90d']} active={range} onChange={setRange} />
+        <FullWeightChart data={filtered} />
       </Card>
 
       <Card delay={260}>
         <SectionLabel>History</SectionLabel>
-        {entries.length === 0 ? <p className="text-sm text-forged-text3 py-2">No entries yet</p> : (
+        {entries.length === 0 ? (
+          <p className="text-sm text-forged-text3 py-2">No entries yet</p>
+        ) : (
           <div className="flex flex-col">
             {entries.slice(0, 20).map(e => (
-              <div key={e.id} className="flex justify-between items-center py-3 border-b border-forged-border last:border-0">
+              <div key={e.id}
+                className="flex justify-between items-center py-3 border-b border-forged-border last:border-0">
                 <span className="text-sm text-forged-text2">
-                  {new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  {new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric'
+                  })}
+                </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-forged-text">{e.weight} lbs</span>
-                  {e.notes && <span className="text-[10px] text-forged-text3 bg-forged-surface2 px-2 py-0.5 rounded-full">{e.notes}</span>}
+                  <span className="text-sm font-black text-forged-text">{e.weight} lbs</span>
+                  {e.notes && (
+                    <span className="text-[10px] text-forged-text3 bg-forged-surface2 px-2 py-0.5 rounded-full">
+                      {e.notes}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -952,60 +1119,83 @@ function ProgressTab({ stats }: { stats: DashboardStats | null }) {
   )
 }
 
+// ── FULL WEIGHT CHART ──
 function FullWeightChart({ data }: { data: WeightEntry[] }) {
   const [drawn, setDrawn] = useState(false)
-  useEffect(() => { setDrawn(false); const t = setTimeout(() => setDrawn(true), 200); return () => clearTimeout(t) }, [data])
-  if (data.length < 2) return <p className="text-sm text-forged-text3 text-center py-4">Need 2+ entries</p>
+  useEffect(() => {
+    setDrawn(false)
+    const t = setTimeout(() => setDrawn(true), 200)
+    return () => clearTimeout(t)
+  }, [data])
+
+  if (data.length < 2) {
+    return <p className="text-sm text-forged-text3 text-center py-4">Need 2+ entries</p>
+  }
 
   const w = 600, h = 160, px = 44, py = 16
   const vals = data.map(d => d.weight)
-  const mn = Math.min(...vals) - 1, mx = Math.max(...vals) + 1
+  const mn = Math.min(...vals) - 1
+  const mx = Math.max(...vals) + 1
   const pts = data.map((d, i) => ({
     x: px + (i / (data.length - 1)) * (w - 2 * px),
     y: py + ((mx - d.weight) / (mx - mn)) * (h - 2 * py),
   }))
   const pathD = pts.map((p, i) => {
     if (i === 0) return `M ${p.x} ${p.y}`
-    const prev = pts[i - 1], cpx = (prev.x + p.x) / 2
+    const prev = pts[i - 1]
+    const cpx = (prev.x + p.x) / 2
     return `C ${cpx} ${prev.y}, ${cpx} ${p.y}, ${p.x} ${p.y}`
   }).join(' ')
-  const fmtDate = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  const fmtDate = (s: string) =>
+    new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto">
       <defs>
         <linearGradient id="fwg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#9b59b6" stopOpacity="0.25"/>
-          <stop offset="100%" stopColor="#9b59b6" stopOpacity="0"/>
-        </linearGradient>
-        <linearGradient id="fwl" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%" stopColor="#9b59b6"/><stop offset="100%" stopColor="#3498db"/>
+          <stop offset="0%" stopColor="#9b59b6" stopOpacity="0.25" />
+          <stop offset="100%" stopColor="#9b59b6" stopOpacity="0" />
         </linearGradient>
       </defs>
       {[0, 0.5, 1].map((f, i) => {
         const y = py + f * (h - 2 * py)
-        return <line key={i} x1={px} y1={y} x2={w - px} y2={y} stroke="var(--border)" strokeWidth="0.5"/>
+        return <line key={i} x1={px} y1={y} x2={w - px} y2={y} stroke="var(--border)" strokeWidth="0.5" />
       })}
       {data.filter((_, i) => i % Math.max(1, Math.floor(data.length / 5)) === 0).map(d => {
         const idx = data.indexOf(d)
-        return <text key={idx} x={pts[idx].x} y={h - 2} fill="var(--text3)" fontSize="9" textAnchor="middle"
-          fontFamily="-apple-system,system-ui,sans-serif">{fmtDate(d.date)}</text>
+        return (
+          <text key={idx} x={pts[idx].x} y={h - 2} fill="var(--text3)" fontSize="9"
+            textAnchor="middle" fontFamily="-apple-system, system-ui, sans-serif">
+            {fmtDate(d.date)}
+          </text>
+        )
       })}
-      <path d={pathD + ` L ${pts[pts.length-1].x} ${h} L ${pts[0].x} ${h} Z`}
-        fill="url(#fwg)" opacity={drawn ? 1 : 0} style={{ transition: 'opacity 0.8s ease 0.2s' }}/>
-      <path d={pathD} fill="none" stroke="url(#fwl)" strokeWidth="2" strokeLinecap="round"
-        style={{ strokeDasharray: drawn ? 'none' : '1200', strokeDashoffset: drawn ? 0 : 1200,
-          transition: 'stroke-dashoffset 1.2s cubic-bezier(0.22,1,0.36,1)' }}/>
+      <path d={pathD + ` L ${pts[pts.length - 1].x} ${h} L ${pts[0].x} ${h} Z`}
+        fill="url(#fwg)" opacity={drawn ? 1 : 0}
+        style={{ transition: 'opacity 0.8s ease 0.2s' }} />
+      <path d={pathD} fill="none" stroke="#9b59b6" strokeWidth="2" strokeLinecap="round"
+        style={{
+          strokeDasharray: drawn ? 'none' : '1200',
+          strokeDashoffset: drawn ? 0 : 1200,
+          transition: 'stroke-dashoffset 1.2s cubic-bezier(0.22, 1, 0.36, 1)',
+        }} />
       {pts.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="3" fill="var(--bg)" stroke="#9b59b6" strokeWidth="1.5"
-          opacity={drawn ? 1 : 0} style={{ transition: `opacity 0.3s ease ${0.2 + i * 0.05}s` }}/>
+        <circle key={i} cx={p.x} cy={p.y} r="3"
+          fill="var(--bg)" stroke="#9b59b6" strokeWidth="1.5"
+          opacity={drawn ? 1 : 0}
+          style={{ transition: `opacity 0.3s ease ${0.2 + i * 0.05}s` }} />
       ))}
-      {drawn && <g>
-        <rect x={pts[pts.length-1].x - 24} y={pts[pts.length-1].y - 24} width="48" height="18" rx="5" fill="#9b59b6"/>
-        <text x={pts[pts.length-1].x} y={pts[pts.length-1].y - 12} fill="#fff" fontSize="10"
-          fontWeight="600" textAnchor="middle" fontFamily="-apple-system,system-ui,sans-serif">
-          {data[data.length-1].weight}</text>
-      </g>}
+      {drawn && (
+        <g>
+          <rect x={pts[pts.length - 1].x - 24} y={pts[pts.length - 1].y - 24}
+            width="48" height="18" rx="5" fill="#9b59b6" />
+          <text x={pts[pts.length - 1].x} y={pts[pts.length - 1].y - 12}
+            fill="#fff" fontSize="10" fontWeight="600" textAnchor="middle"
+            fontFamily="-apple-system, system-ui, sans-serif">
+            {data[data.length - 1].weight}
+          </text>
+        </g>
+      )}
     </svg>
   )
 }
@@ -1019,22 +1209,34 @@ function ProfileTab({ user, onLogout }: { user: User | null; onLogout: () => voi
 
   return (
     <div className="flex flex-col gap-4">
-      {/* Profile header */}
       <Card delay={60}>
         <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-full bg-forged-purple/15 border-2 border-forged-purple/30
-            flex items-center justify-center">
-            <span className="text-2xl font-bold text-forged-purple">
-              {(user?.displayName || user?.username || '?')[0].toUpperCase()}</span>
+          <div className="w-16 h-16 rounded-full bg-forged-purple/20 border-2 border-forged-purple
+            flex items-center justify-center shadow-lg shadow-forged-purple/10">
+            <span className="text-2xl font-black text-forged-purple">
+              {(user?.displayName || user?.username || '?')[0].toUpperCase()}
+            </span>
           </div>
           <div>
-            <p className="text-lg font-bold text-forged-text">{user?.displayName || user?.username}</p>
+            <p className="text-xl font-black text-forged-text">
+              {user?.displayName || user?.username}
+            </p>
             <p className="text-sm text-forged-text3">{user?.email}</p>
           </div>
         </div>
         <div className="flex flex-col">
-          <ProfileRow label="Starting Weight" value={user?.startingWeight ? `${user.startingWeight} lbs` : 'Not set'}/>
-          <ProfileRow label="Goal Weight" value={user?.goalWeight ? `${user.goalWeight} lbs` : 'Not set'}/>
+          <div className="flex justify-between items-center py-3 border-b border-forged-border">
+            <span className="text-xs text-forged-text3 uppercase tracking-wide font-bold">Starting Weight</span>
+            <span className="text-sm text-forged-text font-bold">
+              {user?.startingWeight ? `${user.startingWeight} lbs` : 'Not set'}
+            </span>
+          </div>
+          <div className="flex justify-between items-center py-3">
+            <span className="text-xs text-forged-text3 uppercase tracking-wide font-bold">Goal Weight</span>
+            <span className="text-sm text-forged-text font-bold">
+              {user?.goalWeight ? `${user.goalWeight} lbs` : 'Not set'}
+            </span>
+          </div>
         </div>
       </Card>
 
@@ -1043,29 +1245,23 @@ function ProfileTab({ user, onLogout }: { user: User | null; onLogout: () => voi
           <Card delay={160}>
             <button onClick={toggleTheme}
               className="w-full flex items-center justify-between p-3 rounded-xl
-                bg-forged-bg border border-forged-border hover:border-forged-purple/30 transition-all">
+                bg-forged-bg border border-forged-border
+                hover:border-forged-purple/30 transition-all">
               <div className="flex items-center gap-3">
-                <Icon d={theme === 'dark' ? I.moon : I.sun} size={18} className="text-forged-text2"/>
-                <span className="text-sm text-forged-text">Theme</span>
+                <Icon d={theme === 'dark' ? I.moon : I.sun} size={18} className="text-forged-text2" />
+                <span className="text-sm text-forged-text font-medium">Theme</span>
               </div>
-              <span className="text-xs text-forged-text3 capitalize">{theme}</span>
+              <span className="text-xs text-forged-text3 capitalize font-bold">{theme}</span>
             </button>
           </Card>
           <button onClick={onLogout}
             className="w-full py-3 bg-forged-surface border border-forged-border rounded-xl
-              text-forged-text3 text-sm font-semibold hover:border-forged-red/30 hover:text-forged-red transition-all">
-            Sign Out</button>
+              text-forged-text3 text-sm font-bold
+              hover:border-forged-red/30 hover:text-forged-red transition-all">
+            Sign Out
+          </button>
         </>
       )}
-    </div>
-  )
-}
-
-function ProfileRow({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-between items-center py-3 border-b border-forged-border last:border-0">
-      <span className="text-xs text-forged-text3 uppercase tracking-wide">{label}</span>
-      <span className="text-sm text-forged-text font-medium">{value}</span>
     </div>
   )
 }
