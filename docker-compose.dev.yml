@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  forged-frontend-dev:
+    image: node:20-alpine
+    container_name: forged-frontend-dev
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    depends_on:
+      - forged-api
+    networks:
+      - forged-net
+
+volumes:
+  forged_pgdata:
+  frontend_node_modules:
+
+networks:
+  forged-net:
+    driver: bridge
