@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { api } from '../hooks/api'
-import type { WorkoutLog, ExerciseLog } from '../types'
+import type { WorkoutLog } from '../types'
 
 // ══════════════════════════════════
 // ICONS
@@ -17,6 +17,7 @@ const I = {
   trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></>,
   edit: <><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
   flag: <><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></>,
+  layers: <><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>,
 }
 
 function Icon({ d, size = 20, className = '', sw = 1.8 }: {
@@ -32,15 +33,14 @@ function Icon({ d, size = 20, className = '', sw = 1.8 }: {
 // ══════════════════════════════════
 // SHARED UI
 // ══════════════════════════════════
-function Card({ children, className = '', delay = 0, hero = false }: {
-  children: React.ReactNode; className?: string; delay?: number; hero?: boolean
+function Card({ children, className = '', delay = 0 }: {
+  children: React.ReactNode; className?: string; delay?: number
 }) {
   const [v, setV] = useState(false)
   useEffect(() => { const t = setTimeout(() => setV(true), delay); return () => clearTimeout(t) }, [delay])
   return (
     <div className={`bg-forged-surface border border-forged-border rounded-2xl p-5
       transition-all duration-500 ease-out hover:border-forged-purple/20
-      ${hero ? 'shadow-lg shadow-forged-purple/5' : ''}
       ${v ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'} ${className}`}>
       {children}
     </div>
@@ -48,23 +48,64 @@ function Card({ children, className = '', delay = 0, hero = false }: {
 }
 
 // ══════════════════════════════════
-// WORKOUT PAGE (3 views)
+// TYPES — stored in localStorage
 // ══════════════════════════════════
-type View = 'home' | 'active' | 'builder'
+interface RoutineExercise {
+  name: string
+  sets: number
+  reps: string
+  intensity: string  // light | moderate | heavy | max
+  notes: string
+}
+
+interface RoutineDay {
+  dayName: string
+  exercises: RoutineExercise[]
+}
+
+interface Routine {
+  id: string
+  name: string
+  days: RoutineDay[]
+  createdAt: string
+}
+
+// ── LocalStorage helpers ──
+const STORAGE_KEY = 'forged_routines'
+
+function loadRoutines(): Routine[] {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]') }
+  catch { return [] }
+}
+
+function saveRoutines(routines: Routine[]) {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(routines))
+}
+
+// ══════════════════════════════════
+// WORKOUT PAGE (router)
+// ══════════════════════════════════
+type View = 'home' | 'active' | 'builder' | 'edit'
 
 export default function WorkoutPage() {
   const [view, setView] = useState<View>('home')
   const [activeWorkoutId, setActiveWorkoutId] = useState<string | null>(null)
+  const [activeDay, setActiveDay] = useState<RoutineDay | null>(null)
+  const [editRoutineId, setEditRoutineId] = useState<string | null>(null)
+  const [routines, setRoutines] = useState<Routine[]>(loadRoutines)
 
-  const startWorkout = async (planType?: string, dayName?: string) => {
+  const refreshRoutines = () => setRoutines(loadRoutines())
+
+  const startWorkout = async (dayName: string, day?: RoutineDay) => {
     try {
       const today = new Date().toISOString().split('T')[0]
       const result = await api.workout.create({
         date: today,
-        planType: planType || 'custom',
-        dayName: dayName || 'Workout',
+        planType: 'custom',
+        dayName,
       })
       setActiveWorkoutId(result.id)
+      setActiveDay(day || null)
       setView('active')
     } catch (e) { console.error(e) }
   }
@@ -74,42 +115,63 @@ export default function WorkoutPage() {
       try { await api.workout.complete(activeWorkoutId) } catch (e) { console.error(e) }
     }
     setActiveWorkoutId(null)
+    setActiveDay(null)
     setView('home')
   }
 
   if (view === 'active' && activeWorkoutId) {
-    return <ActiveWorkout workoutId={activeWorkoutId} onFinish={finishWorkout} onBack={() => setView('home')} />
+    return <ActiveWorkout workoutId={activeWorkoutId} preloadedDay={activeDay}
+      onFinish={finishWorkout} onBack={() => setView('home')} />
   }
 
   if (view === 'builder') {
-    return <WorkoutBuilder onBack={() => setView('home')} onStart={startWorkout} />
+    return <RoutineBuilder
+      onBack={() => { refreshRoutines(); setView('home') }}
+    />
   }
 
-  return <WorkoutHome onStart={startWorkout} onBuilder={() => setView('builder')} />
+  if (view === 'edit' && editRoutineId) {
+    const routine = routines.find(r => r.id === editRoutineId)
+    if (routine) {
+      return <RoutineBuilder
+        existing={routine}
+        onBack={() => { refreshRoutines(); setEditRoutineId(null); setView('home') }}
+      />
+    }
+  }
+
+  return <WorkoutHome
+    routines={routines}
+    onStart={startWorkout}
+    onNewRoutine={() => setView('builder')}
+    onEditRoutine={(id) => { setEditRoutineId(id); setView('edit') }}
+    onDeleteRoutine={(id) => {
+      const next = routines.filter(r => r.id !== id)
+      saveRoutines(next)
+      setRoutines(next)
+    }}
+  />
 }
 
 // ══════════════════════════════════
 // WORKOUT HOME
 // ══════════════════════════════════
-function WorkoutHome({ onStart, onBuilder }: {
-  onStart: (planType?: string, dayName?: string) => void
-  onBuilder: () => void
+function WorkoutHome({ routines, onStart, onNewRoutine, onEditRoutine, onDeleteRoutine }: {
+  routines: Routine[]
+  onStart: (dayName: string, day?: RoutineDay) => void
+  onNewRoutine: () => void
+  onEditRoutine: (id: string) => void
+  onDeleteRoutine: (id: string) => void
 }) {
   const [logs, setLogs] = useState<WorkoutLog[]>([])
   const [loading, setLoading] = useState(true)
+  const [expandedRoutine, setExpandedRoutine] = useState<string | null>(null)
 
   useEffect(() => {
     api.workout.getLogs(10).then(setLogs).catch(console.error).finally(() => setLoading(false))
   }, [])
 
   const todayStr = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })
-
-  // PPL presets
-  const presets = [
-    { name: 'Push Day', muscles: 'Chest, Shoulders, Triceps', type: 'ppl' },
-    { name: 'Pull Day', muscles: 'Back, Biceps, Rear Delts', type: 'ppl' },
-    { name: 'Leg Day', muscles: 'Quads, Hamstrings, Glutes', type: 'ppl' },
-  ]
 
   if (loading) {
     return (
@@ -128,7 +190,7 @@ function WorkoutHome({ onStart, onBuilder }: {
           <h1 className="text-2xl font-black text-forged-text">Workouts</h1>
           <p className="text-xs text-forged-text2 font-medium mt-0.5">{todayStr}</p>
         </div>
-        <button onClick={onBuilder}
+        <button onClick={onNewRoutine}
           className="px-4 py-2 rounded-xl text-xs font-black
             bg-forged-purple/10 text-forged-purple border border-forged-purple/20
             hover:bg-forged-purple hover:text-white active:scale-95 transition-all">
@@ -137,9 +199,8 @@ function WorkoutHome({ onStart, onBuilder }: {
       </div>
 
       {/* Quick start */}
-      <Card delay={60} hero className="!p-6">
-        <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-4">Quick Start</p>
-        <button onClick={() => onStart('custom', 'Workout')}
+      <Card delay={60} className="!p-6">
+        <button onClick={() => onStart('Empty Workout')}
           className="w-full py-4 rounded-xl font-black text-base
             bg-forged-purple text-white shadow-lg shadow-forged-purple/30
             hover:brightness-110 active:scale-[0.98] transition-all
@@ -149,30 +210,89 @@ function WorkoutHome({ onStart, onBuilder }: {
         </button>
       </Card>
 
-      {/* PPL presets */}
-      <Card delay={140}>
-        <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-3">Routines</p>
-        <div className="flex flex-col gap-2">
-          {presets.map(p => (
-            <button key={p.name} onClick={() => onStart(p.type, p.name)}
-              className="flex items-center justify-between p-3 rounded-xl
-                bg-forged-bg border border-forged-border
-                hover:border-forged-purple/25 hover:bg-forged-surface2
-                active:scale-[0.99] transition-all text-left">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-forged-purple/10 flex items-center justify-center">
-                  <Icon d={I.dumbbell} size={18} className="text-forged-purple" />
+      {/* Saved routines */}
+      {routines.length > 0 && (
+        <Card delay={140}>
+          <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-3">My Routines</p>
+          <div className="flex flex-col gap-2">
+            {routines.map(routine => {
+              const isExpanded = expandedRoutine === routine.id
+              return (
+                <div key={routine.id}
+                  className="rounded-xl bg-forged-bg border border-forged-border overflow-hidden">
+                  {/* Routine header */}
+                  <div className="flex items-center justify-between p-3">
+                    <button onClick={() => setExpandedRoutine(isExpanded ? null : routine.id)}
+                      className="flex items-center gap-3 flex-1 text-left">
+                      <div className="w-10 h-10 rounded-xl bg-forged-purple/10 flex items-center justify-center">
+                        <Icon d={I.layers} size={18} className="text-forged-purple" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-bold text-forged-text">{routine.name}</p>
+                        <p className="text-[11px] text-forged-text2">
+                          {routine.days.length} day{routine.days.length !== 1 ? 's' : ''}
+                          {' \u00B7 '}
+                          {routine.days.reduce((s, d) => s + d.exercises.length, 0)} exercises
+                        </p>
+                      </div>
+                    </button>
+                    <div className="flex items-center gap-1">
+                      <button onClick={() => onEditRoutine(routine.id)}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center
+                          text-forged-text2 hover:text-forged-purple hover:bg-forged-purple/10 transition-all">
+                        <Icon d={I.edit} size={14} />
+                      </button>
+                      <button onClick={() => {
+                        if (confirm('Delete this routine?')) onDeleteRoutine(routine.id)
+                      }}
+                        className="w-8 h-8 rounded-lg flex items-center justify-center
+                          text-forged-text2 hover:text-forged-red hover:bg-forged-red/10 transition-all">
+                        <Icon d={I.trash} size={14} />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Expanded: show days */}
+                  {isExpanded && (
+                    <div className="border-t border-forged-border p-3 flex flex-col gap-2"
+                      style={{ animation: 'fadeIn 0.15s ease-out' }}>
+                      {routine.days.map((day, di) => (
+                        <button key={di} onClick={() => onStart(day.dayName, day)}
+                          className="flex items-center justify-between p-3 rounded-lg
+                            bg-forged-surface hover:bg-forged-surface2 transition-all text-left">
+                          <div>
+                            <p className="text-sm font-bold text-forged-text">{day.dayName}</p>
+                            <p className="text-[10px] text-forged-text2">
+                              {day.exercises.map(e => e.name).join(', ')}
+                            </p>
+                          </div>
+                          <Icon d={I.play} size={14} className="text-forged-purple" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-forged-text">{p.name}</p>
-                  <p className="text-[11px] text-forged-text2">{p.muscles}</p>
-                </div>
-              </div>
-              <Icon d={I.play} size={16} className="text-forged-purple" />
+              )
+            })}
+          </div>
+        </Card>
+      )}
+
+      {/* No routines placeholder */}
+      {routines.length === 0 && (
+        <Card delay={140}>
+          <div className="py-6 text-center">
+            <Icon d={I.layers} size={28} className="text-forged-text2 mx-auto mb-2" />
+            <p className="text-sm font-bold text-forged-text mb-1">No routines yet</p>
+            <p className="text-xs text-forged-text2 mb-3">Create a routine to get started</p>
+            <button onClick={onNewRoutine}
+              className="px-5 py-2 rounded-xl text-xs font-black
+                bg-forged-purple text-white hover:brightness-110 active:scale-95 transition-all">
+              Create Routine
             </button>
-          ))}
-        </div>
-      </Card>
+          </div>
+        </Card>
+      )}
 
       {/* Recent workouts */}
       <Card delay={220}>
@@ -187,7 +307,7 @@ function WorkoutHome({ onStart, onBuilder }: {
             {logs.slice(0, 5).map(log => (
               <div key={log.id}
                 className="flex items-center justify-between p-3 rounded-xl
-                  bg-forged-bg border border-forged-border transition-all">
+                  bg-forged-bg border border-forged-border">
                 <div className="flex items-center gap-3">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center
                     ${log.completed ? 'bg-forged-green/10' : 'bg-forged-surface2'}`}>
@@ -202,7 +322,6 @@ function WorkoutHome({ onStart, onBuilder }: {
                     </p>
                     <p className="text-[11px] text-forged-text2">
                       {new Date(log.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                      {log.durationMinutes ? ` \u00B7 ${log.durationMinutes}min` : ''}
                       {log.exercises?.length ? ` \u00B7 ${log.exercises.length} exercises` : ''}
                     </p>
                   </div>
@@ -216,6 +335,8 @@ function WorkoutHome({ onStart, onBuilder }: {
           </div>
         )}
       </Card>
+
+      <style>{`@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}`}</style>
     </div>
   )
 }
@@ -231,46 +352,58 @@ interface LiveSet {
 
 interface LiveExercise {
   name: string
+  intensity: string
+  notes: string
   sets: LiveSet[]
 }
 
-function ActiveWorkout({ workoutId, onFinish, onBack }: {
-  workoutId: string; onFinish: () => void; onBack: () => void
+function ActiveWorkout({ workoutId, preloadedDay, onFinish, onBack }: {
+  workoutId: string; preloadedDay: RoutineDay | null
+  onFinish: () => void; onBack: () => void
 }) {
-  const [exercises, setExercises] = useState<LiveExercise[]>([])
+  const [exercises, setExercises] = useState<LiveExercise[]>(() => {
+    if (preloadedDay) {
+      return preloadedDay.exercises.map(e => ({
+        name: e.name,
+        intensity: e.intensity,
+        notes: e.notes,
+        sets: Array.from({ length: e.sets }, () => ({ weight: '', reps: e.reps, done: false })),
+      }))
+    }
+    return []
+  })
   const [addingExercise, setAddingExercise] = useState(false)
-  const [newExName, setNewExName] = useState('')
+  const [newEx, setNewEx] = useState({ name: '', sets: '3', reps: '10', intensity: 'moderate', notes: '' })
   const [timer, setTimer] = useState(0)
   const [saving, setSaving] = useState(false)
   const timerRef = useRef<number>(0)
 
-  // Timer
   useEffect(() => {
     timerRef.current = window.setInterval(() => setTimer(t => t + 1), 1000)
     return () => clearInterval(timerRef.current)
   }, [])
 
-  const fmtTimer = (s: number) => {
-    const m = Math.floor(s / 60)
-    const sec = s % 60
-    return `${m}:${String(sec).padStart(2, '0')}`
-  }
+  const fmtTimer = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`
 
   const addExercise = () => {
-    if (!newExName.trim()) return
+    if (!newEx.name.trim()) return
     setExercises(prev => [...prev, {
-      name: newExName.trim(),
-      sets: [{ weight: '', reps: '', done: false }],
+      name: newEx.name.trim(),
+      intensity: newEx.intensity,
+      notes: newEx.notes,
+      sets: Array.from({ length: parseInt(newEx.sets) || 3 }, () => ({
+        weight: '', reps: newEx.reps || '10', done: false,
+      })),
     }])
-    setNewExName('')
+    setNewEx({ name: '', sets: '3', reps: '10', intensity: 'moderate', notes: '' })
     setAddingExercise(false)
   }
 
   const addSet = (exIdx: number) => {
     setExercises(prev => {
       const next = [...prev]
-      const lastSet = next[exIdx].sets[next[exIdx].sets.length - 1]
-      next[exIdx].sets.push({ weight: lastSet?.weight || '', reps: lastSet?.reps || '', done: false })
+      const last = next[exIdx].sets[next[exIdx].sets.length - 1]
+      next[exIdx].sets.push({ weight: last?.weight || '', reps: last?.reps || '', done: false })
       return next
     })
   }
@@ -291,35 +424,36 @@ function ActiveWorkout({ workoutId, onFinish, onBack }: {
     })
   }
 
-  const removeExercise = (exIdx: number) => {
-    setExercises(prev => prev.filter((_, i) => i !== exIdx))
-  }
+  const removeExercise = (exIdx: number) => setExercises(prev => prev.filter((_, i) => i !== exIdx))
 
   const handleFinish = async () => {
     setSaving(true)
     try {
-      // Save each exercise to the backend
       for (const ex of exercises) {
-        const completedSets = ex.sets.filter(s => s.done)
-        if (completedSets.length > 0) {
+        const done = ex.sets.filter(s => s.done)
+        if (done.length > 0) {
           await api.workout.logExercise(workoutId, {
             exerciseName: ex.name,
-            setsCompleted: completedSets.length,
-            repsCompleted: completedSets.map(s => s.reps).join(', '),
-            weightUsed: parseFloat(completedSets[0]?.weight) || 0,
+            setsCompleted: done.length,
+            repsCompleted: done.map(s => s.reps).join(', '),
+            weightUsed: parseFloat(done[0]?.weight) || 0,
             completed: true,
-            notes: null,
+            notes: ex.notes || null,
           })
         }
       }
       onFinish()
-    } catch (e) {
-      console.error(e)
-      setSaving(false)
-    }
+    } catch (e) { console.error(e); setSaving(false) }
   }
 
   const totalSets = exercises.reduce((s, e) => s + e.sets.filter(set => set.done).length, 0)
+
+  const intensityColors: Record<string, string> = {
+    light: 'bg-forged-blue/10 text-forged-blue',
+    moderate: 'bg-forged-green/10 text-forged-green',
+    heavy: 'bg-forged-gold/10 text-forged-gold',
+    max: 'bg-forged-red/10 text-forged-red',
+  }
 
   return (
     <div className="flex flex-col gap-4">
@@ -335,69 +469,62 @@ function ActiveWorkout({ workoutId, onFinish, onBack }: {
         <div className="w-5" />
       </div>
 
-      {/* Stats bar */}
+      {/* Stats */}
       <div className="flex justify-center gap-6 text-center">
-        <div>
-          <p className="text-xl font-black text-forged-text">{exercises.length}</p>
-          <p className="text-[10px] text-forged-text2 font-bold uppercase">Exercises</p>
-        </div>
-        <div>
-          <p className="text-xl font-black text-forged-text">{totalSets}</p>
-          <p className="text-[10px] text-forged-text2 font-bold uppercase">Sets Done</p>
-        </div>
-        <div>
-          <p className="text-xl font-black text-forged-text">{fmtTimer(timer)}</p>
-          <p className="text-[10px] text-forged-text2 font-bold uppercase">Duration</p>
-        </div>
+        <div><p className="text-xl font-black text-forged-text">{exercises.length}</p><p className="text-[10px] text-forged-text2 font-bold uppercase">Exercises</p></div>
+        <div><p className="text-xl font-black text-forged-text">{totalSets}</p><p className="text-[10px] text-forged-text2 font-bold uppercase">Sets Done</p></div>
+        <div><p className="text-xl font-black text-forged-text">{fmtTimer(timer)}</p><p className="text-[10px] text-forged-text2 font-bold uppercase">Duration</p></div>
       </div>
 
-      {/* Exercise cards */}
+      {/* Exercises */}
       {exercises.map((ex, exIdx) => (
         <Card key={exIdx} delay={0}>
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-black text-forged-text">{ex.name}</p>
+          <div className="flex items-center justify-between mb-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-black text-forged-text">{ex.name}</p>
+              <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${intensityColors[ex.intensity] || intensityColors.moderate}`}>
+                {ex.intensity}
+              </span>
+            </div>
             <button onClick={() => removeExercise(exIdx)}
               className="text-forged-text2 hover:text-forged-red transition-colors">
               <Icon d={I.trash} size={14} />
             </button>
           </div>
+          {ex.notes && <p className="text-[11px] text-forged-text2 mb-2">{ex.notes}</p>}
 
-          {/* Set table header */}
-          <div className="grid grid-cols-[40px_1fr_1fr_44px] gap-2 mb-2 px-1">
+          {/* Table header */}
+          <div className="grid grid-cols-[36px_1fr_1fr_40px] gap-2 mb-1.5 px-1">
             <span className="text-[10px] text-forged-text2 font-bold uppercase">Set</span>
             <span className="text-[10px] text-forged-text2 font-bold uppercase">Weight</span>
             <span className="text-[10px] text-forged-text2 font-bold uppercase">Reps</span>
-            <span className="text-[10px] text-forged-text2 font-bold uppercase text-center">Done</span>
+            <span className="text-[10px] text-forged-text2 font-bold uppercase text-center">✓</span>
           </div>
 
-          {/* Sets */}
-          {ex.sets.map((set, setIdx) => (
-            <div key={setIdx}
-              className={`grid grid-cols-[40px_1fr_1fr_44px] gap-2 items-center py-1.5 px-1
-                rounded-lg transition-colors ${set.done ? 'bg-forged-green/5' : ''}`}>
-              <span className="text-xs font-bold text-forged-text2 text-center">{setIdx + 1}</span>
+          {ex.sets.map((set, si) => (
+            <div key={si} className={`grid grid-cols-[36px_1fr_1fr_40px] gap-2 items-center py-1.5 px-1
+              rounded-lg transition-colors ${set.done ? 'bg-forged-green/5' : ''}`}>
+              <span className="text-xs font-bold text-forged-text2 text-center">{si + 1}</span>
               <input type="number" placeholder="lbs" value={set.weight}
-                onChange={e => updateSet(exIdx, setIdx, 'weight', e.target.value)}
+                onChange={e => updateSet(exIdx, si, 'weight', e.target.value)}
                 className="px-2 py-2 bg-forged-bg border border-forged-border rounded-lg
                   text-forged-text text-sm text-center tabular-nums
                   focus:border-forged-purple/50 transition-colors" />
               <input type="number" placeholder="reps" value={set.reps}
-                onChange={e => updateSet(exIdx, setIdx, 'reps', e.target.value)}
+                onChange={e => updateSet(exIdx, si, 'reps', e.target.value)}
                 className="px-2 py-2 bg-forged-bg border border-forged-border rounded-lg
                   text-forged-text text-sm text-center tabular-nums
                   focus:border-forged-purple/50 transition-colors" />
-              <button onClick={() => toggleSet(exIdx, setIdx)}
+              <button onClick={() => toggleSet(exIdx, si)}
                 className={`w-9 h-9 mx-auto rounded-lg flex items-center justify-center transition-all active:scale-90
                   ${set.done
                     ? 'bg-forged-green text-white'
-                    : 'border-2 border-forged-border text-forged-text2 hover:border-forged-green/40'
-                  }`}>
+                    : 'border-2 border-forged-border text-forged-text2 hover:border-forged-green/40'}`}>
                 <Icon d={I.check} size={16} sw={2.5} />
               </button>
             </div>
           ))}
 
-          {/* Add set */}
           <button onClick={() => addSet(exIdx)}
             className="w-full mt-2 py-2 text-xs font-bold text-forged-purple
               border border-dashed border-forged-purple/30 rounded-xl
@@ -410,24 +537,63 @@ function ActiveWorkout({ workoutId, onFinish, onBack }: {
       {/* Add exercise */}
       {addingExercise ? (
         <Card delay={0}>
-          <p className="text-xs font-bold text-forged-text2 uppercase tracking-widest mb-2">Add Exercise</p>
-          <div className="flex gap-2">
-            <input type="text" placeholder="Exercise name..." value={newExName}
-              onChange={e => setNewExName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addExercise()}
+          <p className="text-xs font-bold text-forged-text2 uppercase tracking-widest mb-3">Add Exercise</p>
+          <div className="flex flex-col gap-2">
+            <input type="text" placeholder="Exercise name" value={newEx.name}
+              onChange={e => setNewEx({ ...newEx, name: e.target.value })}
               autoFocus
-              className="flex-1 px-3 py-2.5 bg-forged-bg border border-forged-border rounded-xl
+              className="w-full px-3 py-2.5 bg-forged-bg border border-forged-border rounded-xl
                 text-forged-text text-sm placeholder:text-forged-text2
                 focus:border-forged-purple/50 transition-colors" />
-            <button onClick={addExercise}
-              className="px-4 py-2.5 bg-forged-purple text-white font-black rounded-xl text-sm
-                hover:brightness-110 active:scale-95 transition-all">
-              Add
-            </button>
-            <button onClick={() => { setAddingExercise(false); setNewExName('') }}
-              className="px-3 py-2.5 text-forged-text2 hover:text-forged-text transition-colors">
-              <Icon d={I.x} size={16} />
-            </button>
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="text-[10px] text-forged-text2 font-bold block mb-1">Sets</label>
+                <input type="number" value={newEx.sets}
+                  onChange={e => setNewEx({ ...newEx, sets: e.target.value })}
+                  className="w-full px-2 py-2 bg-forged-bg border border-forged-border rounded-lg
+                    text-forged-text text-sm text-center focus:border-forged-purple/50 transition-colors" />
+              </div>
+              <div>
+                <label className="text-[10px] text-forged-text2 font-bold block mb-1">Reps</label>
+                <input type="text" value={newEx.reps}
+                  onChange={e => setNewEx({ ...newEx, reps: e.target.value })}
+                  className="w-full px-2 py-2 bg-forged-bg border border-forged-border rounded-lg
+                    text-forged-text text-sm text-center focus:border-forged-purple/50 transition-colors" />
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] text-forged-text2 font-bold block mb-1">Intensity</label>
+              <div className="grid grid-cols-4 gap-1.5">
+                {['light', 'moderate', 'heavy', 'max'].map(lvl => (
+                  <button key={lvl} onClick={() => setNewEx({ ...newEx, intensity: lvl })}
+                    className={`py-2 rounded-lg text-xs font-bold capitalize transition-all
+                      ${newEx.intensity === lvl
+                        ? (intensityColors[lvl] || 'bg-forged-purple/10 text-forged-purple') + ' border border-current'
+                        : 'bg-forged-bg border border-forged-border text-forged-text2 hover:text-forged-text'}`}>
+                    {lvl}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="text-[10px] text-forged-text2 font-bold block mb-1">Quick Note (optional)</label>
+              <input type="text" placeholder="e.g. slow negatives, pause at bottom..."
+                value={newEx.notes} onChange={e => setNewEx({ ...newEx, notes: e.target.value })}
+                className="w-full px-3 py-2 bg-forged-bg border border-forged-border rounded-lg
+                  text-forged-text text-sm placeholder:text-forged-text2
+                  focus:border-forged-purple/50 transition-colors" />
+            </div>
+            <div className="flex gap-2 mt-1">
+              <button onClick={addExercise}
+                className="flex-1 py-2.5 bg-forged-purple text-white font-black rounded-xl text-sm
+                  hover:brightness-110 active:scale-95 transition-all">
+                Add
+              </button>
+              <button onClick={() => setAddingExercise(false)}
+                className="px-4 py-2.5 text-forged-text2 hover:text-forged-text transition-colors">
+                Cancel
+              </button>
+            </div>
           </div>
         </Card>
       ) : (
@@ -441,7 +607,7 @@ function ActiveWorkout({ workoutId, onFinish, onBack }: {
         </button>
       )}
 
-      {/* Finish button */}
+      {/* Finish */}
       {exercises.length > 0 && (
         <button onClick={handleFinish} disabled={saving}
           className="w-full py-4 rounded-xl font-black text-base
@@ -457,38 +623,71 @@ function ActiveWorkout({ workoutId, onFinish, onBack }: {
 }
 
 // ══════════════════════════════════
-// WORKOUT BUILDER
+// ROUTINE BUILDER (create + edit)
 // ══════════════════════════════════
-interface BuilderExercise {
-  name: string
-  sets: number
-  reps: string
-}
-
-function WorkoutBuilder({ onBack, onStart }: {
+function RoutineBuilder({ existing, onBack }: {
+  existing?: Routine
   onBack: () => void
-  onStart: (planType?: string, dayName?: string) => void
 }) {
-  const [name, setName] = useState('')
-  const [exercises, setExercises] = useState<BuilderExercise[]>([])
-  const [newEx, setNewEx] = useState('')
+  const [name, setName] = useState(existing?.name || '')
+  const [days, setDays] = useState<RoutineDay[]>(existing?.days || [])
+  const [addingDay, setAddingDay] = useState(false)
+  const [newDayName, setNewDayName] = useState('')
 
-  const addExercise = () => {
-    if (!newEx.trim()) return
-    setExercises(prev => [...prev, { name: newEx.trim(), sets: 3, reps: '10' }])
-    setNewEx('')
+  // ── Day management ──
+  const addDay = () => {
+    if (!newDayName.trim()) return
+    setDays(prev => [...prev, { dayName: newDayName.trim(), exercises: [] }])
+    setNewDayName('')
+    setAddingDay(false)
   }
 
-  const updateExercise = (idx: number, field: keyof BuilderExercise, value: any) => {
-    setExercises(prev => {
+  const removeDay = (idx: number) => setDays(prev => prev.filter((_, i) => i !== idx))
+
+  // ── Exercise management within a day ──
+  const addExToDay = (dayIdx: number, ex: RoutineExercise) => {
+    setDays(prev => {
       const next = [...prev]
-      next[idx] = { ...next[idx], [field]: value }
+      next[dayIdx].exercises.push(ex)
       return next
     })
   }
 
-  const removeExercise = (idx: number) => {
-    setExercises(prev => prev.filter((_, i) => i !== idx))
+  const removeExFromDay = (dayIdx: number, exIdx: number) => {
+    setDays(prev => {
+      const next = [...prev]
+      next[dayIdx].exercises = next[dayIdx].exercises.filter((_, i) => i !== exIdx)
+      return next
+    })
+  }
+
+  const updateExInDay = (dayIdx: number, exIdx: number, field: keyof RoutineExercise, value: any) => {
+    setDays(prev => {
+      const next = [...prev]
+      next[dayIdx].exercises[exIdx] = { ...next[dayIdx].exercises[exIdx], [field]: value }
+      return next
+    })
+  }
+
+  // ── Save ──
+  const saveRoutine = () => {
+    if (!name.trim() || days.length === 0) return
+    const routines = loadRoutines()
+    if (existing) {
+      const idx = routines.findIndex(r => r.id === existing.id)
+      if (idx >= 0) {
+        routines[idx] = { ...routines[idx], name, days }
+      }
+    } else {
+      routines.push({
+        id: crypto.randomUUID(),
+        name,
+        days,
+        createdAt: new Date().toISOString(),
+      })
+    }
+    saveRoutines(routines)
+    onBack()
   }
 
   return (
@@ -498,85 +697,215 @@ function WorkoutBuilder({ onBack, onStart }: {
         <button onClick={onBack}
           className="w-9 h-9 rounded-xl bg-forged-surface border border-forged-border
             flex items-center justify-center text-forged-text2
-            hover:text-forged-text hover:border-forged-purple/30 active:scale-95 transition-all">
+            hover:text-forged-text active:scale-95 transition-all">
           <Icon d={I.chevL} size={16} />
         </button>
-        <h1 className="text-2xl font-black text-forged-text">Build Routine</h1>
+        <h1 className="text-2xl font-black text-forged-text">
+          {existing ? 'Edit Routine' : 'Build Routine'}
+        </h1>
       </div>
 
       {/* Routine name */}
       <Card delay={60}>
         <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-2">Routine Name</p>
-        <input type="text" placeholder="e.g. Push Day, Upper Body..." value={name}
-          onChange={e => setName(e.target.value)}
+        <input type="text" placeholder="e.g. Push/Pull/Legs, Upper/Lower, Full Body..."
+          value={name} onChange={e => setName(e.target.value)}
           className="w-full px-4 py-3 bg-forged-bg border border-forged-border rounded-xl
             text-forged-text text-sm font-semibold placeholder:text-forged-text2
             focus:border-forged-purple/50 transition-colors" />
       </Card>
 
-      {/* Exercises */}
-      <Card delay={140}>
-        <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-3">Exercises</p>
+      {/* Days */}
+      {days.map((day, dayIdx) => (
+        <DayCard key={dayIdx} day={day} dayIdx={dayIdx}
+          onRemoveDay={() => removeDay(dayIdx)}
+          onAddExercise={(ex) => addExToDay(dayIdx, ex)}
+          onRemoveExercise={(exIdx) => removeExFromDay(dayIdx, exIdx)}
+          onUpdateExercise={(exIdx, field, value) => updateExInDay(dayIdx, exIdx, field, value)}
+        />
+      ))}
 
-        {exercises.length === 0 ? (
-          <p className="text-sm text-forged-text2 text-center py-4">Add exercises to your routine</p>
-        ) : (
-          <div className="flex flex-col gap-2 mb-3">
-            {exercises.map((ex, i) => (
-              <div key={i}
-                className="flex items-center gap-2 p-3 rounded-xl bg-forged-bg border border-forged-border">
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-forged-text">{ex.name}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="flex items-center gap-1">
-                    <input type="number" value={ex.sets}
-                      onChange={e => updateExercise(i, 'sets', parseInt(e.target.value) || 0)}
-                      className="w-12 px-1 py-1.5 bg-forged-surface border border-forged-border rounded-lg
-                        text-forged-text text-xs text-center focus:border-forged-purple/50 transition-colors" />
-                    <span className="text-[10px] text-forged-text2">x</span>
-                    <input type="text" value={ex.reps}
-                      onChange={e => updateExercise(i, 'reps', e.target.value)}
-                      className="w-12 px-1 py-1.5 bg-forged-surface border border-forged-border rounded-lg
-                        text-forged-text text-xs text-center focus:border-forged-purple/50 transition-colors" />
-                  </div>
-                  <button onClick={() => removeExercise(i)}
-                    className="text-forged-text2 hover:text-forged-red transition-colors">
-                    <Icon d={I.x} size={14} />
-                  </button>
-                </div>
-              </div>
-            ))}
+      {/* Add day */}
+      {addingDay ? (
+        <Card delay={0}>
+          <p className="text-xs font-bold text-forged-text2 uppercase tracking-widest mb-2">Day Name</p>
+          <div className="flex gap-2">
+            <input type="text" placeholder="e.g. Push Day A, Leg Day, Upper Body..."
+              value={newDayName} onChange={e => setNewDayName(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && addDay()}
+              autoFocus
+              className="flex-1 px-3 py-2.5 bg-forged-bg border border-forged-border rounded-xl
+                text-forged-text text-sm placeholder:text-forged-text2
+                focus:border-forged-purple/50 transition-colors" />
+            <button onClick={addDay}
+              className="px-4 py-2.5 bg-forged-purple text-white font-black rounded-xl text-sm
+                hover:brightness-110 active:scale-95 transition-all">
+              Add
+            </button>
+            <button onClick={() => { setAddingDay(false); setNewDayName('') }}
+              className="px-3 text-forged-text2 hover:text-forged-text">
+              <Icon d={I.x} size={16} />
+            </button>
           </div>
-        )}
+        </Card>
+      ) : (
+        <button onClick={() => setAddingDay(true)}
+          className="w-full py-3 rounded-xl text-sm font-bold
+            text-forged-purple border border-dashed border-forged-purple/30
+            hover:bg-forged-purple/5 active:scale-[0.99] transition-all
+            flex items-center justify-center gap-2">
+          <Icon d={I.plus} size={16} sw={2.5} />
+          Add Day
+        </button>
+      )}
 
-        {/* Add exercise input */}
-        <div className="flex gap-2">
-          <input type="text" placeholder="Exercise name..." value={newEx}
-            onChange={e => setNewEx(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && addExercise()}
-            className="flex-1 px-3 py-2.5 bg-forged-bg border border-forged-border rounded-xl
-              text-forged-text text-sm placeholder:text-forged-text2
-              focus:border-forged-purple/50 transition-colors" />
-          <button onClick={addExercise}
-            className="px-4 py-2.5 bg-forged-purple/10 text-forged-purple font-black rounded-xl text-sm
-              hover:bg-forged-purple/20 active:scale-95 transition-all">
-            Add
-          </button>
-        </div>
-      </Card>
-
-      {/* Start workout with this routine */}
-      {exercises.length > 0 && name.trim() && (
-        <button onClick={() => onStart('custom', name)}
+      {/* Save button */}
+      {name.trim() && days.length > 0 && (
+        <button onClick={saveRoutine}
           className="w-full py-4 rounded-xl font-black text-base
             bg-forged-purple text-white shadow-lg shadow-forged-purple/30
-            hover:brightness-110 active:scale-[0.98] transition-all
-            flex items-center justify-center gap-2">
-          <Icon d={I.play} size={20} sw={2.5} />
-          Start {name}
+            hover:brightness-110 active:scale-[0.98] transition-all">
+          {existing ? 'Save Changes' : 'Save Routine'}
         </button>
       )}
     </div>
+  )
+}
+
+// ══════════════════════════════════
+// DAY CARD (inside builder)
+// ══════════════════════════════════
+function DayCard({ day, dayIdx, onRemoveDay, onAddExercise, onRemoveExercise, onUpdateExercise }: {
+  day: RoutineDay; dayIdx: number
+  onRemoveDay: () => void
+  onAddExercise: (ex: RoutineExercise) => void
+  onRemoveExercise: (exIdx: number) => void
+  onUpdateExercise: (exIdx: number, field: keyof RoutineExercise, value: any) => void
+}) {
+  const [adding, setAdding] = useState(false)
+  const [newEx, setNewEx] = useState({ name: '', sets: '3', reps: '10', intensity: 'moderate', notes: '' })
+
+  const handleAdd = () => {
+    if (!newEx.name.trim()) return
+    onAddExercise({
+      name: newEx.name.trim(),
+      sets: parseInt(newEx.sets) || 3,
+      reps: newEx.reps || '10',
+      intensity: newEx.intensity,
+      notes: newEx.notes,
+    })
+    setNewEx({ name: '', sets: '3', reps: '10', intensity: 'moderate', notes: '' })
+    setAdding(false)
+  }
+
+  return (
+    <Card delay={80 + dayIdx * 60}>
+      {/* Day header */}
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="w-6 h-6 rounded-lg bg-forged-purple/10 flex items-center justify-center
+            text-[10px] font-black text-forged-purple">{dayIdx + 1}</span>
+          <p className="text-sm font-black text-forged-text">{day.dayName}</p>
+        </div>
+        <button onClick={onRemoveDay}
+          className="text-forged-text2 hover:text-forged-red transition-colors">
+          <Icon d={I.trash} size={14} />
+        </button>
+      </div>
+
+      {/* Exercises */}
+      {day.exercises.length === 0 && !adding && (
+        <p className="text-xs text-forged-text2 text-center py-3">No exercises yet</p>
+      )}
+
+      {day.exercises.map((ex, exIdx) => (
+        <div key={exIdx}
+          className="flex items-center justify-between py-2.5 border-b border-forged-text2/10 last:border-0">
+          <div className="flex-1">
+            <div className="flex items-center gap-2">
+              <p className="text-sm font-semibold text-forged-text">{ex.name}</p>
+              <span className="text-[9px] font-bold text-forged-text2 bg-forged-surface2 px-1.5 py-0.5 rounded">
+                {ex.intensity}
+              </span>
+            </div>
+            <p className="text-[11px] text-forged-text2">
+              {ex.sets} sets x {ex.reps} reps
+              {ex.notes && ` \u00B7 ${ex.notes}`}
+            </p>
+          </div>
+          <button onClick={() => onRemoveExercise(exIdx)}
+            className="w-7 h-7 rounded-lg flex items-center justify-center
+              text-forged-text2 hover:text-forged-red hover:bg-forged-red/10 transition-all">
+            <Icon d={I.x} size={12} />
+          </button>
+        </div>
+      ))}
+
+      {/* Add exercise form */}
+      {adding ? (
+        <div className="mt-3 flex flex-col gap-2 bg-forged-bg border border-forged-border rounded-xl p-3">
+          <input type="text" placeholder="Exercise name" value={newEx.name}
+            onChange={e => setNewEx({ ...newEx, name: e.target.value })}
+            onKeyDown={e => e.key === 'Enter' && handleAdd()}
+            autoFocus
+            className="w-full px-3 py-2 bg-forged-surface border border-forged-border rounded-lg
+              text-forged-text text-sm placeholder:text-forged-text2
+              focus:border-forged-purple/50 transition-colors" />
+          <div className="grid grid-cols-4 gap-2">
+            <div>
+              <label className="text-[9px] text-forged-text2 font-bold">Sets</label>
+              <input type="number" value={newEx.sets}
+                onChange={e => setNewEx({ ...newEx, sets: e.target.value })}
+                className="w-full px-1 py-1.5 bg-forged-surface border border-forged-border rounded-lg
+                  text-forged-text text-xs text-center focus:border-forged-purple/50 transition-colors" />
+            </div>
+            <div>
+              <label className="text-[9px] text-forged-text2 font-bold">Reps</label>
+              <input type="text" value={newEx.reps}
+                onChange={e => setNewEx({ ...newEx, reps: e.target.value })}
+                className="w-full px-1 py-1.5 bg-forged-surface border border-forged-border rounded-lg
+                  text-forged-text text-xs text-center focus:border-forged-purple/50 transition-colors" />
+            </div>
+            <div>
+              <label className="text-[9px] text-forged-text2 font-bold">Intensity</label>
+              <select value={newEx.intensity}
+                onChange={e => setNewEx({ ...newEx, intensity: e.target.value })}
+                className="w-full px-1 py-1.5 bg-forged-surface border border-forged-border rounded-lg
+                  text-forged-text text-xs focus:border-forged-purple/50 transition-colors">
+                <option value="light">Light</option>
+                <option value="moderate">Moderate</option>
+                <option value="heavy">Heavy</option>
+                <option value="max">Max</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-[9px] text-forged-text2 font-bold">Note</label>
+              <input type="text" placeholder="..." value={newEx.notes}
+                onChange={e => setNewEx({ ...newEx, notes: e.target.value })}
+                className="w-full px-1 py-1.5 bg-forged-surface border border-forged-border rounded-lg
+                  text-forged-text text-xs text-center focus:border-forged-purple/50 transition-colors" />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handleAdd}
+              className="flex-1 py-2 bg-forged-purple text-white font-black rounded-lg text-xs
+                hover:brightness-110 active:scale-95 transition-all">
+              Add
+            </button>
+            <button onClick={() => setAdding(false)}
+              className="px-3 text-forged-text2 hover:text-forged-text text-xs font-bold">
+              Cancel
+            </button>
+          </div>
+        </div>
+      ) : (
+        <button onClick={() => setAdding(true)}
+          className="w-full mt-2 py-2 text-xs font-bold text-forged-purple
+            border border-dashed border-forged-purple/30 rounded-xl
+            hover:bg-forged-purple/5 transition-all">
+          + Add Exercise
+        </button>
+      )}
+    </Card>
   )
 }
