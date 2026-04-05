@@ -14,6 +14,7 @@ import StreaksPage from './Streaks'
 import PrivacyPage from './Privacy'
 import RecipesPage from './Recipes'
 import FeedbackPage from './Feedback'
+import FastingPage from './Fasting'
 
 
 // ══════════════════════════════════
@@ -263,7 +264,7 @@ function SettingsDropdown({ onLogout, onProfile, onSettings, onNavigate, dropUp 
 // ══════════════════════════════════
 // NAV — Dashboard in center
 // ══════════════════════════════════
-type TabId = 'food' | 'workouts' | 'dashboard' | 'progress' | 'profile' | 'settings' | 'weekly' | 'photos' | 'streaks' | 'privacy' | 'recipes' | 'feedback'
+type TabId = 'food' | 'workouts' | 'dashboard' | 'progress' | 'profile' | 'settings' | 'weekly' | 'photos' | 'streaks' | 'privacy' | 'recipes' | 'feedback' | 'fasting'
 const NAV: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'food', label: 'Food', icon: I.food },
   { id: 'workouts', label: 'Workouts', icon: I.workout },
@@ -478,6 +479,7 @@ const sw = isDesktop ? (sidebarCollapsed ? 68 : 240) : 0
             {tab === 'privacy' && <PrivacyPage onBack={() => setTab('dashboard')} />}
             {tab === 'recipes' && <RecipesPage onBack={() => setTab('dashboard')} />}
             {tab === 'feedback' && <FeedbackPage onBack={() => setTab('dashboard')} />}
+            {tab === 'fasting' && <FastingPage onBack={() => setTab('dashboard')} />}
           </div>
         )}
       </main>
@@ -641,32 +643,22 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
           <Icon d={I.plus} size={16} sw={2.5} />Add Meal
         </button>
 
-        {/* Fasting — with type selector */}
+{/* Fasting */}
         <div className="border-t border-forged-border mt-5 pt-4">
-          <div className="flex items-center justify-between">
+          <button onClick={() => onTabChange('fasting')} className="w-full flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center
-                ${activeFast ? 'bg-forged-green/15' : 'bg-forged-surface2'}`}>
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${activeFast ? 'bg-forged-green/15' : 'bg-forged-surface2'}`}>
                 <Icon d={I.clock} size={16} className={activeFast ? 'text-forged-green' : 'text-forged-text2'} />
               </div>
               {activeFast ? <FastingMini fast={activeFast} /> : (
-                <div>
+                <div className="text-left">
                   <p className="text-sm font-bold text-forged-text">Fasting</p>
-                  <p className="text-xs text-forged-text2">Choose a window to start</p>
+                  <p className="text-xs text-forged-text2">Tap to start or view history</p>
                 </div>
               )}
-</div>
-            {activeFast && (
-              <button onClick={async () => {
-                try { await api.fasting.end(activeFast.id, {}); window.location.reload() } catch {}
-              }} className="px-3 py-1.5 rounded-lg text-xs font-black
-                bg-forged-red/10 text-forged-red border border-forged-red/20
-                hover:bg-forged-red hover:text-white active:scale-95 transition-all">
-                End Fast
-              </button>
-            )}
-          </div>
-          {!activeFast && <FastingTypeSelector />}
+            </div>
+            <Icon d={I.chevron} size={16} className="text-forged-text2" />
+          </button>
         </div>
       </Card>
 
