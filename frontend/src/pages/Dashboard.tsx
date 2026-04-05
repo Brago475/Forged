@@ -8,7 +8,12 @@ import WorkoutPage from './WorkoutPage'
 import ProgressPage from './ProgressPage'
 import ProfilePage from './ProfilePage'
 import SettingsPage from './SettingsPage'
-
+import WeeklySummaryPage from './WeeklySummary'
+import ProgressPhotosPage from './ProgressPhotos'
+import StreaksPage from './Streaks'
+import PrivacyPage from './Privacy'
+import RecipesPage from './Recipes'
+import FeedbackPage from './Feedback'
 
 
 // ══════════════════════════════════
@@ -174,8 +179,8 @@ function SegmentedControl({ options, active, onChange }: {
 // ══════════════════════════════════
 // 3-DOT SETTINGS DROPDOWN
 // ══════════════════════════════════
-function SettingsDropdown({ onLogout, onProfile, onSettings, dropUp = false }: {
-  onLogout: () => void; onProfile?: () => void; onSettings?: () => void; dropUp?: boolean
+function SettingsDropdown({ onLogout, onProfile, onSettings, onNavigate, dropUp = false }: {
+  onLogout: () => void; onProfile?: () => void; onSettings?: () => void; onNavigate?: (tab: string) => void; dropUp?: boolean
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -193,7 +198,7 @@ function SettingsDropdown({ onLogout, onProfile, onSettings, dropUp = false }: {
       </button>
       {open && (
         <div className={`absolute right-0 w-48 bg-forged-surface border border-forged-border
-          rounded-xl shadow-xl overflow-hidden z-[60]
+          rounded-xl shadow-xl overflow-hidden z-[60] max-h-[70vh] overflow-y-auto
           ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'}`}
           style={{ animation: 'fadeSlide 0.15s ease-out' }}>
           {onProfile && (
@@ -209,36 +214,41 @@ function SettingsDropdown({ onLogout, onProfile, onSettings, dropUp = false }: {
             <Icon d={theme === 'dark' ? I.sun : I.moon} size={16} />
             <span>{theme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
           </button>
- <button onClick={() => { onSettings?.(); setOpen(false) }}
-  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
-    hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
-  <Icon d={I.settings} size={16} /><span>Settings</span>
-</button>
-<button onClick={() => setOpen(false)}
-  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
-    hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
-  <Icon d={I.scale} size={16} /><span>Weekly Summary</span>
-</button>
-<button onClick={() => setOpen(false)}
-  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
-    hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
-  <Icon d={I.heart} size={16} /><span>Progress Photos</span>
-</button>
-<button onClick={() => setOpen(false)}
-  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
-    hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
-  <Icon d={I.flame} size={16} /><span>Streaks</span>
-</button>
-<button onClick={() => setOpen(false)}
-  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
-    hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
-  <Icon d={I.target} size={16} /><span>Privacy</span>
-</button>
-<button onClick={() => setOpen(false)}
-  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
-    hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
-  <Icon d={I.food} size={16} /><span>Recipes</span>
-</button>
+          <button onClick={() => { onSettings?.(); setOpen(false) }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+              hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+            <Icon d={I.settings} size={16} /><span>Settings</span>
+          </button>
+          <button onClick={() => { onNavigate?.('weekly'); setOpen(false) }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+              hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+            <Icon d={I.scale} size={16} /><span>Weekly Summary</span>
+          </button>
+          <button onClick={() => { onNavigate?.('photos'); setOpen(false) }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+              hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+            <Icon d={I.heart} size={16} /><span>Progress Photos</span>
+          </button>
+          <button onClick={() => { onNavigate?.('streaks'); setOpen(false) }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+              hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+            <Icon d={I.flame} size={16} /><span>Streaks</span>
+          </button>
+          <button onClick={() => { onNavigate?.('privacy'); setOpen(false) }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+              hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+            <Icon d={I.target} size={16} /><span>Privacy</span>
+          </button>
+          <button onClick={() => { onNavigate?.('recipes'); setOpen(false) }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+              hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+            <Icon d={I.food} size={16} /><span>Recipes</span>
+          </button>
+          <button onClick={() => { onNavigate?.('feedback'); setOpen(false) }}
+            className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2
+              hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border">
+            <Icon d={I.edit} size={16} /><span>Feedback</span>
+          </button>
           <button onClick={onLogout}
             className="w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-red
               hover:bg-forged-red/5 transition-colors text-left border-t border-forged-border">
@@ -253,7 +263,7 @@ function SettingsDropdown({ onLogout, onProfile, onSettings, dropUp = false }: {
 // ══════════════════════════════════
 // NAV — Dashboard in center
 // ══════════════════════════════════
-type TabId = 'food' | 'workouts' | 'dashboard' | 'progress' | 'profile' | 'settings'
+type TabId = 'food' | 'workouts' | 'dashboard' | 'progress' | 'profile' | 'settings' | 'weekly' | 'photos' | 'streaks' | 'privacy' | 'recipes' | 'feedback'
 const NAV: { id: TabId; label: string; icon: React.ReactNode }[] = [
   { id: 'food', label: 'Food', icon: I.food },
   { id: 'workouts', label: 'Workouts', icon: I.workout },
@@ -390,7 +400,7 @@ function BottomNav({ active, onChange, onLogout, onProfile }: {
         })}
       </div>
       <div className="pr-2 pb-2">
-        <SettingsDropdown onLogout={onLogout} onProfile={onProfile} onSettings={() => onChange('settings')} dropUp />
+        <SettingsDropdown onLogout={onLogout} onProfile={onProfile} onSettings={() => onChange('settings')} onNavigate={(t) => onChange(t as TabId)} dropUp />
       </div>
     </nav>
   )
@@ -441,7 +451,7 @@ export default function Dashboard({ onLogout }: Props) {
     fiber: todayFood.reduce((s, l) => s + (l.food?.fiber ?? 0) * l.servings, 0),
   }
 
-  const sw = isDesktop ? (sidebarCollapsed ? 68 : 240) : 0
+const sw = isDesktop ? (sidebarCollapsed ? 68 : 240) : 0
 
   return (
     <div className="min-h-screen bg-forged-bg">
@@ -462,6 +472,12 @@ export default function Dashboard({ onLogout }: Props) {
             {tab === 'progress' && <ProgressPage />}
             {tab === 'profile' && <ProfilePage user={user} onLogout={onLogout} />}
             {tab === 'settings' && <SettingsPage onBack={() => setTab('dashboard')} />}
+            {tab === 'weekly' && <WeeklySummaryPage onBack={() => setTab('dashboard')} />}
+            {tab === 'photos' && <ProgressPhotosPage onBack={() => setTab('dashboard')} />}
+            {tab === 'streaks' && <StreaksPage onBack={() => setTab('dashboard')} />}
+            {tab === 'privacy' && <PrivacyPage onBack={() => setTab('dashboard')} />}
+            {tab === 'recipes' && <RecipesPage onBack={() => setTab('dashboard')} />}
+            {tab === 'feedback' && <FeedbackPage onBack={() => setTab('dashboard')} />}
           </div>
         )}
       </main>
@@ -587,7 +603,7 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
   return (
     <div className="flex flex-col gap-4">
 
-      {/* ── HEADER ── */}
+    {/* ── HEADER ── */}
       <div className="flex items-center justify-between">
         <div>
           <p className="text-lg font-bold text-forged-text">
@@ -597,8 +613,8 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
             {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
           </p>
         </div>
-        <div className="hidden md:block"><SettingsDropdown onLogout={onLogout} onProfile={() => onTabChange('profile')} onSettings={() => onTabChange('settings')} /> </div>
-        </div>
+        <div className="hidden md:block"><SettingsDropdown onLogout={onLogout} onProfile={() => onTabChange('profile')} onSettings={() => onTabChange('settings')} onNavigate={(t) => onTabChange(t as TabId)} /></div>
+      </div>
 
       {/* ══ HERO: CALORIE CARD ══ */}
       <Card delay={60} hero className="!p-6 relative overflow-hidden">
