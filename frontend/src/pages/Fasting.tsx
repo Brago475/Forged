@@ -416,8 +416,7 @@ function StatChip({ label, value, icon, color, delay = 0 }: { label: string; val
   return (
     <div className={`bg-forged-surface border border-forged-border rounded-xl p-3 text-center transition-all duration-500 ${v ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'}`}>
       <div className="w-7 h-7 mx-auto rounded-lg flex items-center justify-center mb-1.5" style={{ backgroundColor: color + '20' }}>
-        <Icon d={icon} size={13} className="text-forged-text" style={{ color } as any} />
-      </div>
+<Icon d={icon} size={13} className="text-forged-text" />      </div>
       <p className="text-lg font-black text-forged-text tabular-nums">{value}</p>
       <p className="text-[8px] text-forged-text2 font-bold uppercase">{label}</p>
     </div>
