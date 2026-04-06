@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { api } from '../hooks/api'
 import { useTheme } from '../hooks/useTheme'
@@ -156,8 +155,8 @@ function Card({ children, className = '', delay = 0, hero = false }: {
   const [vis, setVis] = useState(false)
   useEffect(() => { const t = setTimeout(() => setVis(true), delay); return () => clearTimeout(t) }, [delay])
   return (
-    <div className={`bg-forged-surface border border-forged-border rounded-2xl p-5
-      transition-all duration-500 ease-out hover:border-forged-purple/20
+    <div className={`bg-forged-surface rounded-2xl p-5
+      transition-all duration-500 ease-out
       ${hero ? 'shadow-lg shadow-forged-purple/5' : ''}
       ${vis ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'} ${className}`}>
       {children}
@@ -611,7 +610,7 @@ function CalorieRing({ pct }: { pct: number }) {
 function MacroCard({ label, current, goal }: { label: string; current: number; goal: number }) {
   const pct = Math.min((current / goal) * 100, 100), over = current > goal, anim = useAnimNum(current, 800)
   return (
-    <div className="bg-forged-bg border border-forged-border rounded-xl p-3 hover:border-forged-purple/30 hover:shadow-md hover:shadow-forged-purple/5 transition-all duration-200">
+    <div className="bg-forged-bg rounded-xl p-3 hover:bg-forged-surface2 transition-all duration-200">
       <p className="text-[10px] text-forged-text2 font-bold uppercase tracking-wider mb-1">{label}</p>
       <p className="text-xl font-black text-forged-text tabular-nums leading-none">{anim}<span className="text-[11px] font-medium text-forged-text2 ml-0.5">g</span></p>
       <p className="text-[10px] text-forged-text2 mt-0.5 mb-2">/ {goal}g</p>
@@ -626,7 +625,7 @@ function MacroCard({ label, current, goal }: { label: string; current: number; g
 /** Compact macro (fiber/water) */
 function MacroSmall({ label, value, pct }: { label: string; value: string; pct: number }) {
   return (
-    <div className="bg-forged-bg border border-forged-border rounded-xl p-3 hover:border-forged-purple/30 transition-all duration-200">
+    <div className="bg-forged-bg rounded-xl p-3 hover:bg-forged-surface2 transition-all duration-200">
       <div className="flex justify-between items-center mb-2">
         <p className="text-[10px] text-forged-text2 font-bold uppercase tracking-wider">{label}</p>
         <p className="text-sm font-black text-forged-text tabular-nums">{value}</p>
@@ -665,7 +664,7 @@ function GoalCheck({ done, label }: { done: boolean; label: string }) {
 /** Stat chip */
 function Stat({ label, value, unit, accent }: { label: string; value: string; unit: string; accent?: boolean }) {
   return (
-    <div className="bg-forged-bg border border-forged-border rounded-xl p-3 text-center hover:border-forged-purple/25 transition-all">
+    <div className="bg-forged-bg rounded-xl p-3 text-center transition-all">
       <p className="text-[10px] text-forged-text2 font-bold uppercase tracking-wider">{label}</p>
       <p className={`text-xl font-black tabular-nums mt-1 ${accent ? 'text-forged-green' : 'text-forged-text'}`}>{value}</p>
       <p className="text-[10px] text-forged-text2">{unit}</p>
