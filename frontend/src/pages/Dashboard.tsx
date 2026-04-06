@@ -103,15 +103,85 @@ function useClickOutside(ref: React.RefObject<HTMLElement | null>, handler: () =
 }
 
 // ══════════════════════════════════
-// SKELETON LOADING
+// LOADING STYLES (injected once)
+// ══════════════════════════════════
+const LOADING_STYLES = `
+@keyframes forgedSkelShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+@keyframes forgedLogoPulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.95); }
+  50% { opacity: 1; transform: scale(1); }
+}
+@keyframes forgedBarPulse {
+  0% { width: 20%; }
+  50% { width: 80%; }
+  100% { width: 20%; }
+}
+@keyframes forgedStaggerIn {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeSlide {
+  from { opacity: 0; transform: translateY(4px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes forgedPageFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+`
+
+// ══════════════════════════════════
+// BRAND LOADER — app launch screen
+// ══════════════════════════════════
+function BrandLoader() {
+  return (
+    <div className="fixed inset-0 z-[100] bg-forged-bg flex flex-col items-center justify-center">
+      <div
+        className="font-black text-3xl tracking-[0.2em] uppercase text-forged-text"
+        style={{
+          fontFamily: "'Archivo', sans-serif",
+          animation: 'forgedLogoPulse 1.6s ease infinite',
+        }}
+      >
+        F<span className="text-forged-gold">O</span>RGED
+      </div>
+      <div
+        className="mt-4 rounded-full overflow-hidden bg-forged-border"
+        style={{ width: 120, height: 3 }}
+      >
+        <div
+          className="h-full rounded-full bg-forged-purple"
+          style={{ animation: 'forgedBarPulse 1.6s ease infinite' }}
+        />
+      </div>
+      <p className="text-xs text-forged-text2 mt-3 opacity-50">Loading your workout...</p>
+    </div>
+  )
+}
+
+// ══════════════════════════════════
+// SKELETON — shimmer gradient
 // ══════════════════════════════════
 function Sk({ className = '' }: { className?: string }) {
-  return <div className={`bg-forged-surface2 rounded-xl animate-pulse ${className}`} />
+  return (
+    <div
+      className={`rounded-xl ${className}`}
+      style={{
+        background: 'linear-gradient(90deg, var(--surface2) 25%, var(--surface2-highlight, rgba(255,255,255,0.04)) 50%, var(--surface2) 75%)',
+        backgroundSize: '200% 100%',
+        animation: 'forgedSkelShimmer 1.5s ease infinite',
+      }}
+    />
+  )
 }
 
 function DashboardSkeleton() {
   return (
     <div className="max-w-2xl mx-auto px-4 pt-4 flex flex-col gap-4">
+      {/* Header skeleton */}
       <div className="flex items-center gap-3">
         <Sk className="w-12 h-12 !rounded-full" />
         <div className="flex-1 flex flex-col gap-2">
@@ -119,21 +189,28 @@ function DashboardSkeleton() {
           <Sk className="h-3 w-32" />
         </div>
       </div>
+      {/* Hero card skeleton */}
       <Sk className="h-64 !rounded-2xl" />
+      {/* Macros skeleton */}
       <div className="grid grid-cols-3 gap-3">
         <Sk className="h-28 !rounded-2xl" />
         <Sk className="h-28 !rounded-2xl" />
         <Sk className="h-28 !rounded-2xl" />
       </div>
+      {/* Quick actions skeleton */}
       <div className="grid grid-cols-4 gap-3">
         <Sk className="h-20 !rounded-2xl" />
         <Sk className="h-20 !rounded-2xl" />
         <Sk className="h-20 !rounded-2xl" />
         <Sk className="h-20 !rounded-2xl" />
       </div>
+      {/* Goals skeleton */}
       <Sk className="h-40 !rounded-2xl" />
+      {/* Workout skeleton */}
       <Sk className="h-28 !rounded-2xl" />
+      {/* Food skeleton */}
       <Sk className="h-28 !rounded-2xl" />
+      {/* Progress skeleton */}
       <Sk className="h-44 !rounded-2xl" />
     </div>
   )
@@ -142,16 +219,24 @@ function DashboardSkeleton() {
 // ══════════════════════════════════
 // SHARED UI
 // ══════════════════════════════════
+
+/** Card with FORGE UI stagger reveal: translateY(16px) → 0, 350ms cubic-bezier */
 function Card({ children, className = '', delay = 0, hero = false }: {
   children: React.ReactNode; className?: string; delay?: number; hero?: boolean
 }) {
   const [v, setV] = useState(false)
   useEffect(() => { const t = setTimeout(() => setV(true), delay); return () => clearTimeout(t) }, [delay])
   return (
-    <div className={`bg-forged-surface border border-forged-border rounded-2xl p-5
-      transition-all duration-500 ease-out hover:border-forged-purple/20
-      ${hero ? 'shadow-lg shadow-forged-purple/5' : ''}
-      ${v ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-3'} ${className}`}>
+    <div
+      className={`bg-forged-surface border border-forged-border rounded-2xl p-5
+        hover:border-forged-purple/20
+        ${hero ? 'shadow-lg shadow-forged-purple/5' : ''} ${className}`}
+      style={{
+        animation: v ? `forgedStaggerIn 0.35s cubic-bezier(0.4, 0, 0.2, 1) both` : 'none',
+        opacity: v ? undefined : 0,
+        transform: v ? undefined : 'translateY(16px)',
+      }}
+    >
       {children}
     </div>
   )
@@ -408,6 +493,60 @@ function BottomNav({ active, onChange, onLogout, onProfile }: {
 }
 
 // ══════════════════════════════════
+// PAGE TRANSITION WRAPPER
+// Handles fade-out → skeleton bridge → stagger-in
+// ══════════════════════════════════
+function PageTransition({ children, tabKey }: { children: React.ReactNode; tabKey: string }) {
+  const [phase, setPhase] = useState<'out' | 'skeleton' | 'in'>('in')
+  const [displayKey, setDisplayKey] = useState(tabKey)
+  const [content, setContent] = useState(children)
+  const isFirstRender = useRef(true)
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    if (tabKey === displayKey) return
+
+    // Step 1: fade out current page (100ms)
+    setPhase('out')
+    const t1 = setTimeout(() => {
+      // Step 2: skeleton bridge (300ms)
+      setPhase('skeleton')
+      setContent(children)
+      setDisplayKey(tabKey)
+      const t2 = setTimeout(() => {
+        // Step 3: stagger reveal
+        setPhase('in')
+      }, 300)
+      return () => clearTimeout(t2)
+    }, 100)
+    return () => clearTimeout(t1)
+  }, [tabKey])
+
+  // Keep content in sync when tabKey hasn't changed
+  useEffect(() => {
+    if (tabKey === displayKey) setContent(children)
+  }, [children, tabKey, displayKey])
+
+  if (phase === 'skeleton') {
+    return <DashboardSkeleton />
+  }
+
+  return (
+    <div
+      style={{
+        opacity: phase === 'out' ? 0 : 1,
+        transition: phase === 'out' ? 'opacity 100ms ease' : 'none',
+      }}
+    >
+      {content}
+    </div>
+  )
+}
+
+// ══════════════════════════════════
 // MAIN DASHBOARD SHELL
 // ══════════════════════════════════
 interface Props { onLogout: () => void }
@@ -420,6 +559,7 @@ export default function Dashboard({ onLogout }: Props) {
   const [activeFast, setActiveFast] = useState<FastingLog | null>(null)
   const [todayFood, setTodayFood] = useState<FoodLog[]>([])
   const [loading, setLoading] = useState(true)
+  const [brandDone, setBrandDone] = useState(false)
   const isDesktop = useMediaQuery('(min-width: 768px)')
 
   const loadData = useCallback(async () => {
@@ -444,6 +584,15 @@ export default function Dashboard({ onLogout }: Props) {
 
   useEffect(() => { loadData() }, [loadData])
 
+  // Brand loader: show for minimum 1.2s or until data loads, whichever is longer
+  useEffect(() => {
+    const t = setTimeout(() => setBrandDone(true), 1200)
+    return () => clearTimeout(t)
+  }, [])
+
+  const showBrand = !brandDone || loading
+  const showSkeleton = brandDone && loading
+
   const macros = {
     cal: todayFood.reduce((s, l) => s + (l.food?.calories ?? 0) * l.servings, 0),
     protein: todayFood.reduce((s, l) => s + (l.food?.protein ?? 0) * l.servings, 0),
@@ -452,39 +601,47 @@ export default function Dashboard({ onLogout }: Props) {
     fiber: todayFood.reduce((s, l) => s + (l.food?.fiber ?? 0) * l.servings, 0),
   }
 
-const sw = isDesktop ? (sidebarCollapsed ? 68 : 240) : 0
+  const sw = isDesktop ? (sidebarCollapsed ? 68 : 240) : 0
 
   return (
     <div className="min-h-screen bg-forged-bg">
+      <style>{LOADING_STYLES}</style>
+
+      {/* ── PHASE 1: Brand loader on first app launch ── */}
+      {showBrand && !showSkeleton && <BrandLoader />}
+
       {isDesktop && (
         <Sidebar active={tab} onChange={setTab} collapsed={sidebarCollapsed}
           onToggle={() => setSC(!sidebarCollapsed)} onLogout={onLogout} />
       )}
       <main className="transition-all duration-300 pb-28 md:pb-6" style={{ marginLeft: sw }}>
-        {loading ? <DashboardSkeleton /> : (
+        {/* ── PHASE 2: Skeleton bridge while data loads ── */}
+        {showSkeleton ? <DashboardSkeleton /> : !showBrand && (
           <div className="max-w-2xl mx-auto px-4 pt-4">
-            {tab === 'dashboard' && (
-              <HomeTab stats={stats} user={user} activeFast={activeFast}
-                macros={macros} todayFood={todayFood}
-                onRefresh={loadData} onTabChange={setTab} onLogout={onLogout} />
-            )}
-            {tab === 'food' && <FoodLogPage />}
-            {tab === 'workouts' && <WorkoutPage />}
-            {tab === 'progress' && <ProgressPage />}
-            {tab === 'profile' && <ProfilePage user={user} onLogout={onLogout} />}
-            {tab === 'settings' && <SettingsPage onBack={() => setTab('dashboard')} />}
-            {tab === 'weekly' && <WeeklySummaryPage onBack={() => setTab('dashboard')} />}
-            {tab === 'photos' && <ProgressPhotosPage onBack={() => setTab('dashboard')} />}
-            {tab === 'streaks' && <StreaksPage onBack={() => setTab('dashboard')} />}
-            {tab === 'privacy' && <PrivacyPage onBack={() => setTab('dashboard')} />}
-            {tab === 'recipes' && <RecipesPage onBack={() => setTab('dashboard')} />}
-            {tab === 'feedback' && <FeedbackPage onBack={() => setTab('dashboard')} />}
-            {tab === 'fasting' && <FastingPage onBack={() => setTab('dashboard')} />}
+            {/* ── PHASE 3: Page transitions with fade → skeleton → stagger ── */}
+            <PageTransition tabKey={tab}>
+              {tab === 'dashboard' && (
+                <HomeTab stats={stats} user={user} activeFast={activeFast}
+                  macros={macros} todayFood={todayFood}
+                  onRefresh={loadData} onTabChange={setTab} onLogout={onLogout} />
+              )}
+              {tab === 'food' && <FoodLogPage />}
+              {tab === 'workouts' && <WorkoutPage />}
+              {tab === 'progress' && <ProgressPage />}
+              {tab === 'profile' && <ProfilePage user={user} onLogout={onLogout} />}
+              {tab === 'settings' && <SettingsPage onBack={() => setTab('dashboard')} />}
+              {tab === 'weekly' && <WeeklySummaryPage onBack={() => setTab('dashboard')} />}
+              {tab === 'photos' && <ProgressPhotosPage onBack={() => setTab('dashboard')} />}
+              {tab === 'streaks' && <StreaksPage onBack={() => setTab('dashboard')} />}
+              {tab === 'privacy' && <PrivacyPage onBack={() => setTab('dashboard')} />}
+              {tab === 'recipes' && <RecipesPage onBack={() => setTab('dashboard')} />}
+              {tab === 'feedback' && <FeedbackPage onBack={() => setTab('dashboard')} />}
+              {tab === 'fasting' && <FastingPage onBack={() => setTab('dashboard')} />}
+            </PageTransition>
           </div>
         )}
       </main>
       {!isDesktop && <BottomNav active={tab} onChange={setTab} onLogout={onLogout} onProfile={() => setTab('profile')} />}
-      <style>{`@keyframes fadeSlide{from{opacity:0;transform:translateY(4px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}`}</style>
     </div>
   )
 }
@@ -663,7 +820,7 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
       </Card>
 
       {/* ══ MACROS ══ */}
-      <Card delay={160}>
+      <Card delay={130}>
         <SectionLabel>Macros</SectionLabel>
         <div className="grid grid-cols-3 gap-3">
           <MacroCard label="Protein" current={macros.protein} goal={pGoal} />
@@ -677,7 +834,7 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
       </Card>
 
       {/* ══ QUICK ACTIONS ══ */}
-      <Card delay={240}>
+      <Card delay={200}>
         <SectionLabel>Quick actions</SectionLabel>
         <div className="grid grid-cols-4 gap-2">
           <QuickAction icon={I.plus} label="Add Meal" onClick={() => onTabChange('food')} />
@@ -691,7 +848,7 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
       </Card>
 
       {/* ══ TODAY'S GOALS ══ */}
-      <Card delay={320}>
+      <Card delay={270}>
         <div className="flex justify-between items-center mb-3">
           <SectionLabel>Today's Goals</SectionLabel>
           <button onClick={() => onTabChange('progress')}
@@ -709,20 +866,20 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
       </Card>
 
       {/* ══ WORKOUT SNAPSHOT ══ */}
-      <Card delay={400}>
+      <Card delay={340}>
         <SectionLabel>Workout</SectionLabel>
         <WorkoutSnapshot onGo={() => onTabChange('workouts')} />
       </Card>
 
       {/* ══ FOOD SNAPSHOT ══ */}
-      <Card delay={480}>
+      <Card delay={410}>
         <SectionLabel>Last meal</SectionLabel>
         <FoodSnapshot todayFood={todayFood} proteinLeft={Math.max(pGoal - macros.protein, 0)}
           onGo={() => onTabChange('food')} />
       </Card>
 
       {/* ══ PROGRESS PREVIEW with date range ══ */}
-      <Card delay={560}>
+      <Card delay={480}>
         <div className="flex justify-between items-center mb-3">
           <SectionLabel>Progress</SectionLabel>
           <button onClick={() => onTabChange('progress')}
@@ -746,7 +903,7 @@ function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabC
       </Card>
 
       {/* ══ INSIGHT ══ */}
-      <Card delay={640}>
+      <Card delay={550}>
         <InsightCard macros={macros} streak={stats?.currentStreak ?? 0} proteinGoal={pGoal} />
       </Card>
     </div>
@@ -964,12 +1121,12 @@ function ProgressTab() {
           </button>
         </div>
       </Card>
-      <Card delay={160}>
+      <Card delay={130}>
         <SectionLabel>Weight trend</SectionLabel>
         <SegmentedControl options={['7d', '30d', '90d']} active={range} onChange={setRange} />
         <FullWeightChart data={filtered} />
       </Card>
-      <Card delay={260}>
+      <Card delay={200}>
         <SectionLabel>History</SectionLabel>
         {entries.length === 0 ? <p className="text-sm text-forged-text2 py-2">No entries yet</p> : (
           <div className="flex flex-col">
@@ -1051,7 +1208,7 @@ function ProfileTab({ user, onLogout }: { user: User | null; onLogout: () => voi
       </Card>
       {!isDesktop && (
         <>
-          <Card delay={160}>
+          <Card delay={130}>
             <button onClick={toggleTheme} className="w-full flex items-center justify-between p-3 rounded-xl bg-forged-bg border border-forged-border hover:border-forged-purple/30 transition-all">
               <div className="flex items-center gap-3"><Icon d={theme === 'dark' ? I.moon : I.sun} size={18} className="text-forged-text2" /><span className="text-sm text-forged-text font-medium">Theme</span></div>
               <span className="text-xs text-forged-text2 capitalize font-bold">{theme}</span>
