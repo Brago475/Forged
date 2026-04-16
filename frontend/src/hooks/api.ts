@@ -1,3 +1,5 @@
+import type { FastingLog } from '../types'
+
 const API_BASE = '/api'
 
 function getToken(): string | null {
@@ -100,12 +102,23 @@ export const api = {
 
   fasting: {
     start: (data: { targetHours: number; notes?: string }) =>
-      request<any>('/fasting/start', { method: 'POST', body: JSON.stringify(data) }),
+      request<FastingLog>('/fasting/start', {
+        method: 'POST',
+        body: JSON.stringify(data),
+      }),
 
     end: (id: string, data: { notes?: string }) =>
-      request<any>(`/fasting/${id}/end`, { method: 'PUT', body: JSON.stringify(data) }),
+      request<FastingLog>(`/fasting/${id}/end`, {
+        method: 'PUT',
+        body: JSON.stringify(data),
+      }),
 
-    getActive: () => request<any>('/fasting/active'),
+    getActive: async (): Promise<FastingLog | null> => {
+      const res = await request<{ active: boolean; fast?: FastingLog }>(
+        '/fasting/active'
+      )
+      return res.active && res.fast ? res.fast : null
+    },
   },
 
   goals: {
