@@ -12,6 +12,7 @@ import { Calendar } from '../components/ui/Calendar'
 import { Icon, I } from '../components/ui/Icon'
 
 // Fasting components
+import { DatePopover } from '../components/ui/DatePopover'
 import { TimerCard } from '../components/fasting/TimerCard'
 import { ConfirmCard } from '../components/fasting/ConfirmCard'
 import { CustomFastForm } from '../components/fasting/CustomFastForm'
@@ -48,6 +49,10 @@ export default function FastingPage({ onBack }: FastingPageProps) {
   const [selectedPreset, setSelectedPreset] = useState<FastingPreset | null>(null)
   const [calMonth, setCalMonth] = useState<Date>(new Date())
   const [loading, setLoading] = useState<boolean>(true)
+  const [selectedDate, setSelectedDate] = useState<{
+  date: string
+  entries: CalendarEntry[]
+} | null>(null)
 
   // Load active fast from backend on mount.
   const loadActive = useCallback(async () => {
@@ -219,8 +224,7 @@ export default function FastingPage({ onBack }: FastingPageProps) {
               entries={calendarEntries}
               legend={FASTING_LEGEND}
               onDateClick={(date, dayEntries) => {
-                // TODO: show popover with fast details for this date
-                console.log('Date clicked:', date, dayEntries)
+                setSelectedDate({ date, entries: dayEntries })
               }}
             />
           </Card>
@@ -297,7 +301,16 @@ export default function FastingPage({ onBack }: FastingPageProps) {
           </Card>
         </>
       )}
+{/* Date detail popover */}
+      {selectedDate && (
+        <DatePopover
+          date={selectedDate.date}
+          entries={selectedDate.entries}
+          onClose={() => setSelectedDate(null)}
+        />
+      )}
 
+      <div className="h-4" />
       <div className="h-4" />
     </div>
   )

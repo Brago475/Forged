@@ -1,4 +1,3 @@
-import { api } from '../../hooks/api'
 import { useAnimatedNumber } from '../../hooks/useAnimatedNumber'
 import { Icon, I } from '../ui/Icon'
 import { Card } from '../ui/Card'
@@ -181,13 +180,7 @@ export function HomeTab({
           <QuickAction
             icon={I.clock}
             label="Start Fast"
-            onClick={async () => {
-              if (activeFast) return
-              try {
-                await api.fasting.start({ targetHours: 16 })
-                window.location.reload()
-              } catch { /* swallow */ }
-            }}
+            onClick={() => onTabChange('fasting')}
           />
         </div>
       </Card>
