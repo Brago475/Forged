@@ -138,41 +138,35 @@ export function Calendar({
                   {day}
                 </span>
 
-                {/* Icons stacked under date number */}
+                {/* Overlapping icons under date number */}
                 {hasData && (
-                  <div className="flex items-center gap-0.5 mt-0.5">
-                    {dayEntries.length <= 2 ? (
-                      dayEntries.map((entry, j) => (
-                        <div
-                          key={j}
-                          className="w-4 h-4 rounded-md flex items-center justify-center"
-                          style={{ backgroundColor: entry.color + '25' }}
-                        >
-                          <Icon
-                            d={I[entry.iconKey || 'clock']}
-                            size={10}
-                            sw={2}
-                            style={{ color: entry.color }}
-                          />
-                        </div>
-                      ))
-                    ) : (
-                      <>
-                        <div
-                          className="w-4 h-4 rounded-md flex items-center justify-center"
-                          style={{ backgroundColor: dayEntries[0].color + '25' }}
-                        >
-                          <Icon
-                            d={I[dayEntries[0].iconKey || 'clock']}
-                            size={10}
-                            sw={2}
-                            style={{ color: dayEntries[0].color }}
-                          />
-                        </div>
-                        <span className="text-[8px] font-black text-forged-text2">
-                          +{dayEntries.length - 1}
-                        </span>
-                      </>
+                  <div className="flex items-center mt-0.5">
+                    {dayEntries.slice(0, 3).map((entry, j) => (
+                      <div
+                        key={j}
+                        className="w-4 h-4 rounded-md flex items-center justify-center
+                          border border-forged-surface"
+                        style={{
+                          backgroundColor: entry.color + '30',
+                          marginLeft: j > 0 ? '-4px' : '0',
+                          zIndex: dayEntries.length - j,
+                        }}
+                      >
+                        <Icon
+                          d={I[entry.iconKey || 'clock']}
+                          size={9}
+                          sw={2}
+                          style={{ color: entry.color }}
+                        />
+                      </div>
+                    ))}
+                    {dayEntries.length > 3 && (
+                      <span
+                        className="text-[7px] font-black text-forged-text2"
+                        style={{ marginLeft: '-2px' }}
+                      >
+                        +{dayEntries.length - 3}
+                      </span>
                     )}
                   </div>
                 )}
@@ -185,7 +179,7 @@ export function Calendar({
         {selectedDate && selectedEntries.length > 0 && (
           <div
             ref={popoverRef}
-            className="absolute left-1/2 -translate-x-1/2 mt-2 w-[260px] z-30
+            className="absolute inset-x-0 top-8 mx-auto w-[90%] max-w-[280px] z-30
               bg-forged-surface border border-forged-border rounded-2xl
               shadow-2xl shadow-black/20 overflow-hidden"
             style={{ animation: 'fadeSlide 0.15s ease-out' }}

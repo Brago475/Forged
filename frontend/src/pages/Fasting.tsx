@@ -54,11 +54,40 @@ export default function FastingPage({ onBack }: FastingPageProps) {
     try {
       const fast = await api.fasting.getActive()
       if (fast) {
-        setActiveFast(fast)
-        setView('active')
+        const startMs = new Date(fast.startTime).getTime()
+        const elapsedHours = (Date.now() - startMs) / 3600000
+        
+        // Auto-end fasts that are more than 2x past their target.
+        if (elapsedHours > fast.targetHours * 2) {
+          try {
+            await api.fasting.end(fast.id, {})
+            const preset = getPreset(fast.targetHours)
+            const record: FastRecord = {
+              id: crypto.randomUUID(),
+              name: preset.name,
+              hours: fast.targetHours,
+              meals: preset.meals,
+              mealTimes: [],
+              notes: 'Auto-completed',
+              startTime: fast.startTime,
+              endTime: new Date(startMs + fast.targetHours * 3600000).toISOString(),
+              date: new Date(fast.startTime).toISOString().split('T')[0],
+            }
+            const updated = [record, ...loadFasts()]
+            setHistory(updated)
+            saveFasts(updated)
+          } catch {
+            // If auto-end fails, still show it so user can manually end
+            setActiveFast(fast)
+            setView('active')
+          }
+        } else {
+          setActiveFast(fast)
+          setView('active')
+        }
       }
     } catch {
-      // No active fast, that's fine.
+      // No active fast
     } finally {
       setLoading(false)
     }

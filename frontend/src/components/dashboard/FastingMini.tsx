@@ -33,16 +33,15 @@ export function FastingMini({ fast }: FastingMiniProps) {
 
   const remH = Math.floor(remainingHours)
   const remM = Math.floor((remainingHours % 1) * 60)
-  const elapH = Math.floor(elapsedHours)
-  const elapM = Math.floor((elapsedHours % 1) * 60)
+
 
   return (
     <div>
       <p className="text-sm font-black text-forged-green tabular-nums">
-        {remH}h {remM}m remaining
+        {remH}h {remM}m left
       </p>
       <p className="text-xs text-forged-text2">
-        {elapH}h {elapM}m elapsed / {fast.targetHours}h window
+        {fast.targetHours}h fast · tap to view
       </p>
     </div>
   )
