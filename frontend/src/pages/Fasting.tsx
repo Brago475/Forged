@@ -37,25 +37,35 @@ interface FastingPageProps {
   onNavigate?: (tab: string) => void
 }
 
-/**
- * Fasting page shell. Manages view state, API calls, and history.
- */
 export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
   const [view, setView] = useState<View>('home')
   const [activeFast, setActiveFast] = useState<FastingLog | null>(null)
+  const [isStale, setIsStale] = useState<boolean>(false)
   const [history, setHistory] = useState<FastRecord[]>(loadFasts)
   const [customFasts, setCustomFasts] = useState<CustomFast[]>(loadCustomFasts)
   const [selectedPreset, setSelectedPreset] = useState<FastingPreset | null>(null)
   const [calMonth, setCalMonth] = useState<Date>(new Date())
   const [loading, setLoading] = useState<boolean>(true)
 
-  // Load active fast from backend on mount. No auto-end.
   const loadActive = useCallback(async () => {
     try {
       const fast = await api.fasting.getActive()
       if (fast) {
-        setActiveFast(fast)
-        setView('active')
+        const startMs = new Date(fast.startTime).getTime()
+        const elapsedHours = (Date.now() - startMs) / 3600000
+
+        // If the fast is way past its target, mark it as stale
+        // so we show a dismissal banner instead of the full timer.
+        if (elapsedHours > fast.targetHours * 2) {
+          setActiveFast(fast)
+          setIsStale(true)
+          // Stay on home view so presets are visible behind the banner
+          setView('home')
+        } else {
+          setActiveFast(fast)
+          setIsStale(false)
+          setView('active')
+        }
       }
     } catch {
       // No active fast
@@ -66,7 +76,35 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
 
   useEffect(() => { loadActive() }, [loadActive])
 
-  // Start a new fast via API.
+  // Dismiss a stale fast (end it on the backend, optionally save to history).
+  const dismissStaleFast = async (saveToHistory: boolean): Promise<void> => {
+    if (!activeFast) return
+    try {
+      await api.fasting.end(activeFast.id, {})
+      if (saveToHistory) {
+        const preset = getPreset(activeFast.targetHours)
+        const record: FastRecord = {
+          id: crypto.randomUUID(),
+          name: preset.name,
+          hours: activeFast.targetHours,
+          meals: preset.meals,
+          mealTimes: [],
+          notes: 'Completed (late)',
+          startTime: activeFast.startTime,
+          endTime: new Date().toISOString(),
+          date: new Date(activeFast.startTime).toISOString().split('T')[0],
+        }
+        const updated = [record, ...history]
+        setHistory(updated)
+        saveFasts(updated)
+      }
+      setActiveFast(null)
+      setIsStale(false)
+    } catch (err) {
+      console.error('Failed to dismiss fast:', err)
+    }
+  }
+
   const startFast = async (hours: number): Promise<void> => {
     try {
       await api.fasting.start({ targetHours: hours })
@@ -78,7 +116,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
     }
   }
 
-  // End the active fast, save to local history.
   const endFast = async (): Promise<void> => {
     if (!activeFast) return
     try {
@@ -99,6 +136,7 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
       setHistory(updated)
       saveFasts(updated)
       setActiveFast(null)
+      setIsStale(false)
       setView('home')
     } catch (err) {
       console.error('Failed to end fast:', err)
@@ -124,7 +162,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
     saveFasts(updated)
   }
 
-  // Derived stats
   const streak = calculateStreak(history)
   const totalHours = history.reduce((sum, f) => sum + f.hours, 0)
   const longestFast = history.length > 0
@@ -156,8 +193,47 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
     <div className="flex flex-col gap-4">
       <PageHeader onBack={onBack} title="Fasting" subtitle="Intermittent fasting tracker" />
 
-      {/* Active fast timer */}
-      {view === 'active' && activeFast && (
+      {/* Stale fast banner: old fast that was never ended */}
+      {isStale && activeFast && (
+        <Card delay={0} className="!p-4 border-forged-red/20">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-9 h-9 rounded-lg bg-forged-red/10 flex items-center justify-center flex-shrink-0">
+              <Icon d={I.clock} size={16} className="text-forged-red" />
+            </div>
+            <div className="flex-1">
+              <p className="text-sm font-bold text-forged-text">Unfinished fast</p>
+              <p className="text-[10px] text-forged-text2">
+                {getPreset(activeFast.targetHours).name} ({activeFast.targetHours}h) from{' '}
+                {new Date(activeFast.startTime).toLocaleDateString('en-US', {
+                  month: 'short',
+                  day: 'numeric',
+                })}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => dismissStaleFast(true)}
+              className="flex-1 py-2.5 rounded-xl text-xs font-black
+                bg-forged-purple/10 text-forged-purple border border-forged-purple/20
+                hover:bg-forged-purple hover:text-white active:scale-95 transition-all"
+            >
+              Save & Dismiss
+            </button>
+            <button
+              onClick={() => dismissStaleFast(false)}
+              className="flex-1 py-2.5 rounded-xl text-xs font-black
+                bg-forged-surface2 text-forged-text2 border border-forged-border
+                hover:text-forged-text active:scale-95 transition-all"
+            >
+              Discard
+            </button>
+          </div>
+        </Card>
+      )}
+
+      {/* Active fast timer (only for fresh, non-stale fasts) */}
+      {view === 'active' && activeFast && !isStale && (
         <TimerCard
           fast={activeFast}
           onEnd={endFast}
@@ -165,7 +241,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         />
       )}
 
-      {/* Confirm preset before starting */}
       {view === 'confirm' && selectedPreset && (
         <ConfirmCard
           preset={selectedPreset}
@@ -177,7 +252,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         />
       )}
 
-      {/* Custom fast creation form */}
       {view === 'custom' && (
         <CustomFastForm
           onSave={handleSaveCustom}
@@ -186,10 +260,10 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         />
       )}
 
-      {/* Home view + always-visible stats/calendar/chart */}
       {(view === 'home' || view === 'active') && (
         <>
-          {view === 'home' && (
+          {/* Presets: show on home, or on active if the fast is stale (so user can start a new one) */}
+          {(view === 'home' || isStale) && (
             <PresetList
               onSelect={(preset) => {
                 setSelectedPreset(preset)
