@@ -79,7 +79,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }
   }, [])
 
+  // Re-fetch data whenever the user switches back to the dashboard tab.
   useEffect(() => { loadData() }, [loadData])
+  useEffect(() => {
+    if (tab === 'dashboard') {
+      loadData()
+    }
+  }, [tab, loadData])
 
   // Brand loader: visible for at least 1.2s so the logo registers.
   useEffect(() => {

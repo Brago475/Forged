@@ -12,7 +12,6 @@ import { Calendar } from '../components/ui/Calendar'
 import { Icon, I } from '../components/ui/Icon'
 
 // Fasting components
-import { DatePopover } from '../components/ui/DatePopover'
 import { TimerCard } from '../components/fasting/TimerCard'
 import { ConfirmCard } from '../components/fasting/ConfirmCard'
 import { CustomFastForm } from '../components/fasting/CustomFastForm'
@@ -49,10 +48,6 @@ export default function FastingPage({ onBack }: FastingPageProps) {
   const [selectedPreset, setSelectedPreset] = useState<FastingPreset | null>(null)
   const [calMonth, setCalMonth] = useState<Date>(new Date())
   const [loading, setLoading] = useState<boolean>(true)
-  const [selectedDate, setSelectedDate] = useState<{
-  date: string
-  entries: CalendarEntry[]
-} | null>(null)
 
   // Load active fast from backend on mount.
   const loadActive = useCallback(async () => {
@@ -140,11 +135,15 @@ export default function FastingPage({ onBack }: FastingPageProps) {
     : 0
 
   // Convert history to CalendarEntry format for the shared Calendar.
-  const calendarEntries: CalendarEntry[] = history.map(f => ({
-    date: f.date,
-    color: getPreset(f.hours).color,
-    label: `${f.name || getPreset(f.hours).name} (${f.hours}h)`,
-  }))
+  const calendarEntries: CalendarEntry[] = history.map(f => {
+    const preset = getPreset(f.hours)
+    return {
+      date: f.date,
+      color: preset.color,
+      label: `${f.name || preset.name} (${f.hours}h)`,
+      iconKey: preset.iconKey,
+    }
+  })
 
   // Loading skeleton
   if (loading) {
@@ -223,9 +222,6 @@ export default function FastingPage({ onBack }: FastingPageProps) {
               onMonthChange={setCalMonth}
               entries={calendarEntries}
               legend={FASTING_LEGEND}
-              onDateClick={(date, dayEntries) => {
-                setSelectedDate({ date, entries: dayEntries })
-              }}
             />
           </Card>
 
@@ -301,16 +297,7 @@ export default function FastingPage({ onBack }: FastingPageProps) {
           </Card>
         </>
       )}
-{/* Date detail popover */}
-      {selectedDate && (
-        <DatePopover
-          date={selectedDate.date}
-          entries={selectedDate.entries}
-          onClose={() => setSelectedDate(null)}
-        />
-      )}
 
-      <div className="h-4" />
       <div className="h-4" />
     </div>
   )
