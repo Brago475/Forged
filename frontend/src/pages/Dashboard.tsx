@@ -63,14 +63,20 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
       if (d.status === 'fulfilled') setStats(d.value)
       if (u.status === 'fulfilled') setUser(u.value)
-      if (
-        f.status === 'fulfilled' &&
-        f.value &&
-        f.value.startTime &&
-        !isNaN(new Date(f.value.startTime).getTime())
-      ) {
-        setActiveFast(f.value)
+
+      // Only show fasts that aren't way past their target.
+      if (f.status === 'fulfilled' && f.value) {
+        const startMs = new Date(f.value.startTime).getTime()
+        const elapsedHours = (Date.now() - startMs) / 3600000
+        if (!isNaN(startMs) && elapsedHours <= f.value.targetHours * 2) {
+          setActiveFast(f.value)
+        } else {
+          setActiveFast(null)
+        }
+      } else {
+        setActiveFast(null)
       }
+
       if (fd.status === 'fulfilled') setTodayFood(fd.value)
     } catch (err) {
       console.error(err)
@@ -79,8 +85,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     }
   }, [])
 
-  // Re-fetch data whenever the user switches back to the dashboard tab.
   useEffect(() => { loadData() }, [loadData])
+
+  // Re-fetch data whenever the user switches back to the dashboard tab.
   useEffect(() => {
     if (tab === 'dashboard') {
       loadData()
@@ -159,7 +166,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {tab === 'privacy' && <PrivacyPage onBack={() => setTab('dashboard')} />}
                 {tab === 'recipes' && <RecipesPage onBack={() => setTab('dashboard')} />}
                 {tab === 'feedback' && <FeedbackPage onBack={() => setTab('dashboard')} />}
-                {tab === 'fasting' && <FastingPage onBack={() => setTab('dashboard')} />}
+                {tab === 'fasting' && (
+                  <FastingPage
+                    onBack={() => setTab('dashboard')}
+                    onNavigate={(t) => setTab(t as TabId)}
+                  />
+                )}
               </PageTransition>
             </div>
           )

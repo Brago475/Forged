@@ -34,13 +34,15 @@ type View = 'home' | 'confirm' | 'custom' | 'active'
 
 interface FastingPageProps {
   onBack: () => void
+  /** Navigate to another tab (e.g. 'food' for adding meals). */
+  onNavigate?: (tab: string) => void
 }
 
 /**
  * Fasting page shell. Manages view state, API calls, and history.
  * All visual sub-sections are extracted into dedicated components.
  */
-export default function FastingPage({ onBack }: FastingPageProps) {
+export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
   const [view, setView] = useState<View>('home')
   const [activeFast, setActiveFast] = useState<FastingLog | null>(null)
   const [history, setHistory] = useState<FastRecord[]>(loadFasts)
@@ -56,7 +58,7 @@ export default function FastingPage({ onBack }: FastingPageProps) {
       if (fast) {
         const startMs = new Date(fast.startTime).getTime()
         const elapsedHours = (Date.now() - startMs) / 3600000
-        
+
         // Auto-end fasts that are more than 2x past their target.
         if (elapsedHours > fast.targetHours * 2) {
           try {
@@ -192,7 +194,11 @@ export default function FastingPage({ onBack }: FastingPageProps) {
 
       {/* Active fast timer */}
       {view === 'active' && activeFast && (
-        <TimerCard fast={activeFast} onEnd={endFast} />
+        <TimerCard
+          fast={activeFast}
+          onEnd={endFast}
+          onAddMeal={onNavigate ? () => onNavigate('food') : undefined}
+        />
       )}
 
       {/* Confirm preset before starting */}

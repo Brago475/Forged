@@ -7,13 +7,15 @@ import { getPreset, formatTime } from './fastingConstants'
 interface TimerCardProps {
   fast: FastingLog
   onEnd: () => void
+  /** Navigate to food log to add a meal during eating window. */
+  onAddMeal?: () => void
 }
 
 /**
  * Active fast timer with animated SVG ring, stats row,
  * meal window preview, and end button.
  */
-export function TimerCard({ fast, onEnd }: TimerCardProps) {
+export function TimerCard({ fast, onEnd, onAddMeal }: TimerCardProps) {
   const [now, setNow] = useState<number>(Date.now())
 
   useEffect(() => {
@@ -188,6 +190,20 @@ export function TimerCard({ fast, onEnd }: TimerCardProps) {
         <p className="text-[10px] text-forged-text2 mt-2 text-center">
           {preset.meals} meal{preset.meals > 1 ? 's' : ''} recommended
         </p>
+
+        {/* Add meal button during eating window */}
+        {inEatingWindow && onAddMeal && (
+          <button
+            onClick={onAddMeal}
+            className="w-full mt-3 py-2.5 rounded-xl text-xs font-black
+              bg-forged-green/10 text-forged-green border border-forged-green/20
+              hover:bg-forged-green hover:text-white active:scale-95 transition-all
+              flex items-center justify-center gap-2"
+          >
+            <Icon d={I.food} size={14} sw={2} />
+            Add Meal
+          </button>
+        )}
       </div>
 
       {/* End button */}
