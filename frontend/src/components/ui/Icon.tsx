@@ -44,6 +44,8 @@ interface IconProps {
   className?: string
   /** Stroke width. Defaults to 1.8. Use higher values for active/filled states. */
   sw?: number
+  /** Inline styles, used when color must be dynamic (e.g. preset themes). */
+  style?: React.CSSProperties
 }
 
 /**
@@ -53,7 +55,7 @@ interface IconProps {
  * @example
  *   <Icon d={I.flame} size={18} className="text-forged-green" />
  */
-export function Icon({ d, size = 20, className = '', sw = 1.8 }: IconProps) {
+export function Icon({ d, size = 20, className = '', sw = 1.8, style }: IconProps) {
   return (
     <svg
       width={size}
@@ -65,6 +67,7 @@ export function Icon({ d, size = 20, className = '', sw = 1.8 }: IconProps) {
       strokeLinecap="round"
       strokeLinejoin="round"
       className={className}
+      style={style}
     >
       {d}
     </svg>
