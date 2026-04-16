@@ -54,12 +54,9 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         const startMs = new Date(fast.startTime).getTime()
         const elapsedHours = (Date.now() - startMs) / 3600000
 
-        // If the fast is way past its target, mark it as stale
-        // so we show a dismissal banner instead of the full timer.
         if (elapsedHours > fast.targetHours * 2) {
           setActiveFast(fast)
           setIsStale(true)
-          // Stay on home view so presets are visible behind the banner
           setView('home')
         } else {
           setActiveFast(fast)
@@ -76,7 +73,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
 
   useEffect(() => { loadActive() }, [loadActive])
 
-  // Dismiss a stale fast (end it on the backend, optionally save to history).
   const dismissStaleFast = async (saveToHistory: boolean): Promise<void> => {
     if (!activeFast) return
     try {
@@ -178,11 +174,23 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
     }
   })
 
+  // Loading skeleton
   if (loading) {
     return (
       <div className="flex flex-col gap-4">
         <PageHeader onBack={onBack} title="Fasting" subtitle="Intermittent fasting tracker" />
-        {/* Quick action: always available to log food */}
+        {[1, 2, 3].map(i => (
+          <div key={i} className="h-32 bg-forged-surface2 rounded-2xl animate-pulse" />
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex flex-col gap-4">
+      <PageHeader onBack={onBack} title="Fasting" subtitle="Intermittent fasting tracker" />
+
+      {/* Log a meal: always visible regardless of fasting state */}
       {onNavigate && (
         <button
           onClick={() => onNavigate('food')}
@@ -205,18 +213,8 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
           <Icon d={I.chevron} size={16} className="text-forged-text2" />
         </button>
       )}
-        {[1, 2, 3].map(i => (
-          <div key={i} className="h-32 bg-forged-surface2 rounded-2xl animate-pulse" />
-        ))}
-      </div>
-    )
-  }
 
-  return (
-    <div className="flex flex-col gap-4">
-      <PageHeader onBack={onBack} title="Fasting" subtitle="Intermittent fasting tracker" />
-
-      {/* Stale fast banner: old fast that was never ended */}
+      {/* Stale fast banner */}
       {isStale && activeFast && (
         <Card delay={0} className="!p-4 border-forged-red/20">
           <div className="flex items-center gap-3 mb-3">
@@ -255,7 +253,7 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         </Card>
       )}
 
-      {/* Active fast timer (only for fresh, non-stale fasts) */}
+      {/* Active fast timer */}
       {view === 'active' && activeFast && !isStale && (
         <TimerCard
           fast={activeFast}
@@ -264,6 +262,7 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         />
       )}
 
+      {/* Confirm preset */}
       {view === 'confirm' && selectedPreset && (
         <ConfirmCard
           preset={selectedPreset}
@@ -275,6 +274,7 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         />
       )}
 
+      {/* Custom fast form */}
       {view === 'custom' && (
         <CustomFastForm
           onSave={handleSaveCustom}
@@ -283,9 +283,9 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         />
       )}
 
+      {/* Home + active shared sections */}
       {(view === 'home' || view === 'active') && (
         <>
-          {/* Presets: show on home, or on active if the fast is stale (so user can start a new one) */}
           {(view === 'home' || isStale) && (
             <PresetList
               onSelect={(preset) => {
