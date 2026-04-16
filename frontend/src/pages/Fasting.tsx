@@ -182,6 +182,29 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
     return (
       <div className="flex flex-col gap-4">
         <PageHeader onBack={onBack} title="Fasting" subtitle="Intermittent fasting tracker" />
+        {/* Quick action: always available to log food */}
+      {onNavigate && (
+        <button
+          onClick={() => onNavigate('food')}
+          className="w-full flex items-center gap-3 p-4 rounded-2xl
+            bg-forged-surface border border-forged-border
+            hover:border-forged-green/30 active:scale-[0.99] transition-all"
+        >
+          <div className="w-10 h-10 rounded-xl bg-forged-green/15 flex items-center justify-center flex-shrink-0">
+            <Icon d={I.food} size={18} className="text-forged-green" />
+          </div>
+          <div className="text-left flex-1">
+            <p className="text-sm font-bold text-forged-text">Log a Meal</p>
+            <p className="text-[10px] text-forged-text2">
+              {activeFast && !isStale
+                ? 'Track what you eat during your fast'
+                : 'Log your meal before starting a fast'
+              }
+            </p>
+          </div>
+          <Icon d={I.chevron} size={16} className="text-forged-text2" />
+        </button>
+      )}
         {[1, 2, 3].map(i => (
           <div key={i} className="h-32 bg-forged-surface2 rounded-2xl animate-pulse" />
         ))}
