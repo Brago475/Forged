@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../hooks/api'
-import type { FastingLog } from '../types'
+import type { FastingLog, FoodLog } from '../types'
 import type { CalendarEntry } from '../components/ui/Calendar'
 
 // Shared UI
@@ -46,6 +46,7 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
   const [selectedPreset, setSelectedPreset] = useState<FastingPreset | null>(null)
   const [calMonth, setCalMonth] = useState<Date>(new Date())
   const [loading, setLoading] = useState<boolean>(true)
+  const [todayFood, setTodayFood] = useState<FoodLog[]>([])
 
   const loadActive = useCallback(async () => {
     try {
@@ -72,6 +73,13 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
   }, [])
 
   useEffect(() => { loadActive() }, [loadActive])
+
+  // Fetch today's food logs for the timer's meal tracking.
+  // Re-fetches when view changes (e.g. coming back from food page).
+  useEffect(() => {
+    const today = new Date().toISOString().split('T')[0]
+    api.food.getLogs(today).then(setTodayFood).catch(() => setTodayFood([]))
+  }, [view])
 
   const dismissStaleFast = async (saveToHistory: boolean): Promise<void> => {
     if (!activeFast) return
@@ -174,7 +182,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
     }
   })
 
-  // Loading skeleton
   if (loading) {
     return (
       <div className="flex flex-col gap-4">
@@ -253,12 +260,13 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         </Card>
       )}
 
-      {/* Active fast timer */}
+      {/* Active fast timer with today's food */}
       {view === 'active' && activeFast && !isStale && (
         <TimerCard
           fast={activeFast}
           onEnd={endFast}
           onAddMeal={onNavigate ? () => onNavigate('food') : undefined}
+          todayFood={todayFood}
         />
       )}
 
