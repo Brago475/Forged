@@ -35,13 +35,15 @@ export function FastingMini({ fast }: FastingMiniProps) {
   const remM = Math.floor((remainingHours % 1) * 60)
 
 
+  const isComplete = remainingHours <= 0
+
   return (
     <div>
-      <p className="text-sm font-black text-forged-green tabular-nums">
-        {remH}h {remM}m left
+      <p className={`text-sm font-black tabular-nums ${isComplete ? 'text-forged-purple' : 'text-forged-green'}`}>
+        {isComplete ? 'Fast complete!' : `${remH}h ${remM}m left`}
       </p>
       <p className="text-xs text-forged-text2">
-        {fast.targetHours}h fast · tap to view
+        {fast.targetHours}h {isComplete ? 'fast finished' : 'fast in progress'}
       </p>
     </div>
   )

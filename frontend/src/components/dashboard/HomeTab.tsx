@@ -100,13 +100,15 @@ export function HomeTab({
             <p className="text-sm text-forged-text2">{calLeft} remaining</p>
             <div
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-black mt-3
-                ${onTrack
-                  ? 'bg-forged-green/15 text-forged-green border border-forged-green/25'
-                  : 'bg-forged-red/15 text-forged-red border border-forged-red/25'
+                ${macros.cal === 0
+                  ? 'bg-forged-surface2 text-forged-text2 border border-forged-border'
+                  : onTrack
+                    ? 'bg-forged-green/15 text-forged-green border border-forged-green/25'
+                    : 'bg-forged-red/15 text-forged-red border border-forged-red/25'
                 }`}
             >
-              <Icon d={onTrack ? I.check : I.x} size={13} sw={3} />
-              {onTrack ? 'On Track' : 'Over Goal'}
+              <Icon d={macros.cal === 0 ? I.clock : onTrack ? I.check : I.x} size={13} sw={3} />
+              {macros.cal === 0 ? 'No meals yet' : onTrack ? 'On Track' : 'Over Goal'}
             </div>
           </div>
         </div>
@@ -123,10 +125,7 @@ export function HomeTab({
 
         {/* Fasting status */}
         <div className="border-t border-forged-border mt-5 pt-4">
-          <button
-            onClick={() => onTabChange('fasting')}
-            className="w-full flex items-center justify-between"
-          >
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div
                 className={`w-9 h-9 rounded-lg flex items-center justify-center
@@ -143,12 +142,19 @@ export function HomeTab({
               ) : (
                 <div className="text-left">
                   <p className="text-sm font-bold text-forged-text">Fasting</p>
-                  <p className="text-xs text-forged-text2">Tap to start or view history</p>
+                  <p className="text-xs text-forged-text2">No active fast</p>
                 </div>
               )}
             </div>
-            <Icon d={I.chevron} size={16} className="text-forged-text2" />
-          </button>
+            <button
+              onClick={() => onTabChange('fasting')}
+              className="px-4 py-2 rounded-xl text-xs font-black
+                bg-forged-purple/10 text-forged-purple border border-forged-purple/20
+                hover:bg-forged-purple hover:text-white active:scale-95 transition-all"
+            >
+              {activeFast ? 'View' : 'Start'}
+            </button>
+          </div>
         </div>
       </Card>
 
