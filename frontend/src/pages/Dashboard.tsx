@@ -246,21 +246,7 @@ function SectionLabel({ children }: { children: string }) {
   return <h3 className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-3">{children}</h3>
 }
 
-function SegmentedControl({ options, active, onChange }: {
-  options: string[]; active: string; onChange: (v: string) => void
-}) {
-  return (
-    <div className="flex bg-forged-bg rounded-xl p-1 gap-0.5 mb-4">
-      {options.map(o => (
-        <button key={o} onClick={() => onChange(o)}
-          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all duration-200
-            ${active === o ? 'bg-forged-surface text-forged-text shadow-sm' : 'text-forged-text2 hover:text-forged-text2'}`}>
-          {o}
-        </button>
-      ))}
-    </div>
-  )
-}
+
 
 // ══════════════════════════════════
 // 3-DOT SETTINGS DROPDOWN
@@ -645,77 +631,6 @@ export default function Dashboard({ onLogout }: Props) {
     </div>
   )
 }
-
-// ══════════════════════════════════
-// FASTING TYPE SELECTOR
-// ══════════════════════════════════
-function FastingTypeSelector() {
-  const [custom, setCustom] = useState(false)
-  const [customHrs, setCustomHrs] = useState('')
-
-  const presets = [
-    { label: '16:8', hours: 16, desc: '16h fast, 8h eat' },
-    { label: '18:6', hours: 18, desc: '18h fast, 6h eat' },
-    { label: '20:4', hours: 20, desc: '20h fast, 4h eat' },
-    { label: 'OMAD', hours: 23, desc: '23h fast, 1h eat' },
-  ]
-
-  const startFast = async (hours: number) => {
-    try { await api.fasting.start({ targetHours: hours }); window.location.reload() }
-    catch (e) { console.error(e) }
-  }
-
-  return (
-    <div className="mt-3">
-      <div className="grid grid-cols-4 gap-2">
-        {presets.map(p => (
-          <button key={p.label} onClick={() => startFast(p.hours)}
-            className="py-2.5 rounded-xl text-center border border-forged-border bg-forged-bg
-              hover:border-forged-green/30 hover:bg-forged-green/5
-              active:scale-95 transition-all">
-            <p className="text-sm font-black text-forged-text">{p.label}</p>
-            <p className="text-[9px] text-forged-text2">{p.desc}</p>
-          </button>
-        ))}
-      </div>
-      <div className="flex items-center gap-2 mt-2">
-        {custom ? (
-          <>
-            <input type="number" placeholder="Hours" value={customHrs}
-              onChange={e => setCustomHrs(e.target.value)}
-              className="flex-1 px-3 py-2 bg-forged-bg border border-forged-border rounded-xl
-                text-forged-text text-sm placeholder:text-forged-text2
-                focus:border-forged-purple/50 transition-colors" />
-            <button onClick={() => {
-              const h = parseInt(customHrs)
-              if (h && h > 0 && h <= 72) startFast(h)
-            }}
-              className="px-4 py-2 rounded-xl text-xs font-black
-                bg-forged-green text-white hover:brightness-110 active:scale-95 transition-all">
-              Start
-            </button>
-            <button onClick={() => { setCustom(false); setCustomHrs('') }}
-              className="px-3 py-2 rounded-xl text-xs font-bold text-forged-text2
-                hover:text-forged-text transition-colors">
-              Cancel
-            </button>
-          </>
-        ) : (
-          <button onClick={() => setCustom(true)}
-            className="w-full py-2 rounded-xl text-xs font-bold text-forged-text2
-              border border-dashed border-forged-border
-              hover:border-forged-purple/30 hover:text-forged-purple transition-all">
-            Custom duration
-          </button>
-        )}
-      </div>
-    </div>
-  )
-}
-
-// ══════════════════════════════════
-// FASTING MINI — NaN-safe
-// ══════════════════════════════════
 function FastingMini({ fast }: { fast: FastingLog }) {
   const [now, setNow] = useState(Date.now())
   useEffect(() => { const i = setInterval(() => setNow(Date.now()), 1000); return () => clearInterval(i) }, [])
@@ -743,7 +658,7 @@ function FastingMini({ fast }: { fast: FastingLog }) {
 // ══════════════════════════════════
 type Macros = { cal: number; protein: number; carbs: number; fat: number; fiber: number }
 
-function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh, onTabChange, onLogout }: {
+function HomeTab({ stats, user, activeFast, macros, todayFood, onRefresh: _onRefresh, onTabChange, onLogout }: {
   stats: DashboardStats | null; user: User | null; activeFast: FastingLog | null
   macros: Macros; todayFood: FoodLog[]
   onRefresh: () => void; onTabChange: (t: TabId) => void; onLogout: () => void
@@ -1078,145 +993,3 @@ function InsightCard({ macros, streak, proteinGoal }: { macros: Macros; streak: 
 }
 
 
-// ══════════════════════════════════
-// PROGRESS TAB
-// ══════════════════════════════════
-function ProgressTab() {
-  const [weight, setWeight] = useState('')
-  const [notes, setNotes] = useState('')
-  const [saving, setSaving] = useState(false)
-  const [entries, setEntries] = useState<WeightEntry[]>([])
-  const [range, setRange] = useState('30d')
-
-  useEffect(() => { loadW() }, [])
-  const loadW = async () => { try { setEntries(await api.weight.getAll(90)) } catch (e) { console.error(e) } }
-
-  const handleLog = async () => {
-    const w = parseFloat(weight)
-    if (!w || w < 50 || w > 500) return
-    setSaving(true)
-    try { await api.weight.add({ weight: w, date: new Date().toISOString().split('T')[0], notes: notes || undefined }); setWeight(''); setNotes(''); await loadW() }
-    catch (e) { console.error(e) } finally { setSaving(false) }
-  }
-
-  const filtered = (() => {
-    const days = range === '7d' ? 7 : range === '30d' ? 30 : 90
-    const cut = new Date(); cut.setDate(cut.getDate() - days)
-    return entries.filter(w => new Date(w.date) >= cut)
-  })()
-
-  return (
-    <div className="flex flex-col gap-4">
-      <h1 className="text-2xl font-black text-forged-text">Progress</h1>
-      <Card delay={60}>
-        <SectionLabel>Log weight</SectionLabel>
-        <div className="flex gap-2">
-          <input type="number" step="0.1" placeholder="e.g. 181.5" value={weight} onChange={e => setWeight(e.target.value)}
-            className="flex-1 px-4 py-2.5 bg-forged-bg border border-forged-border rounded-xl text-forged-text text-sm placeholder:text-forged-text2 focus:border-forged-purple/50 transition-colors" />
-          <input type="text" placeholder="Notes" value={notes} onChange={e => setNotes(e.target.value)}
-            className="flex-1 px-4 py-2.5 bg-forged-bg border border-forged-border rounded-xl text-forged-text text-sm placeholder:text-forged-text2 focus:border-forged-purple/50 transition-colors" />
-          <button onClick={handleLog} disabled={saving}
-            className="px-5 py-2.5 bg-forged-purple text-white font-black rounded-xl text-sm hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50">
-            {saving ? '...' : 'Log'}
-          </button>
-        </div>
-      </Card>
-      <Card delay={130}>
-        <SectionLabel>Weight trend</SectionLabel>
-        <SegmentedControl options={['7d', '30d', '90d']} active={range} onChange={setRange} />
-        <FullWeightChart data={filtered} />
-      </Card>
-      <Card delay={200}>
-        <SectionLabel>History</SectionLabel>
-        {entries.length === 0 ? <p className="text-sm text-forged-text2 py-2">No entries yet</p> : (
-          <div className="flex flex-col">
-            {entries.slice(0, 20).map(e => (
-              <div key={e.id} className="flex justify-between items-center py-3 border-b border-forged-border last:border-0">
-                <span className="text-sm text-forged-text2">{new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-forged-text">{e.weight} lbs</span>
-                  {e.notes && <span className="text-[10px] text-forged-text2 bg-forged-surface2 px-2 py-0.5 rounded-full">{e.notes}</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
-    </div>
-  )
-}
-
-function FullWeightChart({ data }: { data: WeightEntry[] }) {
-  const [drawn, setDrawn] = useState(false)
-  useEffect(() => { setDrawn(false); const t = setTimeout(() => setDrawn(true), 200); return () => clearTimeout(t) }, [data])
-  if (data.length < 2) return <p className="text-sm text-forged-text2 text-center py-4">Need 2+ entries</p>
-
-  const w = 600, h = 160, px = 44, py = 16
-  const vals = data.map(d => d.weight), mn = Math.min(...vals) - 1, mx = Math.max(...vals) + 1
-  const pts = data.map((d, i) => ({ x: px + (i / (data.length - 1)) * (w - 2 * px), y: py + ((mx - d.weight) / (mx - mn)) * (h - 2 * py) }))
-  const pathD = pts.map((p, i) => { if (i === 0) return `M ${p.x} ${p.y}`; const prev = pts[i - 1], cpx = (prev.x + p.x) / 2; return `C ${cpx} ${prev.y}, ${cpx} ${p.y}, ${p.x} ${p.y}` }).join(' ')
-  const fmtDate = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto">
-      <defs><linearGradient id="fwg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#9b59b6" stopOpacity="0.25" /><stop offset="100%" stopColor="#9b59b6" stopOpacity="0" /></linearGradient></defs>
-      {[0, 0.5, 1].map((f, i) => { const y = py + f * (h - 2 * py); return <line key={i} x1={px} y1={y} x2={w - px} y2={y} stroke="var(--border)" strokeWidth="0.5" /> })}
-      {data.filter((_, i) => i % Math.max(1, Math.floor(data.length / 5)) === 0).map(d => {
-        const idx = data.indexOf(d)
-        return <text key={idx} x={pts[idx].x} y={h - 2} fill="var(--text3)" fontSize="9" textAnchor="middle" fontFamily="-apple-system,system-ui,sans-serif">{fmtDate(d.date)}</text>
-      })}
-      <path d={pathD + ` L ${pts[pts.length - 1].x} ${h} L ${pts[0].x} ${h} Z`} fill="url(#fwg)" opacity={drawn ? 1 : 0} style={{ transition: 'opacity 0.8s ease 0.2s' }} />
-      <path d={pathD} fill="none" stroke="#9b59b6" strokeWidth="2" strokeLinecap="round"
-        style={{ strokeDasharray: drawn ? 'none' : '1200', strokeDashoffset: drawn ? 0 : 1200, transition: 'stroke-dashoffset 1.2s cubic-bezier(0.22,1,0.36,1)' }} />
-      {pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r="3" fill="var(--bg)" stroke="#9b59b6" strokeWidth="1.5" opacity={drawn ? 1 : 0} style={{ transition: `opacity 0.3s ease ${0.2 + i * 0.05}s` }} />)}
-      {drawn && <g>
-        <rect x={pts[pts.length - 1].x - 24} y={pts[pts.length - 1].y - 24} width="48" height="18" rx="5" fill="#9b59b6" />
-        <text x={pts[pts.length - 1].x} y={pts[pts.length - 1].y - 12} fill="#fff" fontSize="10" fontWeight="600" textAnchor="middle" fontFamily="-apple-system,system-ui,sans-serif">{data[data.length - 1].weight}</text>
-      </g>}
-    </svg>
-  )
-}
-
-// ══════════════════════════════════
-// PROFILE TAB
-// ══════════════════════════════════
-function ProfileTab({ user, onLogout }: { user: User | null; onLogout: () => void }) {
-  const { theme, toggleTheme } = useTheme()
-  const isDesktop = useMediaQuery('(min-width: 768px)')
-  return (
-    <div className="flex flex-col gap-4">
-      <Card delay={60}>
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 rounded-full bg-forged-purple/20 border-2 border-forged-purple flex items-center justify-center shadow-lg shadow-forged-purple/10">
-            <span className="text-2xl font-black text-forged-purple">{(user?.displayName || user?.username || '?')[0].toUpperCase()}</span>
-          </div>
-          <div>
-            <p className="text-xl font-black text-forged-text">{user?.displayName || user?.username}</p>
-            <p className="text-sm text-forged-text2">{user?.email}</p>
-          </div>
-        </div>
-        <div className="flex flex-col">
-          <div className="flex justify-between items-center py-3 border-b border-forged-border">
-            <span className="text-xs text-forged-text2 uppercase tracking-wide font-bold">Starting Weight</span>
-            <span className="text-sm text-forged-text font-bold">{user?.startingWeight ? `${user.startingWeight} lbs` : 'Not set'}</span>
-          </div>
-          <div className="flex justify-between items-center py-3">
-            <span className="text-xs text-forged-text2 uppercase tracking-wide font-bold">Goal Weight</span>
-            <span className="text-sm text-forged-text font-bold">{user?.goalWeight ? `${user.goalWeight} lbs` : 'Not set'}</span>
-          </div>
-        </div>
-      </Card>
-      {!isDesktop && (
-        <>
-          <Card delay={130}>
-            <button onClick={toggleTheme} className="w-full flex items-center justify-between p-3 rounded-xl bg-forged-bg border border-forged-border hover:border-forged-purple/30 transition-all">
-              <div className="flex items-center gap-3"><Icon d={theme === 'dark' ? I.moon : I.sun} size={18} className="text-forged-text2" /><span className="text-sm text-forged-text font-medium">Theme</span></div>
-              <span className="text-xs text-forged-text2 capitalize font-bold">{theme}</span>
-            </button>
-          </Card>
-          <button onClick={onLogout} className="w-full py-3 bg-forged-surface border border-forged-border rounded-xl text-forged-text2 text-sm font-bold hover:border-forged-red/30 hover:text-forged-red transition-all">Sign Out</button>
-        </>
-      )}
-    </div>
-  )
-}

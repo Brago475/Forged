@@ -101,7 +101,6 @@ export default function ProgressPage() {
 
   // ── Computed stats ──
   const currentWeight = entries.length > 0 ? entries[entries.length - 1].weight : 0
-  const startWeight = entries.length > 0 ? entries[0].weight : 0
   const weekEntries = entries.filter(e => {
     const d = new Date(e.date + 'T00:00:00')
     const ago = new Date(); ago.setDate(ago.getDate() - 7)
@@ -341,7 +340,7 @@ function WeightChart({ data }: { data: WeightEntry[] }) {
         const y = py + f * (h - 2 * py)
         return <line key={i} x1={px} y1={y} x2={w - px} y2={y} stroke="var(--border)" strokeWidth="0.5" />
       })}
-      {data.filter((_, i) => i % Math.max(1, Math.floor(data.length / 5)) === 0).map((d, _, arr) => {
+      {data.filter((_, i) => i % Math.max(1, Math.floor(data.length / 5)) === 0).map((d) => {
         const idx = data.indexOf(d)
         return <text key={idx} x={pts[idx].x} y={h - 2} fill="var(--text2)" fontSize="9" textAnchor="middle"
           fontFamily="-apple-system,system-ui,sans-serif">{fmtDate(d.date)}</text>

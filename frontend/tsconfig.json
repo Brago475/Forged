@@ -1,19 +1,31 @@
 {
   "compilerOptions": {
+    // Language target & module system
     "target": "ES2020",
-    "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
-    "skipLibCheck": true,
     "moduleResolution": "bundler",
+    "moduleDetection": "force",
+    "jsx": "react-jsx",
+    "useDefineForClassFields": true,
+
+    // Interop & resolution
     "allowImportingTsExtensions": true,
     "isolatedModules": true,
-    "moduleDetection": "force",
+    "skipLibCheck": true,
     "noEmit": true,
-    "jsx": "react-jsx",
+
+    // Strictness
     "strict": true,
-    "noUnusedLocals": false,
-    "noUnusedParameters": false
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noImplicitOverride": true,
+    "forceConsistentCasingInFileNames": true
+
+    // NOTE: noUncheckedIndexedAccess and exactOptionalPropertyTypes
+    // will be enabled after the Phase 3 component extraction is done.
   },
   "include": ["src"]
 }

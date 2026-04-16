@@ -816,7 +816,7 @@ function RoutineBuilder({ existing, onBack }: {
 // ══════════════════════════════════
 // DAY CARD (inside builder)
 // ══════════════════════════════════
-function DayCard({ day, dayIdx, onRemoveDay, onAddExercise, onRemoveExercise, onUpdateExercise }: {
+function DayCard({ day, dayIdx, onRemoveDay, onAddExercise, onRemoveExercise, onUpdateExercise: _onUpdateExercise }: {
   day: RoutineDay; dayIdx: number
   onRemoveDay: () => void
   onAddExercise: (ex: RoutineExercise) => void
