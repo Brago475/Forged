@@ -34,13 +34,11 @@ type View = 'home' | 'confirm' | 'custom' | 'active'
 
 interface FastingPageProps {
   onBack: () => void
-  /** Navigate to another tab (e.g. 'food' for adding meals). */
   onNavigate?: (tab: string) => void
 }
 
 /**
  * Fasting page shell. Manages view state, API calls, and history.
- * All visual sub-sections are extracted into dedicated components.
  */
 export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
   const [view, setView] = useState<View>('home')
@@ -51,42 +49,13 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
   const [calMonth, setCalMonth] = useState<Date>(new Date())
   const [loading, setLoading] = useState<boolean>(true)
 
-  // Load active fast from backend on mount.
+  // Load active fast from backend on mount. No auto-end.
   const loadActive = useCallback(async () => {
     try {
       const fast = await api.fasting.getActive()
       if (fast) {
-        const startMs = new Date(fast.startTime).getTime()
-        const elapsedHours = (Date.now() - startMs) / 3600000
-
-        // Auto-end fasts that are more than 2x past their target.
-        if (elapsedHours > fast.targetHours * 2) {
-          try {
-            await api.fasting.end(fast.id, {})
-            const preset = getPreset(fast.targetHours)
-            const record: FastRecord = {
-              id: crypto.randomUUID(),
-              name: preset.name,
-              hours: fast.targetHours,
-              meals: preset.meals,
-              mealTimes: [],
-              notes: 'Auto-completed',
-              startTime: fast.startTime,
-              endTime: new Date(startMs + fast.targetHours * 3600000).toISOString(),
-              date: new Date(fast.startTime).toISOString().split('T')[0],
-            }
-            const updated = [record, ...loadFasts()]
-            setHistory(updated)
-            saveFasts(updated)
-          } catch {
-            // If auto-end fails, still show it so user can manually end
-            setActiveFast(fast)
-            setView('active')
-          }
-        } else {
-          setActiveFast(fast)
-          setView('active')
-        }
+        setActiveFast(fast)
+        setView('active')
       }
     } catch {
       // No active fast
@@ -136,7 +105,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
     }
   }
 
-  // Save a new custom fast template.
   const handleSaveCustom = (cf: CustomFast): void => {
     const updated = [cf, ...customFasts]
     setCustomFasts(updated)
@@ -144,14 +112,12 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
     setView('home')
   }
 
-  // Delete a custom fast template.
   const handleDeleteCustom = (id: string): void => {
     const updated = customFasts.filter(c => c.id !== id)
     setCustomFasts(updated)
     saveCustomFasts(updated)
   }
 
-  // Delete a history entry.
   const handleDeleteHistory = (id: string): void => {
     const updated = history.filter(f => f.id !== id)
     setHistory(updated)
@@ -165,7 +131,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
     ? Math.max(...history.map(f => f.hours))
     : 0
 
-  // Convert history to CalendarEntry format for the shared Calendar.
   const calendarEntries: CalendarEntry[] = history.map(f => {
     const preset = getPreset(f.hours)
     return {
@@ -176,7 +141,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
     }
   })
 
-  // Loading skeleton
   if (loading) {
     return (
       <div className="flex flex-col gap-4">
@@ -225,7 +189,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
       {/* Home view + always-visible stats/calendar/chart */}
       {(view === 'home' || view === 'active') && (
         <>
-          {/* Preset selection (only on home, not during active fast) */}
           {view === 'home' && (
             <PresetList
               onSelect={(preset) => {
@@ -239,7 +202,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
             />
           )}
 
-          {/* Stats */}
           <Card delay={view === 'active' ? 60 : 140}>
             <SectionLabel>Your Progress</SectionLabel>
             <div className="grid grid-cols-4 gap-3">
@@ -250,7 +212,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
             </div>
           </Card>
 
-          {/* Calendar */}
           <Card delay={view === 'active' ? 120 : 200}>
             <Calendar
               month={calMonth}
@@ -260,13 +221,11 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
             />
           </Card>
 
-          {/* Weekly chart */}
           <WeekChart
             history={history}
             delay={view === 'active' ? 180 : 260}
           />
 
-          {/* Recent fasts */}
           <Card delay={view === 'active' ? 240 : 320}>
             <SectionLabel>Recent Fasts</SectionLabel>
             {history.length === 0 ? (

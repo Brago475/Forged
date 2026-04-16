@@ -7,13 +7,12 @@ import { getPreset, formatTime } from './fastingConstants'
 interface TimerCardProps {
   fast: FastingLog
   onEnd: () => void
-  /** Navigate to food log to add a meal during eating window. */
   onAddMeal?: () => void
 }
 
 /**
  * Active fast timer with animated SVG ring, stats row,
- * meal window preview, and end button.
+ * meal window with scheduled slots, and end button.
  */
 export function TimerCard({ fast, onEnd, onAddMeal }: TimerCardProps) {
   const [now, setNow] = useState<number>(Date.now())
@@ -50,6 +49,22 @@ export function TimerCard({ fast, onEnd, onAddMeal }: TimerCardProps) {
   const fmtTime = (d: Date): string =>
     d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
+  // Generate meal time slots evenly across eating window
+  const mealSlots: { label: string; time: Date }[] = []
+  if (preset.meals > 0) {
+    const eatDurationMs = eatClose.getTime() - eatOpen.getTime()
+    for (let i = 0; i < preset.meals; i++) {
+      const offset = preset.meals === 1
+        ? eatDurationMs / 2
+        : (eatDurationMs / (preset.meals - 1)) * i
+      const mealTime = new Date(eatOpen.getTime() + offset)
+      mealSlots.push({
+        label: `Meal ${i + 1}`,
+        time: mealTime,
+      })
+    }
+  }
+
   return (
     <Card delay={0} className="!p-6 relative overflow-hidden">
       {/* Status badge */}
@@ -66,9 +81,11 @@ export function TimerCard({ fast, onEnd, onAddMeal }: TimerCardProps) {
         </div>
         <span
           className={`text-[10px] font-bold px-3 py-1 rounded-full
-            ${inEatingWindow
+            ${isDone
               ? 'bg-forged-green/15 text-forged-green'
-              : 'bg-forged-purple/15 text-forged-purple'
+              : inEatingWindow
+                ? 'bg-forged-green/15 text-forged-green'
+                : 'bg-forged-purple/15 text-forged-purple'
             }`}
         >
           {isDone ? 'Complete' : inEatingWindow ? 'Eating Window' : 'Fasting'}
@@ -79,7 +96,6 @@ export function TimerCard({ fast, onEnd, onAddMeal }: TimerCardProps) {
       <div className="flex justify-center mb-6">
         <div className="relative" style={{ width: size, height: size }}>
           <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-            {/* Background track */}
             <circle
               cx={size / 2}
               cy={size / 2}
@@ -89,7 +105,6 @@ export function TimerCard({ fast, onEnd, onAddMeal }: TimerCardProps) {
               strokeWidth={strokeWidth}
               opacity={0.2}
             />
-            {/* Progress arc */}
             <circle
               cx={size / 2}
               cy={size / 2}
@@ -107,7 +122,6 @@ export function TimerCard({ fast, onEnd, onAddMeal }: TimerCardProps) {
             />
           </svg>
 
-          {/* Center content */}
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             {isDone ? (
               <>
@@ -156,15 +170,24 @@ export function TimerCard({ fast, onEnd, onAddMeal }: TimerCardProps) {
         </div>
       </div>
 
-      {/* Meal window */}
+      {/* Meal window with scheduled slots */}
       <div className="bg-forged-bg border border-forged-border rounded-xl p-4 mb-5">
         <div className="flex items-center gap-2 mb-3">
           <Icon d={I.food} size={14} className="text-forged-text2" />
           <span className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider">
             Meal Window
           </span>
+          <span className={`ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full
+            ${inEatingWindow
+              ? 'bg-forged-green/15 text-forged-green'
+              : 'bg-forged-surface2 text-forged-text2'
+            }`}>
+            {inEatingWindow ? 'Open' : 'Closed'}
+          </span>
         </div>
-        <div className="flex justify-between items-center">
+
+        {/* Window timeline */}
+        <div className="flex justify-between items-center mb-4">
           <div>
             <p className="text-[9px] text-forged-text2 uppercase font-bold">Opens</p>
             <p className="text-sm font-black text-forged-text">
@@ -187,22 +210,79 @@ export function TimerCard({ fast, onEnd, onAddMeal }: TimerCardProps) {
             </p>
           </div>
         </div>
-        <p className="text-[10px] text-forged-text2 mt-2 text-center">
-          {preset.meals} meal{preset.meals > 1 ? 's' : ''} recommended
-        </p>
 
-        {/* Add meal button during eating window */}
-        {inEatingWindow && onAddMeal && (
-          <button
-            onClick={onAddMeal}
-            className="w-full mt-3 py-2.5 rounded-xl text-xs font-black
-              bg-forged-green/10 text-forged-green border border-forged-green/20
-              hover:bg-forged-green hover:text-white active:scale-95 transition-all
-              flex items-center justify-center gap-2"
-          >
-            <Icon d={I.food} size={14} sw={2} />
-            Add Meal
-          </button>
+        {/* Scheduled meal slots */}
+        {mealSlots.length > 0 && (
+          <div className="border-t border-forged-border pt-3">
+            <p className="text-[9px] font-bold text-forged-text2 uppercase tracking-wider mb-2">
+              Scheduled Meals
+            </p>
+            <div className="flex flex-col gap-2">
+              {mealSlots.map((slot, i) => {
+                const isPast = now > slot.time.getTime()
+                const isCurrent = inEatingWindow && !isPast
+                return (
+                  <div
+                    key={i}
+                    className={`flex items-center justify-between p-2.5 rounded-xl border
+                      ${isCurrent
+                        ? 'border-forged-green/30 bg-forged-green/5'
+                        : isPast
+                          ? 'border-forged-border bg-forged-surface2/50'
+                          : 'border-forged-border'
+                      }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div
+                        className={`w-7 h-7 rounded-lg flex items-center justify-center
+                          ${isPast
+                            ? 'bg-forged-surface2'
+                            : isCurrent
+                              ? 'bg-forged-green/15'
+                              : 'bg-forged-surface2'
+                          }`}
+                      >
+                        <Icon
+                          d={I.food}
+                          size={13}
+                          sw={2}
+                          className={isPast
+                            ? 'text-forged-text2'
+                            : isCurrent
+                              ? 'text-forged-green'
+                              : 'text-forged-text2'
+                          }
+                        />
+                      </div>
+                      <div>
+                        <p className={`text-xs font-bold ${isPast ? 'text-forged-text2' : 'text-forged-text'}`}>
+                          {slot.label}
+                        </p>
+                        <p className="text-[9px] text-forged-text2">
+                          {fmtTime(slot.time)}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Add meal button (only during eating window) */}
+                    {inEatingWindow && onAddMeal && (
+                      <button
+                        onClick={onAddMeal}
+                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black
+                          transition-all active:scale-95
+                          ${isCurrent
+                            ? 'bg-forged-green/10 text-forged-green border border-forged-green/20 hover:bg-forged-green hover:text-white'
+                            : 'bg-forged-surface2 text-forged-text2 hover:text-forged-text'
+                          }`}
+                      >
+                        {isPast ? 'Log' : 'Add'}
+                      </button>
+                    )}
+                  </div>
+                )
+              })}
+            </div>
+          </div>
         )}
       </div>
 
