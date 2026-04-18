@@ -167,10 +167,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {tab === 'recipes' && <RecipesPage onBack={() => setTab('dashboard')} />}
                 {tab === 'feedback' && <FeedbackPage onBack={() => setTab('dashboard')} />}
                 {tab === 'fasting' && (
-                  <FastingPage
-                    onBack={() => setTab('dashboard')}
-                    onNavigate={(t) => setTab(t as TabId)}
-                  />
+                 <FastingPage onBack={() => setTab('dashboard')} />
                 )}
               </PageTransition>
             </div>
