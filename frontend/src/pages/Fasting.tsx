@@ -248,6 +248,7 @@ export default function FastingPage({ onBack }: FastingPageProps) {
           onEnd={endFast}
           todayFood={todayFood}
           onFoodLogged={(log) => setTodayFood((prev) => [...prev, log])}
+          onFoodDeleted={(logId) => setTodayFood((prev) => prev.filter((l) => l.id !== logId))}
         />
       )}
 

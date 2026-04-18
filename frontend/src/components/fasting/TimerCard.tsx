@@ -2,20 +2,42 @@ import { useEffect, useState } from 'react'
 import { Icon, I } from '../ui/Icon'
 import { Card } from '../ui/Card'
 import { FoodLogger } from './FoodLogger'
+import { api } from '../../hooks/api'
 import type { FastingLog, FoodLog } from '../../types'
 import { getPreset, formatTime, loadCustomEatHours } from './fastingConstants'
 
 interface TimerCardProps {
   fast: FastingLog
   onEnd: () => void
-  /** Today's food logs, shown in the "Logged Today" section. */
+  /** Today's food logs. */
   todayFood?: FoodLog[]
-  /** Called after a food is logged from the inline logger. */
+  /** Called after a food is logged from an inline slot. */
   onFoodLogged?: (log: FoodLog) => void
+  /** Called after a food is deleted from an inline slot. */
+  onFoodDeleted?: (logId: string) => void
 }
 
-export function TimerCard({ fast, onEnd, todayFood = [], onFoodLogged }: TimerCardProps) {
+const MEAL_LABELS: Record<string, string> = {
+  morning: 'Morning',
+  afternoon: 'Afternoon',
+  evening: 'Evening',
+  snack: 'Snacks',
+}
+
+/**
+ * Map a time-of-day to one of the four mealType keys Food Log uses.
+ */
+function getMealTypeForTime(d: Date): string {
+  const h = d.getHours()
+  if (h >= 5 && h < 11) return 'morning'
+  if (h >= 11 && h < 16) return 'afternoon'
+  if (h >= 16 && h < 21) return 'evening'
+  return 'snack'
+}
+
+export function TimerCard({ fast, onEnd, todayFood = [], onFoodLogged, onFoodDeleted }: TimerCardProps) {
   const [now, setNow] = useState<number>(Date.now())
+  const [expandedSlot, setExpandedSlot] = useState<number | null>(null)
 
   useEffect(() => {
     const interval = setInterval(() => setNow(Date.now()), 1000)
@@ -66,9 +88,23 @@ export function TimerCard({ fast, onEnd, todayFood = [], onFoodLogged }: TimerCa
     }
   }
 
+  // First non-past slot during eating window = "current" slot
+  const currentSlotIndex = inEatingWindow
+    ? mealSlots.findIndex(slot => now <= slot.time.getTime() + 30 * 60000)
+    : -1
+
   const totalCal = todayFood.reduce((s, l) => s + (l.food?.calories ?? 0) * l.servings, 0)
   const totalProtein = todayFood.reduce((s, l) => s + (l.food?.protein ?? 0) * l.servings, 0)
   const todayIso = new Date().toISOString().split('T')[0]
+
+  const handleDelete = async (logId: string): Promise<void> => {
+    try {
+      await api.food.deleteFoodLog(logId)
+      onFoodDeleted?.(logId)
+    } catch (err) {
+      console.error('Failed to delete log:', err)
+    }
+  }
 
   return (
     <Card delay={0} className="!p-6 relative overflow-hidden">
@@ -179,86 +215,143 @@ export function TimerCard({ fast, onEnd, todayFood = [], onFoodLogged }: TimerCa
           </div>
         </div>
 
-        {/* Inline logger: only active during eating window */}
-        {inEatingWindow && (
-          <div className="border-t border-forged-border pt-3 mb-3">
-            <FoodLogger date={todayIso} onLogged={onFoodLogged} compact />
-          </div>
-        )}
-
+        {/* Totals bar */}
         {todayFood.length > 0 && (
-          <div className="border-t border-forged-border pt-3 mb-3">
-            <p className="text-[9px] font-bold text-forged-text2 uppercase tracking-wider mb-2">
-              Logged Today
-            </p>
-            <div className="flex flex-col gap-1.5">
-              {todayFood.map((log, i) => (
-                <div key={i} className="flex items-center justify-between py-1.5 px-2 rounded-lg bg-forged-surface2/50">
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-forged-green/15 flex items-center justify-center">
-                      <Icon d={I.check} size={10} sw={3} className="text-forged-green" />
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-bold text-forged-text">{log.food?.name || 'Food'}</p>
-                      <p className="text-[9px] text-forged-text2">{log.mealType}</p>
-                    </div>
-                  </div>
-                  <p className="text-[10px] font-bold text-forged-text tabular-nums">
-                    {(log.food?.calories ?? 0) * log.servings} cal
-                  </p>
-                </div>
-              ))}
-              <div className="flex justify-between items-center pt-2 border-t border-forged-border">
-                <p className="text-[10px] font-bold text-forged-text2">Total</p>
-                <div className="flex items-center gap-3">
-                  <p className="text-[10px] font-bold text-forged-text tabular-nums">{totalCal} cal</p>
-                  <p className="text-[10px] font-bold text-forged-purple tabular-nums">{totalProtein}g protein</p>
-                </div>
-              </div>
+          <div className="flex justify-between items-center py-2.5 px-3 mb-3
+            rounded-lg bg-forged-surface2/50 border border-forged-border">
+            <span className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider">
+              Today
+            </span>
+            <div className="flex items-center gap-3">
+              <span className="text-[11px] font-black text-forged-text tabular-nums">{totalCal} cal</span>
+              <span className="text-[11px] font-black text-forged-purple tabular-nums">{totalProtein}g protein</span>
             </div>
           </div>
         )}
 
+        {/* Unified meal slots */}
         {mealSlots.length > 0 && (
-          <div className="border-t border-forged-border pt-3">
-            <p className="text-[9px] font-bold text-forged-text2 uppercase tracking-wider mb-2">
-              Scheduled Meals
+          <div className="flex flex-col gap-2 border-t border-forged-border pt-3">
+            <p className="text-[9px] font-bold text-forged-text2 uppercase tracking-wider mb-1">
+              Meals
             </p>
-            <div className="flex flex-col gap-2">
-              {mealSlots.map((slot, i) => {
-                const isPast = now > slot.time.getTime()
-                const isCurrent = inEatingWindow && !isPast
-                return (
-                  <div
-                    key={i}
-                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border
-                      ${isCurrent
-                        ? 'border-forged-green/30 bg-forged-green/5'
-                        : isPast
-                          ? 'border-forged-border bg-forged-surface2/50'
-                          : 'border-forged-border'
-                      }`}
+            {mealSlots.map((slot, i) => {
+              const slotMealType = getMealTypeForTime(slot.time)
+              const slotFoods = todayFood.filter(l => l.mealType === slotMealType)
+              const slotCal = slotFoods.reduce((s, l) => s + (l.food?.calories ?? 0) * l.servings, 0)
+              const isCurrent = i === currentSlotIndex
+              const isPast = now > slot.time.getTime() + 60 * 60000
+              const isExpanded = expandedSlot === i
+              const canLog = inEatingWindow
+
+              return (
+                <div
+                  key={i}
+                  className={`rounded-xl border transition-all overflow-hidden
+                    ${isCurrent
+                      ? 'border-forged-green/30 bg-forged-green/5'
+                      : isPast
+                        ? 'border-forged-border bg-forged-surface2/30'
+                        : 'border-forged-border'
+                    }`}
+                >
+                  <button
+                    onClick={() => setExpandedSlot(isExpanded ? null : i)}
+                    className="w-full flex items-center gap-2.5 p-2.5 text-left
+                      hover:bg-forged-surface2/40 transition-colors"
                   >
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center
-                      ${isPast ? 'bg-forged-surface2' : isCurrent ? 'bg-forged-green/15' : 'bg-forged-surface2'}`}>
+                      ${isCurrent ? 'bg-forged-green/15' : 'bg-forged-surface2'}`}>
                       <Icon d={I.food} size={13} sw={2}
-                        className={isPast ? 'text-forged-text2' : isCurrent ? 'text-forged-green' : 'text-forged-text2'} />
+                        className={isCurrent ? 'text-forged-green' : 'text-forged-text2'} />
                     </div>
-                    <div className="flex-1">
-                      <p className={`text-xs font-bold ${isPast ? 'text-forged-text2' : 'text-forged-text'}`}>
-                        {slot.label}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <p className={`text-xs font-bold ${isPast && !isCurrent ? 'text-forged-text2' : 'text-forged-text'}`}>
+                          {slot.label}
+                        </p>
+                        <span className="text-[9px] text-forged-text2">
+                          · {MEAL_LABELS[slotMealType]}
+                        </span>
+                      </div>
+                      <p className="text-[9px] text-forged-text2">
+                        {fmtTime(slot.time)}
+                        {slotFoods.length > 0 && (
+                          <span className="text-forged-text font-bold"> · {slotFoods.length} item{slotFoods.length > 1 ? 's' : ''}</span>
+                        )}
                       </p>
-                      <p className="text-[9px] text-forged-text2">{fmtTime(slot.time)}</p>
                     </div>
-                    {isCurrent && (
-                      <span className="text-[9px] font-bold text-forged-green bg-forged-green/15 px-2 py-0.5 rounded-full">
-                        Now
+                    {slotCal > 0 && (
+                      <span className="text-xs font-black text-forged-text tabular-nums">
+                        {slotCal} cal
                       </span>
                     )}
-                  </div>
-                )
-              })}
-            </div>
+                    <div className={`w-6 h-6 rounded-md flex items-center justify-center transition-transform
+                      ${isExpanded ? 'rotate-45' : ''}
+                      ${isCurrent ? 'bg-forged-green/20 text-forged-green' : 'bg-forged-surface2 text-forged-text2'}`}>
+                      <Icon d={I.plus} size={10} sw={2.5} />
+                    </div>
+                  </button>
+
+                  {isExpanded && (
+                    <div className="border-t border-forged-border p-3 bg-forged-bg/40">
+                      {/* Foods in this slot */}
+                      {slotFoods.length > 0 && (
+                        <div className="flex flex-col gap-1.5 mb-3">
+                          {slotFoods.map(log => (
+                            <div
+                              key={log.id}
+                              className="flex items-center justify-between py-1.5 px-2
+                                rounded-lg bg-forged-surface2/50"
+                            >
+                              <div className="min-w-0 flex-1">
+                                <p className="text-[11px] font-bold text-forged-text truncate">
+                                  {log.food?.name || 'Food'}
+                                </p>
+                                <p className="text-[9px] text-forged-text2">
+                                  P:{(log.food?.protein ?? 0) * log.servings}g
+                                  {' · '}C:{(log.food?.carbs ?? 0) * log.servings}g
+                                  {' · '}F:{(log.food?.fat ?? 0) * log.servings}g
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 ml-2">
+                                <span className="text-[10px] font-bold text-forged-text tabular-nums">
+                                  {(log.food?.calories ?? 0) * log.servings} cal
+                                </span>
+                                <button
+                                  onClick={() => handleDelete(log.id)}
+                                  className="w-6 h-6 rounded-md flex items-center justify-center
+                                    text-forged-text2 hover:text-forged-red hover:bg-forged-red/10
+                                    active:scale-90 transition-all"
+                                >
+                                  <Icon d={I.x} size={10} sw={2} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Logger, only active while eating window is open */}
+                      {canLog ? (
+                        <FoodLogger
+                          date={todayIso}
+                          mealType={slotMealType}
+                          onLogged={onFoodLogged}
+                          compact
+                        />
+                      ) : (
+                        <p className="text-[10px] text-forged-text2 italic text-center py-3">
+                          {isPast
+                            ? 'Eating window has closed'
+                            : `Opens at ${fmtTime(eatOpen)}`}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>

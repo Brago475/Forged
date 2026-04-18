@@ -155,7 +155,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                     onLogout={onLogout}
                   />
                 )}
-                {tab === 'food' && <FoodLogPage />}
+                {tab === 'food' && <FoodLogPage onNavigate={(t) => setTab(t as TabId)} />}
                 {tab === 'workouts' && <WorkoutPage />}
                 {tab === 'progress' && <ProgressPage />}
                 {tab === 'profile' && <ProfilePage user={user} onLogout={onLogout} />}

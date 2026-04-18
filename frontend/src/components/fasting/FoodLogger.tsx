@@ -14,15 +14,23 @@ interface FoodLoggerProps {
   compact?: boolean
 }
 
+const MEAL_LABELS: Record<string, string> = {
+  morning: 'Morning',
+  afternoon: 'Afternoon',
+  evening: 'Evening',
+  snack: 'Snacks',
+}
+
 /**
- * Meal type based on current hour of day.
+ * Meal type key based on current hour of day. Matches Food Log's keys
+ * so logs show in the right section.
  */
 function getDefaultMealType(): string {
   const h = new Date().getHours()
-  if (h >= 5 && h < 11) return 'Morning'
-  if (h >= 11 && h < 16) return 'Afternoon'
-  if (h >= 16 && h < 21) return 'Evening'
-  return 'Snacks'
+  if (h >= 5 && h < 11) return 'morning'
+  if (h >= 11 && h < 16) return 'afternoon'
+  if (h >= 16 && h < 21) return 'evening'
+  return 'snack'
 }
 
 /**
@@ -110,9 +118,9 @@ export function FoodLogger({ date, mealType, onLogged, compact = false }: FoodLo
             Log Food
           </span>
         </div>
-        <span className="text-[9px] font-bold text-forged-green bg-forged-green/15 px-2 py-0.5 rounded-full">
-          {effectiveMeal}
-        </span>
+       <span className="text-[9px] font-bold text-forged-green bg-forged-green/15 px-2 py-0.5 rounded-full">
+  {MEAL_LABELS[effectiveMeal] ?? effectiveMeal}
+</span>
       </div>
 
       <div className="relative mb-2">

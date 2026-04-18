@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { api } from '../hooks/api'
 import type { FoodLog as FoodLogType, Food, FoodDaySummary } from '../types'
+import { loadFasts, getPreset } from '../components/fasting/fastingConstants'
+import type { FastingLog } from '../types'
 
 // ══════════════════════════════════
 // ICONS
@@ -335,7 +337,11 @@ type MealKey = typeof MEALS[number]['key']
 // ══════════════════════════════════
 // FOOD LOG PAGE
 // ══════════════════════════════════
-export default function FoodLog() {
+interface FoodLogProps {
+  onNavigate?: (tab: string) => void
+}
+
+export default function FoodLog({ onNavigate }: FoodLogProps = {}) {
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
   const [logs, setLogs] = useState<FoodLogType[]>([])
   const [loading, setLoading] = useState(true)
@@ -461,6 +467,9 @@ export default function FoodLog() {
       {showCalendar && (
         <CalendarModal selected={date} onSelect={setDate} onClose={() => setShowCalendar(false)} />
       )}
+
+      {/* ── Fasting section ── */}
+      <FastingSection date={date} onNavigate={onNavigate} />
 
       {/* ── Daily Summary ── */}
       <Card delay={60} hero className="!p-5">
@@ -958,4 +967,145 @@ function MacroMini({ label, value, goal }: { label: string; value: number; goal:
       {over && <p className="text-[9px] text-forged-red font-bold mt-1">+{value - goal}g over</p>}
     </div>
   )
+}
+
+// ══════════════════════════════════
+// FASTING SECTION
+// ══════════════════════════════════
+function FastingSection({ date, onNavigate }: {
+  date: string
+  onNavigate?: (tab: string) => void
+}) {
+  const [activeFast, setActiveFast] = useState<FastingLog | null>(null)
+  const [now, setNow] = useState(Date.now())
+
+  useEffect(() => {
+    api.fasting.getActive()
+      .then(setActiveFast)
+      .catch(() => setActiveFast(null))
+  }, [date])
+
+  useEffect(() => {
+    const i = setInterval(() => setNow(Date.now()), 30000)
+    return () => clearInterval(i)
+  }, [])
+
+  const history = loadFasts()
+  const pastFast = history.find(f => f.date === date)
+
+  const activeFastDate = activeFast
+    ? new Date(activeFast.startTime).toISOString().split('T')[0]
+    : null
+  const showActive = activeFast && activeFastDate === date
+
+  if (!showActive && !pastFast) {
+    return (
+      <Card delay={50} className="!p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg bg-forged-surface2 flex items-center justify-center">
+              <Icon d={I.moon} size={14} className="text-forged-text2" />
+            </div>
+            <div>
+              <p className="text-sm font-bold text-forged-text">No fast on this day</p>
+              <p className="text-[10px] text-forged-text2">Tap to start one</p>
+            </div>
+          </div>
+          {onNavigate && (
+            <button
+              onClick={() => onNavigate('fasting')}
+              className="px-3 py-1.5 rounded-lg text-[11px] font-black
+                bg-forged-purple/10 text-forged-purple border border-forged-purple/20
+                hover:bg-forged-purple hover:text-white active:scale-95 transition-all"
+            >
+              Fasting
+            </button>
+          )}
+        </div>
+      </Card>
+    )
+  }
+
+  if (showActive && activeFast) {
+    const startMs = new Date(activeFast.startTime).getTime()
+    const elapsedSec = Math.max((now - startMs) / 1000, 0)
+    const totalSec = activeFast.targetHours * 3600
+    const remainingSec = Math.max(totalSec - elapsedSec, 0)
+    const pct = Math.min(elapsedSec / totalSec, 1)
+    const preset = getPreset(activeFast.targetHours)
+    const hRem = Math.floor(remainingSec / 3600)
+    const mRem = Math.floor((remainingSec % 3600) / 60)
+
+    return (
+      <Card delay={50} className="!p-4">
+        <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: preset.color + '20', color: preset.color }}>
+              <Icon d={I.moon} size={14} />
+            </div>
+            <div>
+              <p className="text-sm font-black text-forged-text">
+                {preset.id} Fast Active
+              </p>
+              <p className="text-[10px] text-forged-text2">
+                {preset.name} &middot; {hRem}h {mRem}m remaining
+              </p>
+            </div>
+          </div>
+          {onNavigate && (
+            <button
+              onClick={() => onNavigate('fasting')}
+              className="px-3 py-1.5 rounded-lg text-[11px] font-black text-white
+                active:scale-95 transition-all"
+              style={{ backgroundColor: preset.color }}
+            >
+              View Fast
+            </button>
+          )}
+        </div>
+        <div className="h-1.5 rounded-full bg-forged-surface2 overflow-hidden">
+          <div className="h-full rounded-full transition-all duration-700"
+            style={{ width: `${pct * 100}%`, backgroundColor: preset.color }} />
+        </div>
+      </Card>
+    )
+  }
+
+  if (pastFast) {
+    const preset = getPreset(pastFast.hours)
+    const dur = ((new Date(pastFast.endTime).getTime() - new Date(pastFast.startTime).getTime()) / 3600000).toFixed(1)
+    return (
+      <Card delay={50} className="!p-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center"
+              style={{ backgroundColor: preset.color + '20', color: preset.color }}>
+              <Icon d={I.moon} size={14} />
+            </div>
+            <div>
+              <p className="text-sm font-black text-forged-text">
+                {pastFast.name || preset.name}
+              </p>
+              <p className="text-[10px] text-forged-text2">
+                Completed &middot; {dur}h &middot; {pastFast.meals} meal{pastFast.meals !== 1 ? 's' : ''}
+              </p>
+            </div>
+          </div>
+          {onNavigate && (
+            <button
+              onClick={() => onNavigate('fasting')}
+              className="px-3 py-1.5 rounded-lg text-[11px] font-black
+                bg-forged-purple/10 text-forged-purple border border-forged-purple/20
+                hover:bg-forged-purple hover:text-white active:scale-95 transition-all"
+            >
+              Fasting
+            </button>
+          )}
+        </div>
+      </Card>
+    )
+  }
+
+  return null
 }
