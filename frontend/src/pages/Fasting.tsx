@@ -3,7 +3,6 @@ import { api } from '../hooks/api'
 import type { FastingLog, FoodLog } from '../types'
 import type { CalendarEntry } from '../components/ui/Calendar'
 
-// Shared UI
 import { PageHeader } from '../components/ui/PageHeader'
 import { Card } from '../components/ui/Card'
 import { SectionLabel } from '../components/ui/SectionLabel'
@@ -11,7 +10,6 @@ import { MiniStat } from '../components/ui/MiniStat'
 import { Calendar } from '../components/ui/Calendar'
 import { Icon, I } from '../components/ui/Icon'
 
-// Fasting components
 import { TimerCard } from '../components/fasting/TimerCard'
 import { ConfirmCard } from '../components/fasting/ConfirmCard'
 import { CustomFastForm } from '../components/fasting/CustomFastForm'
@@ -27,6 +25,8 @@ import {
   saveFasts,
   loadCustomFasts,
   saveCustomFasts,
+  saveCustomEatHours,
+  clearCustomEatHours,
   FASTING_LEGEND,
 } from '../components/fasting/fastingConstants'
 
@@ -34,10 +34,9 @@ type View = 'home' | 'confirm' | 'custom' | 'active'
 
 interface FastingPageProps {
   onBack: () => void
-  onNavigate?: (tab: string) => void
 }
 
-export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
+export default function FastingPage({ onBack }: FastingPageProps) {
   const [view, setView] = useState<View>('home')
   const [activeFast, setActiveFast] = useState<FastingLog | null>(null)
   const [isStale, setIsStale] = useState<boolean>(false)
@@ -74,12 +73,12 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
 
   useEffect(() => { loadActive() }, [loadActive])
 
-  // Fetch today's food logs for the timer's meal tracking.
-  // Re-fetches when view changes (e.g. coming back from food page).
-  useEffect(() => {
+  const refreshTodayFood = useCallback(() => {
     const today = new Date().toISOString().split('T')[0]
     api.food.getLogs(today).then(setTodayFood).catch(() => setTodayFood([]))
-  }, [view])
+  }, [])
+
+  useEffect(() => { refreshTodayFood() }, [view, refreshTodayFood])
 
   const dismissStaleFast = async (saveToHistory: boolean): Promise<void> => {
     if (!activeFast) return
@@ -102,6 +101,7 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         setHistory(updated)
         saveFasts(updated)
       }
+      clearCustomEatHours(activeFast.id)
       setActiveFast(null)
       setIsStale(false)
     } catch (err) {
@@ -109,9 +109,15 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
     }
   }
 
-  const startFast = async (hours: number): Promise<void> => {
+  const startFast = async (hours: number, customEatHours?: number): Promise<void> => {
     try {
-      await api.fasting.start({ targetHours: hours })
+      const fast = await api.fasting.start({ targetHours: hours })
+      if (fast && customEatHours !== undefined) {
+        const preset = getPreset(hours)
+        if (customEatHours !== preset.eat) {
+          saveCustomEatHours(fast.id, customEatHours)
+        }
+      }
       await loadActive()
       setView('active')
       setSelectedPreset(null)
@@ -139,6 +145,7 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
       const updated = [record, ...history]
       setHistory(updated)
       saveFasts(updated)
+      clearCustomEatHours(activeFast.id)
       setActiveFast(null)
       setIsStale(false)
       setView('home')
@@ -197,31 +204,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
     <div className="flex flex-col gap-4">
       <PageHeader onBack={onBack} title="Fasting" subtitle="Intermittent fasting tracker" />
 
-      {/* Log a meal: always visible regardless of fasting state */}
-      {onNavigate && (
-        <button
-          onClick={() => onNavigate('food')}
-          className="w-full flex items-center gap-3 p-4 rounded-2xl
-            bg-forged-surface border border-forged-border
-            hover:border-forged-green/30 active:scale-[0.99] transition-all"
-        >
-          <div className="w-10 h-10 rounded-xl bg-forged-green/15 flex items-center justify-center flex-shrink-0">
-            <Icon d={I.food} size={18} className="text-forged-green" />
-          </div>
-          <div className="text-left flex-1">
-            <p className="text-sm font-bold text-forged-text">Log a Meal</p>
-            <p className="text-[10px] text-forged-text2">
-              {activeFast && !isStale
-                ? 'Track what you eat during your fast'
-                : 'Log your meal before starting a fast'
-              }
-            </p>
-          </div>
-          <Icon d={I.chevron} size={16} className="text-forged-text2" />
-        </button>
-      )}
-
-      {/* Stale fast banner */}
       {isStale && activeFast && (
         <Card delay={0} className="!p-4 border-forged-red/20">
           <div className="flex items-center gap-3 mb-3">
@@ -260,21 +242,19 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         </Card>
       )}
 
-      {/* Active fast timer with today's food */}
       {view === 'active' && activeFast && !isStale && (
         <TimerCard
           fast={activeFast}
           onEnd={endFast}
-          onAddMeal={onNavigate ? () => onNavigate('food') : undefined}
           todayFood={todayFood}
+          onFoodLogged={(log) => setTodayFood((prev) => [...prev, log])}
         />
       )}
 
-      {/* Confirm preset */}
       {view === 'confirm' && selectedPreset && (
         <ConfirmCard
           preset={selectedPreset}
-          onStart={() => startFast(selectedPreset.hours)}
+          onStart={(eatHours) => startFast(selectedPreset.hours, eatHours)}
           onCancel={() => {
             setView('home')
             setSelectedPreset(null)
@@ -282,7 +262,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         />
       )}
 
-      {/* Custom fast form */}
       {view === 'custom' && (
         <CustomFastForm
           onSave={handleSaveCustom}
@@ -291,7 +270,6 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
         />
       )}
 
-      {/* Home + active shared sections */}
       {(view === 'home' || view === 'active') && (
         <>
           {(view === 'home' || isStale) && (
@@ -326,10 +304,7 @@ export default function FastingPage({ onBack, onNavigate }: FastingPageProps) {
             />
           </Card>
 
-          <WeekChart
-            history={history}
-            delay={view === 'active' ? 180 : 260}
-          />
+          <WeekChart history={history} delay={view === 'active' ? 180 : 260} />
 
           <Card delay={view === 'active' ? 240 : 320}>
             <SectionLabel>Recent Fasts</SectionLabel>

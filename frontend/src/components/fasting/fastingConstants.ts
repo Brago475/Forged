@@ -169,3 +169,41 @@ export function calculateStreak(history: FastRecord[]): number {
 
   return streak
 }
+
+const EAT_WINDOW_KEY = 'forged:eatwindow'
+
+/**
+ * Load the custom eating window hours saved for a given fast (or null if none).
+ */
+export function loadCustomEatHours(fastId: string): number | null {
+  try {
+    const raw = localStorage.getItem(`${EAT_WINDOW_KEY}:${fastId}`)
+    if (!raw) return null
+    const n = parseFloat(raw)
+    return isNaN(n) ? null : n
+  } catch {
+    return null
+  }
+}
+
+/**
+ * Persist a custom eating window duration (hours) for a given fast.
+ */
+export function saveCustomEatHours(fastId: string, hours: number): void {
+  try {
+    localStorage.setItem(`${EAT_WINDOW_KEY}:${fastId}`, String(hours))
+  } catch {
+    // Storage unavailable, silent fail
+  }
+}
+
+/**
+ * Clear a fast's custom eating window override (call when the fast ends).
+ */
+export function clearCustomEatHours(fastId: string): void {
+  try {
+    localStorage.removeItem(`${EAT_WINDOW_KEY}:${fastId}`)
+  } catch {
+    // ignore
+  }
+}

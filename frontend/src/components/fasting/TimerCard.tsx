@@ -1,18 +1,20 @@
 import { useEffect, useState } from 'react'
 import { Icon, I } from '../ui/Icon'
 import { Card } from '../ui/Card'
+import { FoodLogger } from './FoodLogger'
 import type { FastingLog, FoodLog } from '../../types'
-import { getPreset, formatTime } from './fastingConstants'
+import { getPreset, formatTime, loadCustomEatHours } from './fastingConstants'
 
 interface TimerCardProps {
   fast: FastingLog
   onEnd: () => void
-  onAddMeal?: () => void
-  /** Today's food logs, shown inside meal slots during eating window. */
+  /** Today's food logs, shown in the "Logged Today" section. */
   todayFood?: FoodLog[]
+  /** Called after a food is logged from the inline logger. */
+  onFoodLogged?: (log: FoodLog) => void
 }
 
-export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardProps) {
+export function TimerCard({ fast, onEnd, todayFood = [], onFoodLogged }: TimerCardProps) {
   const [now, setNow] = useState<number>(Date.now())
 
   useEffect(() => {
@@ -30,13 +32,17 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
   const preset = getPreset(fast.targetHours)
   const isDone = remainingSec <= 0
 
+  const customEatHours = loadCustomEatHours(fast.id)
+  const eatHours = customEatHours ?? preset.eat
+  const eatModified = customEatHours !== null && customEatHours !== preset.eat
+
   const rem = formatTime(remainingSec)
   const elap = formatTime(elapsedSec)
 
   const startDate = new Date(fast.startTime)
   const eatOpen = new Date(startDate.getTime() + fast.targetHours * 3600000)
-  const eatClose = new Date(eatOpen.getTime() + preset.eat * 3600000)
-  const inEatingWindow = now >= eatOpen.getTime()
+  const eatClose = new Date(eatOpen.getTime() + eatHours * 3600000)
+  const inEatingWindow = now >= eatOpen.getTime() && now < eatClose.getTime()
 
   const size = 200
   const strokeWidth = 12
@@ -46,7 +52,6 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
   const fmtTime = (d: Date): string =>
     d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
 
-  // Generate meal time slots evenly across eating window
   const mealSlots: { label: string; time: Date }[] = []
   if (preset.meals > 0) {
     const eatDurationMs = eatClose.getTime() - eatOpen.getTime()
@@ -61,13 +66,12 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
     }
   }
 
-  // Aggregate today's food stats
   const totalCal = todayFood.reduce((s, l) => s + (l.food?.calories ?? 0) * l.servings, 0)
   const totalProtein = todayFood.reduce((s, l) => s + (l.food?.protein ?? 0) * l.servings, 0)
+  const todayIso = new Date().toISOString().split('T')[0]
 
   return (
     <Card delay={0} className="!p-6 relative overflow-hidden">
-      {/* Status badge */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2.5">
           <div className="w-3 h-3 rounded-full" style={{ backgroundColor: preset.color }} />
@@ -87,7 +91,6 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
         </span>
       </div>
 
-      {/* Ring timer */}
       <div className="flex justify-center mb-6">
         <div className="relative" style={{ width: size, height: size }}>
           <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
@@ -124,7 +127,6 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
         </div>
       </div>
 
-      {/* Stats row */}
       <div className="grid grid-cols-3 gap-3 mb-5">
         <div className="bg-forged-bg border border-forged-border rounded-xl p-2.5 text-center">
           <p className="text-xs font-black text-forged-text tabular-nums">{elap.h}h {elap.m}m</p>
@@ -140,13 +142,17 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
         </div>
       </div>
 
-      {/* Meal window */}
       <div className="bg-forged-bg border border-forged-border rounded-xl p-4 mb-5">
         <div className="flex items-center gap-2 mb-3">
           <Icon d={I.food} size={14} className="text-forged-text2" />
           <span className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider">
             Meal Window
           </span>
+          {eatModified && (
+            <span className="text-[9px] font-bold text-forged-purple bg-forged-purple/10 px-1.5 py-0.5 rounded-full">
+              Custom {eatHours}h
+            </span>
+          )}
           <span className={`ml-auto text-[9px] font-bold px-2 py-0.5 rounded-full
             ${inEatingWindow
               ? 'bg-forged-green/15 text-forged-green'
@@ -156,7 +162,6 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
           </span>
         </div>
 
-        {/* Timeline */}
         <div className="flex justify-between items-center mb-4">
           <div>
             <p className="text-[9px] text-forged-text2 uppercase font-bold">Opens</p>
@@ -164,7 +169,7 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
           </div>
           <div className="flex-1 mx-4 h-1 rounded-full bg-forged-surface2 relative overflow-hidden">
             <div className="h-full rounded-full" style={{
-              width: `${Math.min(pct / (fast.targetHours / 24), 1) * 100}%`,
+              width: `${Math.min(pct, 1) * 100}%`,
               backgroundColor: preset.color,
             }} />
           </div>
@@ -174,7 +179,13 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
           </div>
         </div>
 
-        {/* Today's food summary (if any meals logged) */}
+        {/* Inline logger: only active during eating window */}
+        {inEatingWindow && (
+          <div className="border-t border-forged-border pt-3 mb-3">
+            <FoodLogger date={todayIso} onLogged={onFoodLogged} compact />
+          </div>
+        )}
+
         {todayFood.length > 0 && (
           <div className="border-t border-forged-border pt-3 mb-3">
             <p className="text-[9px] font-bold text-forged-text2 uppercase tracking-wider mb-2">
@@ -208,7 +219,6 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
           </div>
         )}
 
-        {/* Scheduled meal slots */}
         {mealSlots.length > 0 && (
           <div className="border-t border-forged-border pt-3">
             <p className="text-[9px] font-bold text-forged-text2 uppercase tracking-wider mb-2">
@@ -221,7 +231,7 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
                 return (
                   <div
                     key={i}
-                    className={`flex items-center justify-between p-2.5 rounded-xl border
+                    className={`flex items-center gap-2.5 p-2.5 rounded-xl border
                       ${isCurrent
                         ? 'border-forged-green/30 bg-forged-green/5'
                         : isPast
@@ -229,31 +239,21 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
                           : 'border-forged-border'
                       }`}
                   >
-                    <div className="flex items-center gap-2.5">
-                      <div className={`w-7 h-7 rounded-lg flex items-center justify-center
-                        ${isPast ? 'bg-forged-surface2' : isCurrent ? 'bg-forged-green/15' : 'bg-forged-surface2'}`}>
-                        <Icon d={I.food} size={13} sw={2}
-                          className={isPast ? 'text-forged-text2' : isCurrent ? 'text-forged-green' : 'text-forged-text2'} />
-                      </div>
-                      <div>
-                        <p className={`text-xs font-bold ${isPast ? 'text-forged-text2' : 'text-forged-text'}`}>
-                          {slot.label}
-                        </p>
-                        <p className="text-[9px] text-forged-text2">{fmtTime(slot.time)}</p>
-                      </div>
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center
+                      ${isPast ? 'bg-forged-surface2' : isCurrent ? 'bg-forged-green/15' : 'bg-forged-surface2'}`}>
+                      <Icon d={I.food} size={13} sw={2}
+                        className={isPast ? 'text-forged-text2' : isCurrent ? 'text-forged-green' : 'text-forged-text2'} />
                     </div>
-                    {onAddMeal && (
-                      <button
-                        onClick={onAddMeal}
-                        className={`px-3 py-1.5 rounded-lg text-[10px] font-black
-                          transition-all active:scale-95
-                          ${isCurrent
-                            ? 'bg-forged-green/10 text-forged-green border border-forged-green/20 hover:bg-forged-green hover:text-white'
-                            : 'bg-forged-surface2 text-forged-text2 hover:text-forged-text'
-                          }`}
-                      >
-                        {isPast ? 'Log' : 'Add'}
-                      </button>
+                    <div className="flex-1">
+                      <p className={`text-xs font-bold ${isPast ? 'text-forged-text2' : 'text-forged-text'}`}>
+                        {slot.label}
+                      </p>
+                      <p className="text-[9px] text-forged-text2">{fmtTime(slot.time)}</p>
+                    </div>
+                    {isCurrent && (
+                      <span className="text-[9px] font-bold text-forged-green bg-forged-green/15 px-2 py-0.5 rounded-full">
+                        Now
+                      </span>
                     )}
                   </div>
                 )
@@ -263,7 +263,6 @@ export function TimerCard({ fast, onEnd, onAddMeal, todayFood = [] }: TimerCardP
         )}
       </div>
 
-      {/* End button */}
       <button onClick={onEnd}
         className="w-full py-3.5 rounded-xl text-sm font-black border transition-all active:scale-[0.98]
           bg-forged-red/10 text-forged-red border-forged-red/25 hover:bg-forged-red hover:text-white">
