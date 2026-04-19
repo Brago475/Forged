@@ -1,6 +1,7 @@
 import { useTheme } from '../../hooks/useTheme'
 import { Icon, I } from '../ui/Icon'
 import { NAV, type TabId } from './nav'
+import { SettingsDropdown } from './SettingsDropdown'
 import logo from '../../public/logo.png'
 
 interface SidebarProps {
@@ -14,6 +15,9 @@ interface SidebarProps {
 /**
  * Desktop left sidebar. Collapses to icon-only at 68px,
  * expands to 240px with labels.
+ *
+ * Settings/Profile/secondary pages live in the SettingsDropdown at the bottom
+ * (mirrors the mobile bottom-nav 3-dot menu). Primary tabs live above it.
  */
 export function Sidebar({ active, onChange, collapsed, onToggle, onLogout }: SidebarProps) {
   const { theme, toggleTheme } = useTheme()
@@ -84,35 +88,50 @@ export function Sidebar({ active, onChange, collapsed, onToggle, onLogout }: Sid
         })}
       </nav>
 
-      {/* Theme + logout */}
-      <div className="px-3 py-3 border-t border-forged-border flex flex-col gap-1.5">
+      {/* Bottom: SettingsDropdown + quick theme toggle */}
+      <div className="px-3 py-3 border-t border-forged-border flex flex-col gap-2">
         {!collapsed && (
           <p className="text-[10px] text-forged-text2 font-bold uppercase tracking-widest px-3 mb-1">
             Settings
           </p>
         )}
-        <button
-          onClick={toggleTheme}
-          className={`flex items-center gap-3 rounded-xl text-forged-text2
-            hover:text-forged-text hover:bg-forged-surface2 transition-all
-            ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-2.5'}`}
-        >
-          <Icon d={theme === 'dark' ? I.sun : I.moon} size={18} className="flex-shrink-0" />
+
+        {/* Row with dropdown + theme */}
+        <div className={`flex items-center gap-2 ${collapsed ? 'flex-col' : ''}`}>
+          <SettingsDropdown
+            onLogout={onLogout}
+            onProfile={() => onChange('profile')}
+            onSettings={() => onChange('settings' as TabId)}
+            onNavigate={(t) => onChange(t as TabId)}
+            dropUp
+          />
           {!collapsed && (
-            <span className="text-sm font-semibold">
-              {theme === 'dark' ? 'Light Mode' : 'Dark Mode'}
-            </span>
+            <button
+              onClick={toggleTheme}
+              className="flex-1 flex items-center gap-2 justify-center px-3 py-2 rounded-xl
+                text-forged-text2 hover:text-forged-text hover:bg-forged-surface2 transition-all
+                border border-forged-border"
+              title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
+            >
+              <Icon d={theme === 'dark' ? I.sun : I.moon} size={16} className="flex-shrink-0" />
+              <span className="text-xs font-bold">
+                {theme === 'dark' ? 'Light' : 'Dark'}
+              </span>
+            </button>
           )}
-        </button>
-        <button
-          onClick={onLogout}
-          className={`flex items-center gap-3 rounded-xl text-forged-text2
-            hover:text-forged-red hover:bg-forged-red/5 transition-all
-            ${collapsed ? 'justify-center px-0 py-3' : 'px-3 py-2.5'}`}
-        >
-          <Icon d={I.logout} size={18} className="flex-shrink-0" />
-          {!collapsed && <span className="text-sm font-semibold">Sign Out</span>}
-        </button>
+          {collapsed && (
+            <button
+              onClick={toggleTheme}
+              className="w-9 h-9 rounded-xl bg-forged-surface border border-forged-border
+                flex items-center justify-center text-forged-text2
+                hover:text-forged-text hover:border-forged-purple/30 hover:bg-forged-surface2
+                active:scale-95 transition-all"
+              title={theme === 'dark' ? 'Switch to light' : 'Switch to dark'}
+            >
+              <Icon d={theme === 'dark' ? I.sun : I.moon} size={16} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Collapse toggle */}
