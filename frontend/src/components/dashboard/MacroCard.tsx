@@ -1,4 +1,5 @@
 import { useAnimatedNumber } from '../../hooks/useAnimatedNumber'
+import { getWarnLevel } from '../food/goalStorage'
 
 interface MacroCardProps {
   label: string
@@ -8,11 +9,13 @@ interface MacroCardProps {
 
 /**
  * Single macro nutrient card (protein, carbs, fat).
- * Shows an animated count-up, a progress bar, and over-goal warning.
+ * Shows an animated count-up, a progress bar, and close/over warnings
+ * based on the shared goal-warning logic.
  */
 export function MacroCard({ label, current, goal }: MacroCardProps) {
-  const pct = Math.min((current / goal) * 100, 100)
-  const isOver = current > goal
+  const pct = goal > 0 ? Math.min((current / goal) * 100, 100) : 0
+  const level = getWarnLevel(current, goal)
+  const barColor = level === 'over' ? 'bg-forged-red' : level === 'close' ? 'bg-yellow-500' : 'bg-forged-purple'
   const animated = useAnimatedNumber(current, 800)
 
   return (
@@ -28,15 +31,16 @@ export function MacroCard({ label, current, goal }: MacroCardProps) {
 
       <div className="h-2 rounded-full bg-forged-surface2 overflow-hidden">
         <div
-          className="h-full rounded-full bg-forged-purple transition-all duration-1000 ease-out"
+          className={`h-full rounded-full transition-all duration-1000 ease-out ${barColor}`}
           style={{ width: `${pct}%` }}
         />
       </div>
 
-      {isOver && (
-        <p className="text-[10px] text-forged-red font-black mt-1">
-          +{current - goal}g over
-        </p>
+      {level === 'over' && (
+        <p className="text-[10px] text-forged-red font-black mt-1">+{current - goal}g over</p>
+      )}
+      {level === 'close' && (
+        <p className="text-[10px] text-yellow-600 font-black mt-1">Almost there</p>
       )}
     </div>
   )
