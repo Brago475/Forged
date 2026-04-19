@@ -1,6 +1,18 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../hooks/api'
 import type { WeightEntry, FoodLog } from '../types'
+import { loadBodyGoals, saveBodyGoals, type BodyGoals } from '../components/progress/bodyGoalsStorage'
+import { BodyGoalsModal } from '../components/progress/BodyGoalsModal'
+import { WeightChart, type WeightRange } from '../components/progress/WeightChart'
+import { loadGoals } from '../components/food/goalStorage'
+import {
+  summarizeWindow,
+  computeConsistencyScore,
+  computeAllTimeStats,
+  findWeightNearDate,
+  generateInsights,
+  type Insight,
+} from '../components/progress/progressInsights'
 
 // ══════════════════════════════════
 // ICONS
@@ -9,12 +21,16 @@ const I = {
   trendDown: <><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"/><polyline points="17 18 23 18 23 12"/></>,
   trendUp: <><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></>,
   scale: <><path d="M8 21h8"/><path d="M12 17V3"/><path d="M2 11h4l2-4 4 8 4-8 2 4h4"/></>,
-  flame: <><path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.07-2.14 0-5.5 3-7 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.15.39-2.35 1-3.5.33.43.67.77 1.5 1.5z"/></>,
+  flame: <><path d="M13 2s1 4 4 6.5c2.5 2.1 3.5 5 3.5 7.5a7.5 7.5 0 01-15 0c0-2.5 1-4.5 3-6 0 2 1 3 2 3 0-5 2.5-8 2.5-11z"/></>,
   target: <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></>,
   check: <><polyline points="20 6 9 17 4 12"/></>,
-  dumbbell: <><path d="M6.5 6.5L17.5 17.5"/><path d="M2 12l2-2 2 2"/><path d="M18 12l2-2 2 2"/><path d="M7 7L5 5"/><path d="M17 17l2 2"/></>,
+  dumbbell: <><path d="M6.5 6.5L17.5 17.5"/><path d="M2 12l2-2 2 2"/><path d="M18 12l2-2 2 2"/></>,
   zap: <><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></>,
   plus: <><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></>,
+  edit: <><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4 12.5-12.5z"/></>,
+  trophy: <><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></>,
+  calendar: <><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></>,
+  clock: <><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></>,
 }
 
 function Icon({ d, size = 20, className = '', sw = 1.8 }: {
@@ -33,8 +49,11 @@ function Icon({ d, size = 20, className = '', sw = 1.8 }: {
 function Card({ children, className = '', delay = 0 }: {
   children: React.ReactNode; className?: string; delay?: number
 }) {
-  const [v, setV] = useState(false)
-  useEffect(() => { const t = setTimeout(() => setV(true), delay); return () => clearTimeout(t) }, [delay])
+  const [v, setV] = useState<boolean>(false)
+  useEffect(() => {
+    const t = setTimeout(() => setV(true), delay)
+    return () => clearTimeout(t)
+  }, [delay])
   return (
     <div className={`bg-forged-surface border border-forged-border rounded-2xl p-5
       transition-all duration-500 ease-out hover:border-forged-purple/20
@@ -50,14 +69,17 @@ function Card({ children, className = '', delay = 0 }: {
 export default function ProgressPage() {
   const [entries, setEntries] = useState<WeightEntry[]>([])
   const [weekFood, setWeekFood] = useState<FoodLog[][]>([])
+  const [prevWeekFood, setPrevWeekFood] = useState<FoodLog[][]>([])
   const [dashStats, setDashStats] = useState<any>(null)
-  const [loading, setLoading] = useState(true)
-  const [range, setRange] = useState<'7d' | '30d' | '90d' | 'all'>('30d')
+  const [loading, setLoading] = useState<boolean>(true)
+  const [range, setRange] = useState<WeightRange>('30d')
+  const [bodyGoals, setBodyGoals] = useState<BodyGoals>(loadBodyGoals)
+  const [showBodyGoals, setShowBodyGoals] = useState<boolean>(false)
 
   // Weight form
-  const [weight, setWeight] = useState('')
-  const [wNotes, setWNotes] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [weight, setWeight] = useState<string>('')
+  const [wNotes, setWNotes] = useState<string>('')
+  const [saving, setSaving] = useState<boolean>(false)
 
   const loadData = useCallback(async () => {
     setLoading(true)
@@ -69,82 +91,127 @@ export default function ProgressPage() {
       setEntries(w)
       setDashStats(d)
 
-      // Load last 7 days of food for weekly averages
-      const days: FoodLog[][] = []
+      const thisWeek: FoodLog[][] = []
+      const lastWeek: FoodLog[][] = []
       for (let i = 0; i < 7; i++) {
         const dt = new Date()
         dt.setDate(dt.getDate() - i)
-        const dateStr = dt.toISOString().split('T')[0]
-        try {
-          const logs = await api.food.getLogs(dateStr)
-          days.push(logs)
-        } catch { days.push([]) }
+        try { thisWeek.push(await api.food.getLogs(dt.toISOString().split('T')[0])) }
+        catch { thisWeek.push([]) }
       }
-      setWeekFood(days)
-    } catch (e) { console.error(e) }
-    finally { setLoading(false) }
+      for (let i = 7; i < 14; i++) {
+        const dt = new Date()
+        dt.setDate(dt.getDate() - i)
+        try { lastWeek.push(await api.food.getLogs(dt.toISOString().split('T')[0])) }
+        catch { lastWeek.push([]) }
+      }
+      setWeekFood(thisWeek)
+      setPrevWeekFood(lastWeek)
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
   }, [])
 
   useEffect(() => { loadData() }, [loadData])
 
-  const handleLogWeight = async () => {
+  const handleLogWeight = async (): Promise<void> => {
     const w = parseFloat(weight)
     if (!w || w < 50 || w > 500) return
     setSaving(true)
     try {
-      await api.weight.add({ weight: w, date: new Date().toISOString().split('T')[0], notes: wNotes || undefined })
-      setWeight(''); setWNotes('')
+      await api.weight.add({
+        weight: w,
+        date: new Date().toISOString().split('T')[0],
+        notes: wNotes || undefined,
+      })
+      setWeight('')
+      setWNotes('')
       await loadData()
-    } catch (e) { console.error(e) }
-    finally { setSaving(false) }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setSaving(false)
+    }
   }
 
-  // ── Computed stats ──
-  const currentWeight = entries.length > 0 ? entries[entries.length - 1].weight : 0
-  const weekEntries = entries.filter(e => {
-    const d = new Date(e.date + 'T00:00:00')
-    const ago = new Date(); ago.setDate(ago.getDate() - 7)
-    return d >= ago
-  })
-  const weekChange = weekEntries.length >= 2
-    ? weekEntries[weekEntries.length - 1].weight - weekEntries[0].weight
-    : 0
-
-  // Weekly food averages
-  const daysWithFood = weekFood.filter(d => d.length > 0).length || 1
-  const weekAvg = {
-    cal: Math.round(weekFood.flat().reduce((s, l) => s + (l.food?.calories ?? 0) * l.servings, 0) / daysWithFood),
-    protein: Math.round(weekFood.flat().reduce((s, l) => s + (l.food?.protein ?? 0) * l.servings, 0) / daysWithFood),
-    carbs: Math.round(weekFood.flat().reduce((s, l) => s + (l.food?.carbs ?? 0) * l.servings, 0) / daysWithFood),
-    fat: Math.round(weekFood.flat().reduce((s, l) => s + (l.food?.fat ?? 0) * l.servings, 0) / daysWithFood),
+  const handleSaveBodyGoals = (next: BodyGoals): void => {
+    setBodyGoals(next)
+    saveBodyGoals(next)
   }
 
-  // Habit stats
-  const calGoal = 2400, proteinGoal = 180
-  const daysOnCalTarget = weekFood.filter(d => {
-    const cals = d.reduce((s, l) => s + (l.food?.calories ?? 0) * l.servings, 0)
-    return cals > 0 && cals <= calGoal
-  }).length
-  const daysProteinHit = weekFood.filter(d => {
-    const p = d.reduce((s, l) => s + (l.food?.protein ?? 0) * l.servings, 0)
-    return p >= proteinGoal
-  }).length
+  // ── Computed ──
+  const foodGoals = loadGoals()
+  const calGoal = foodGoals.calories
+  const proteinGoal = foodGoals.protein
 
-  // Filtered weight data for chart
-  const filtered = (() => {
+  const now = new Date()
+  const sevenDaysAgo = new Date(); sevenDaysAgo.setDate(now.getDate() - 7)
+  const fourteenDaysAgo = new Date(); fourteenDaysAgo.setDate(now.getDate() - 14)
+
+  const thisWeek = summarizeWindow(weekFood, entries, sevenDaysAgo, now, calGoal, proteinGoal)
+  const lastWeek = summarizeWindow(prevWeekFood, entries, fourteenDaysAgo, sevenDaysAgo, calGoal, proteinGoal)
+
+  const consistency = computeConsistencyScore(thisWeek)
+  const insights = generateInsights(thisWeek, lastWeek, proteinGoal, calGoal)
+  const allTime = computeAllTimeStats(entries)
+
+  // Filter data by range
+  const rangedEntries = (() => {
     if (range === 'all') return entries
-    const days = range === '7d' ? 7 : range === '30d' ? 30 : 90
-    const cut = new Date(); cut.setDate(cut.getDate() - days)
-    return entries.filter(w => new Date(w.date) >= cut)
+    const days = range === '7d' ? 7 : range === '30d' ? 30 : range === '90d' ? 90 : range === '6m' ? 180 : 365
+    const cut = new Date(); cut.setDate(now.getDate() - days)
+    return entries.filter(e => new Date(e.date + 'T00:00:00') >= cut)
   })()
+
+  // On-this-day lookups
+  const oneMonthAgo = new Date(now); oneMonthAgo.setMonth(now.getMonth() - 1)
+  const threeMonthsAgo = new Date(now); threeMonthsAgo.setMonth(now.getMonth() - 3)
+  const sixMonthsAgo = new Date(now); sixMonthsAgo.setMonth(now.getMonth() - 6)
+  const oneYearAgo = new Date(now); oneYearAgo.setFullYear(now.getFullYear() - 1)
+
+  const onThisDay = [
+    { label: '1 month ago',  entry: findWeightNearDate(entries, oneMonthAgo, 3) },
+    { label: '3 months ago', entry: findWeightNearDate(entries, threeMonthsAgo, 5) },
+    { label: '6 months ago', entry: findWeightNearDate(entries, sixMonthsAgo, 7) },
+    { label: '1 year ago',   entry: findWeightNearDate(entries, oneYearAgo, 14) },
+  ]
+
+  // Body goal progress
+  const startWeight = bodyGoals.startWeight ?? allTime.start?.weight
+  const goalWeight = bodyGoals.goalWeight
+  const currentWeight = allTime.current?.weight ?? 0
+  const goalProgress = (startWeight && goalWeight && currentWeight)
+    ? Math.min(100, Math.max(0, ((startWeight - currentWeight) / (startWeight - goalWeight)) * 100))
+    : null
+
+  // Milestones
+  const lost = Math.max(0, (startWeight ?? 0) - currentWeight)
+  const milestones = [
+    { label: 'First 5 lbs lost',  threshold: 5,  hit: lost >= 5 },
+    { label: 'First 10 lbs lost', threshold: 10, hit: lost >= 10 },
+    { label: 'First 20 lbs lost', threshold: 20, hit: lost >= 20 },
+    { label: '30-day streak',     threshold: 30, hit: (dashStats?.currentStreak ?? 0) >= 30 },
+    { label: '100 workouts',      threshold: 100, hit: (dashStats?.totalWorkouts ?? 0) >= 100 },
+  ]
+
+  // Workout heatmap — 30 days
+  const heatmapCells = Array.from({ length: 30 }, (_, i) => {
+    const dt = new Date(); dt.setDate(dt.getDate() - (29 - i))
+    const iso = dt.toISOString().split('T')[0]
+    const intensity = dashStats?.workoutDaysLast30?.includes?.(iso) ? 1 : 0
+    return { date: iso, intensity }
+  })
+  const heatmapActive = heatmapCells.filter(c => c.intensity > 0).length
 
   if (loading) {
     return (
       <div className="flex flex-col gap-4">
         <div className="h-7 w-32 bg-forged-surface2 rounded-xl animate-pulse" />
         <div className="h-28 bg-forged-surface2 rounded-2xl animate-pulse" />
-        <div className="h-52 bg-forged-surface2 rounded-2xl animate-pulse" />
         <div className="h-36 bg-forged-surface2 rounded-2xl animate-pulse" />
+        <div className="h-52 bg-forged-surface2 rounded-2xl animate-pulse" />
         <div className="h-28 bg-forged-surface2 rounded-2xl animate-pulse" />
       </div>
     )
@@ -154,120 +221,279 @@ export default function ProgressPage() {
     <div className="flex flex-col gap-4">
       <h1 className="text-2xl font-black text-forged-text">Progress</h1>
 
-      {/* ── Top Summary ── */}
-      <Card delay={60} className="!p-5">
-        <div className="grid grid-cols-4 gap-3">
-          <SummaryChip label="Current" value={currentWeight ? `${currentWeight}` : '--'} unit="lbs"
-            icon={I.scale} />
-          <SummaryChip label="This Week" value={weekChange !== 0 ? `${weekChange > 0 ? '+' : ''}${weekChange.toFixed(1)}` : '--'} unit="lbs"
-            icon={weekChange <= 0 ? I.trendDown : I.trendUp}
-            accent={weekChange < 0 ? 'green' : weekChange > 0 ? 'red' : undefined} />
-          <SummaryChip label="Streak" value={dashStats?.currentStreak ?? 0} unit="days"
-            icon={I.flame} accent="purple" />
-          <SummaryChip label="Avg Cal" value={weekAvg.cal > 0 ? `${weekAvg.cal}` : '--'} unit="/day"
-            icon={I.zap} />
+      {/* ── 1. Hero: Consistency Score ── */}
+      <Card delay={60}>
+        <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest mb-3">
+          Consistency Score
+        </p>
+        <ConsistencyHero score={consistency} week={thisWeek} />
+      </Card>
+
+      {/* ── 2. This Week vs Last Week ── */}
+      <Card delay={120}>
+        <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest mb-3">
+          This Week vs Last Week
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          <CompareTile
+            label="Weight"
+            value={thisWeek.weightChange !== 0
+              ? `${thisWeek.weightChange > 0 ? '+' : ''}${thisWeek.weightChange.toFixed(1)}`
+              : 'Same'}
+            unit={thisWeek.weightChange !== 0 ? 'lbs' : ''}
+            delta={thisWeek.weightChange - lastWeek.weightChange}
+            deltaUnit="lbs"
+            goodDirection="down"
+          />
+          <CompareTile
+            label="Avg Cal"
+            value={thisWeek.avgCal || '--'}
+            unit="cal"
+            delta={thisWeek.avgCal - lastWeek.avgCal}
+            deltaUnit=""
+            goodDirection="down"
+          />
+          <CompareTile
+            label="Avg Protein"
+            value={thisWeek.avgProtein || '--'}
+            unit="g"
+            delta={thisWeek.avgProtein - lastWeek.avgProtein}
+            deltaUnit="g"
+            goodDirection="up"
+          />
+          <CompareTile
+            label="Days Logged"
+            value={thisWeek.daysWithFood}
+            unit="/7"
+            delta={thisWeek.daysWithFood - lastWeek.daysWithFood}
+            deltaUnit=""
+            goodDirection="up"
+          />
         </div>
       </Card>
 
+      {/* ── 3. Weight Journey ── */}
+      <Card delay={180}>
+        <div className="flex justify-between items-center mb-3">
+          <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest">
+            Weight Journey
+          </p>
+          <button
+            onClick={() => setShowBodyGoals(true)}
+            className="text-xs text-forged-purple font-black hover:text-forged-text transition-colors flex items-center gap-1"
+          >
+            <Icon d={I.edit} size={11} sw={2} />Edit
+          </button>
+        </div>
+        <WeightJourney
+          start={startWeight}
+          startDate={bodyGoals.startDate ?? allTime.start?.date}
+          current={currentWeight}
+          currentDate={allTime.current?.date}
+          goal={goalWeight}
+          goalDate={bodyGoals.goalDate}
+          progress={goalProgress}
+          lost={lost}
+        />
+      </Card>
+
+      {/* ── 4. Insights ── */}
+      <Card delay={240}>
+        <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest mb-3">
+          Insights
+        </p>
+        <InsightList insights={insights} />
+      </Card>
+
+      {/* ── 5. Weight Trend with Range Toggle ── */}
+      <Card delay={300}>
+        <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest mb-3">
+          Weight Trend
+        </p>
+        <div className="flex bg-forged-bg rounded-xl p-1 gap-0.5 mb-4">
+          {(['7d', '30d', '90d', '6m', '1y', 'all'] as WeightRange[]).map(r => (
+            <button
+              key={r}
+              onClick={() => setRange(r)}
+              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all
+                ${range === r ? 'bg-forged-surface text-forged-text shadow-sm' : 'text-forged-text2 hover:text-forged-text'}`}
+            >
+              {r === 'all' ? 'All' : r}
+            </button>
+          ))}
+        </div>
+        <WeightChart data={rangedEntries} range={range} />
+      </Card>
+
+      {/* ── 6. Workout Heatmap ── */}
+      <Card delay={360}>
+        <div className="flex justify-between items-center mb-3">
+          <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest">
+            Workouts (30 days)
+          </p>
+          <span className="text-[10px] text-forged-text2 font-bold">
+            {heatmapActive} active days
+          </span>
+        </div>
+        <div className="grid grid-cols-15 gap-1" style={{ gridTemplateColumns: 'repeat(15, 1fr)' }}>
+          {heatmapCells.map(cell => (
+            <div
+              key={cell.date}
+              title={cell.date}
+              className={`aspect-square rounded transition-all
+                ${cell.intensity === 0
+                  ? 'bg-forged-surface2'
+                  : 'bg-forged-purple'}`}
+            />
+          ))}
+        </div>
+        <p className="text-[10px] text-forged-text2 mt-2">
+          Requires workout dates from backend. Will populate as you log.
+        </p>
+      </Card>
+
+      {/* ── 7. Personal Records ── */}
+      <Card delay={420}>
+        <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+          <Icon d={I.trophy} size={11} sw={2} className="text-forged-purple" />Personal Records
+        </p>
+        <PRRow
+          label="Heaviest weight"
+          value={allTime.heaviest ? `${allTime.heaviest.weight} lbs` : 'No record'}
+          date={allTime.heaviest?.date}
+        />
+        <PRRow
+          label="Lightest weight"
+          value={allTime.lightest ? `${allTime.lightest.weight} lbs` : 'No record'}
+          date={allTime.lightest?.date}
+        />
+        <PRRow
+          label="Longest fast"
+          value={dashStats?.longestFastHours ? `${dashStats.longestFastHours.toFixed(1)} hrs` : 'No record'}
+        />
+        <PRRow
+          label="Best streak"
+          value={dashStats?.bestStreak ? `${dashStats.bestStreak} days` : 'No record'}
+        />
+        <PRRow
+          label="Most protein in a day"
+          value={dashStats?.mostProteinInDay ? `${dashStats.mostProteinInDay}g` : 'No record'}
+        />
+      </Card>
+
+      {/* ── 8. Milestones ── */}
+      <Card delay={480}>
+        <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest mb-3">
+          Milestones
+        </p>
+        <div className="grid grid-cols-2 gap-2">
+          {milestones.map(m => (
+            <MilestoneBadge key={m.label} label={m.label} hit={m.hit} remaining={
+              m.label.includes('lbs') ? Math.max(0, m.threshold - lost).toFixed(1) + ' to go'
+              : m.label.includes('streak') ? `${Math.max(0, m.threshold - (dashStats?.currentStreak ?? 0))} to go`
+              : `${Math.max(0, m.threshold - (dashStats?.totalWorkouts ?? 0))} to go`
+            } />
+          ))}
+        </div>
+      </Card>
+
+      {/* ── 9. Averages ── */}
+      <Card delay={540}>
+        <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest mb-3">
+          Averages
+        </p>
+        <div className="grid grid-cols-3 gap-3">
+          <AvgStat
+            value={allTime.avgPerWeek !== 0 ? `${allTime.avgPerWeek > 0 ? '-' : '+'}${Math.abs(allTime.avgPerWeek).toFixed(2)}` : '--'}
+            label="lbs/week"
+          />
+          <AvgStat
+            value={allTime.avgPerMonth !== 0 ? `${allTime.avgPerMonth > 0 ? '-' : '+'}${Math.abs(allTime.avgPerMonth).toFixed(1)}` : '--'}
+            label="lbs/month"
+          />
+          <AvgStat
+            value={allTime.avgOverall ? allTime.avgOverall.toFixed(1) : '--'}
+            label="avg weight"
+          />
+        </div>
+      </Card>
+
+      {/* ── 10. On This Day ── */}
+      <Card delay={600}>
+        <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest mb-3 flex items-center gap-1.5">
+          <Icon d={I.calendar} size={11} sw={2} className="text-forged-purple" />On This Day
+        </p>
+        {onThisDay.map(row => (
+          <div
+            key={row.label}
+            className="flex justify-between items-center py-2 border-b border-forged-border last:border-0"
+          >
+            <span className="text-xs text-forged-text2 font-bold">{row.label}</span>
+            <span className={`text-sm font-black tabular-nums
+              ${row.entry ? 'text-forged-text' : 'text-forged-text2'}`}>
+              {row.entry ? `${row.entry.weight} lbs` : 'No record'}
+            </span>
+          </div>
+        ))}
+      </Card>
+
       {/* ── Log Weight ── */}
-      <Card delay={100}>
-        <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-2">Log Weight</p>
+      <Card delay={660}>
+        <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-2">
+          Log Weight
+        </p>
         <div className="flex gap-2">
-          <input type="number" step="0.1" placeholder="e.g. 181.5" value={weight}
-            onChange={e => setWeight(e.target.value)}
+          <input
+            type="number" step="0.1" placeholder="e.g. 181.5"
+            value={weight} onChange={e => setWeight(e.target.value)}
             className="flex-1 px-3 py-2.5 bg-forged-bg border border-forged-border rounded-xl
               text-forged-text text-sm placeholder:text-forged-text2
-              focus:border-forged-purple/50 transition-colors" />
-          <input type="text" placeholder="Note (optional)" value={wNotes}
-            onChange={e => setWNotes(e.target.value)}
+              focus:border-forged-purple/50 transition-colors"
+          />
+          <input
+            type="text" placeholder="Note (optional)"
+            value={wNotes} onChange={e => setWNotes(e.target.value)}
             className="flex-1 px-3 py-2.5 bg-forged-bg border border-forged-border rounded-xl
               text-forged-text text-sm placeholder:text-forged-text2
-              focus:border-forged-purple/50 transition-colors" />
-          <button onClick={handleLogWeight} disabled={saving}
+              focus:border-forged-purple/50 transition-colors"
+          />
+          <button
+            onClick={handleLogWeight} disabled={saving}
             className="px-5 py-2.5 bg-forged-purple text-white font-black rounded-xl text-sm
-              hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50">
+              hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-50"
+          >
             {saving ? '...' : 'Log'}
           </button>
         </div>
       </Card>
 
-      {/* ── Weight Chart ── */}
-      <Card delay={160}>
-        <div className="flex items-center justify-between mb-3">
-          <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest">Weight Trend</p>
-        </div>
-        <div className="flex bg-forged-bg rounded-xl p-1 gap-0.5 mb-4">
-          {(['7d', '30d', '90d', 'all'] as const).map(r => (
-            <button key={r} onClick={() => setRange(r)}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg transition-all
-                ${range === r ? 'bg-forged-surface text-forged-text shadow-sm' : 'text-forged-text2 hover:text-forged-text'}`}>
-              {r === 'all' ? 'All' : r}
-            </button>
-          ))}
-        </div>
-        <WeightChart data={filtered} />
-      </Card>
-
-      {/* ── Weekly Nutrition ── */}
-      <Card delay={240}>
-        <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-4">Weekly Averages</p>
-        <div className="grid grid-cols-2 gap-4">
-          <MacroBar label="Calories" value={weekAvg.cal} goal={calGoal} color="#9b59b6" unit="cal" />
-          <MacroBar label="Protein" value={weekAvg.protein} goal={proteinGoal} color="#3498db" unit="g" />
-          <MacroBar label="Carbs" value={weekAvg.carbs} goal={250} color="#2ecc71" unit="g" />
-          <MacroBar label="Fat" value={weekAvg.fat} goal={65} color="#e74c3c" unit="g" />
-        </div>
-
-        {/* Daily breakdown mini bars */}
-        <div className="mt-4 pt-4 border-t border-forged-text2/10">
-          <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest mb-2">Daily Calories (Last 7 Days)</p>
-          <div className="flex items-end gap-1.5 h-16">
-            {weekFood.slice().reverse().map((day, i) => {
-              const cals = day.reduce((s, l) => s + (l.food?.calories ?? 0) * l.servings, 0)
-              const pct = Math.min((cals / calGoal) * 100, 100)
-              const label = new Date(Date.now() - (6 - i) * 86400000).toLocaleDateString('en-US', { weekday: 'narrow' })
-              return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full rounded-t-md relative" style={{ height: `${Math.max(pct * 0.64, 2)}px` }}>
-                    <div className={`absolute inset-0 rounded-t-md transition-all duration-500
-                      ${cals > calGoal ? 'bg-forged-red' : cals > 0 ? 'bg-forged-purple' : 'bg-forged-surface2'}`} />
-                  </div>
-                  <span className="text-[8px] text-forged-text2 font-bold">{label}</span>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </Card>
-
-      {/* ── Habits ── */}
-      <Card delay={320}>
-        <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-3">Habits This Week</p>
-        <div className="grid grid-cols-2 gap-3">
-          <HabitCard label="Within Calorie Goal" count={daysOnCalTarget} total={7} icon={I.target} />
-          <HabitCard label="Protein Target Hit" count={daysProteinHit} total={7} icon={I.zap} />
-          <HabitCard label="Workouts Completed" count={dashStats?.totalWorkouts ?? 0} total={0} icon={I.dumbbell} showTotal={false} />
-          <HabitCard label="Current Streak" count={dashStats?.currentStreak ?? 0} total={0} icon={I.flame} showTotal={false} unit="days" />
-        </div>
-      </Card>
-
       {/* ── Weight History ── */}
-      <Card delay={400}>
-        <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-3">Weight History</p>
+      <Card delay={720}>
+        <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-3">
+          Weight History
+        </p>
         {entries.length === 0 ? (
-          <p className="text-sm text-forged-text2 text-center py-4">No entries yet. Log your first weight above.</p>
+          <p className="text-sm text-forged-text2 text-center py-4">
+            No entries yet. Log your first weight above.
+          </p>
         ) : (
           <div className="flex flex-col max-h-64 overflow-y-auto">
             {entries.slice().reverse().slice(0, 20).map(e => (
               <div key={e.id} className="flex justify-between items-center py-3
-                border-b border-forged-text2/10 last:border-0">
+                border-b border-forged-border last:border-0">
                 <span className="text-sm text-forged-text2">
-                  {new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                  {new Date(e.date + 'T00:00:00').toLocaleDateString('en-US', {
+                    month: 'short', day: 'numeric', year: 'numeric',
+                  })}
                 </span>
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-black text-forged-text tabular-nums">{e.weight} lbs</span>
+                  <span className="text-sm font-black text-forged-text tabular-nums">
+                    {e.weight} lbs
+                  </span>
                   {e.notes && (
-                    <span className="text-[10px] text-forged-text2 bg-forged-surface2 px-2 py-0.5 rounded-full">{e.notes}</span>
+                    <span className="text-[10px] text-forged-text2 bg-forged-surface2 px-2 py-0.5 rounded-full">
+                      {e.notes}
+                    </span>
                   )}
                 </div>
               </div>
@@ -275,151 +501,224 @@ export default function ProgressPage() {
           </div>
         )}
       </Card>
-    </div>
-  )
-}
 
-// ══════════════════════════════════
-// SUMMARY CHIP
-// ══════════════════════════════════
-function SummaryChip({ label, value, unit, icon, accent }: {
-  label: string; value: string | number; unit: string; icon: React.ReactNode
-  accent?: 'green' | 'red' | 'purple'
-}) {
-  const colors = {
-    green: 'text-forged-green',
-    red: 'text-forged-red',
-    purple: 'text-forged-purple',
-  }
-  return (
-    <div className="text-center">
-      <div className="w-8 h-8 mx-auto rounded-lg bg-forged-purple/10 flex items-center justify-center mb-1.5">
-        <Icon d={icon} size={14} className="text-forged-purple" />
-      </div>
-      <p className={`text-base font-black tabular-nums ${accent ? colors[accent] : 'text-forged-text'}`}>{value}</p>
-      <p className="text-[9px] text-forged-text2 font-bold uppercase">{unit}</p>
-      <p className="text-[8px] text-forged-text2 mt-0.5">{label}</p>
-    </div>
-  )
-}
-
-// ══════════════════════════════════
-// WEIGHT CHART (SVG)
-// ══════════════════════════════════
-function WeightChart({ data }: { data: WeightEntry[] }) {
-  const [drawn, setDrawn] = useState(false)
-  useEffect(() => { setDrawn(false); const t = setTimeout(() => setDrawn(true), 200); return () => clearTimeout(t) }, [data])
-
-  if (data.length < 2) return <p className="text-sm text-forged-text2 text-center py-6">Need 2+ entries for chart</p>
-
-  const w = 600, h = 160, px = 44, py = 16
-  const vals = data.map(d => d.weight)
-  const mn = Math.min(...vals) - 1, mx = Math.max(...vals) + 1
-  const pts = data.map((d, i) => ({
-    x: px + (i / (data.length - 1)) * (w - 2 * px),
-    y: py + ((mx - d.weight) / (mx - mn)) * (h - 2 * py),
-  }))
-
-  const pathD = pts.map((p, i) => {
-    if (i === 0) return `M ${p.x} ${p.y}`
-    const prev = pts[i - 1], cpx = (prev.x + p.x) / 2
-    return `C ${cpx} ${prev.y}, ${cpx} ${p.y}, ${p.x} ${p.y}`
-  }).join(' ')
-
-  const fmtDate = (s: string) => new Date(s + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="w-full h-auto">
-      <defs>
-        <linearGradient id="pwg" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#9b59b6" stopOpacity="0.25" />
-          <stop offset="100%" stopColor="#9b59b6" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      {[0, 0.5, 1].map((f, i) => {
-        const y = py + f * (h - 2 * py)
-        return <line key={i} x1={px} y1={y} x2={w - px} y2={y} stroke="var(--border)" strokeWidth="0.5" />
-      })}
-      {data.filter((_, i) => i % Math.max(1, Math.floor(data.length / 5)) === 0).map((d) => {
-        const idx = data.indexOf(d)
-        return <text key={idx} x={pts[idx].x} y={h - 2} fill="var(--text2)" fontSize="9" textAnchor="middle"
-          fontFamily="-apple-system,system-ui,sans-serif">{fmtDate(d.date)}</text>
-      })}
-      <path d={pathD + ` L ${pts[pts.length - 1].x} ${h} L ${pts[0].x} ${h} Z`}
-        fill="url(#pwg)" opacity={drawn ? 1 : 0} style={{ transition: 'opacity 0.8s ease 0.2s' }} />
-      <path d={pathD} fill="none" stroke="#9b59b6" strokeWidth="2" strokeLinecap="round"
-        style={{ strokeDasharray: drawn ? 'none' : '1200', strokeDashoffset: drawn ? 0 : 1200,
-          transition: 'stroke-dashoffset 1.2s cubic-bezier(0.22,1,0.36,1)' }} />
-      {pts.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r="3" fill="var(--bg)" stroke="#9b59b6" strokeWidth="1.5"
-          opacity={drawn ? 1 : 0} style={{ transition: `opacity 0.3s ease ${0.2 + i * 0.05}s` }} />
-      ))}
-      {drawn && (
-        <g>
-          <rect x={pts[pts.length - 1].x - 24} y={pts[pts.length - 1].y - 24} width="48" height="18" rx="5" fill="#9b59b6" />
-          <text x={pts[pts.length - 1].x} y={pts[pts.length - 1].y - 12} fill="#fff" fontSize="10" fontWeight="600"
-            textAnchor="middle" fontFamily="-apple-system,system-ui,sans-serif">{data[data.length - 1].weight}</text>
-        </g>
+      {showBodyGoals && (
+        <BodyGoalsModal
+          initial={bodyGoals}
+          firstEntryWeight={allTime.start?.weight}
+          firstEntryDate={allTime.start?.date}
+          onSave={handleSaveBodyGoals}
+          onClose={() => setShowBodyGoals(false)}
+        />
       )}
-    </svg>
+    </div>
   )
 }
 
 // ══════════════════════════════════
-// MACRO BAR
+// SUBCOMPONENTS
 // ══════════════════════════════════
-function MacroBar({ label, value, goal, color, unit }: {
-  label: string; value: number; goal: number; color: string; unit: string
+
+function ConsistencyHero({ score, week }: { score: number | null; week: { daysWithFood: number } }) {
+  const ring = score ?? 0
+  const circumference = 2 * Math.PI * 36
+  const offset = circumference - (ring / 100) * circumference
+
+  return (
+    <div className="flex items-center gap-4">
+      <div className="relative w-20 h-20 flex-shrink-0">
+        <svg viewBox="0 0 80 80" className="w-full h-full -rotate-90">
+          <circle cx="40" cy="40" r="36" fill="none" stroke="var(--border)" strokeWidth="5" />
+          <circle
+            cx="40" cy="40" r="36" fill="none"
+            stroke="#6D28D9" strokeWidth="5" strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={offset}
+            style={{ transition: 'stroke-dashoffset 1s ease' }}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="text-xl font-black text-forged-text tabular-nums">
+            {score ?? '--'}
+          </span>
+        </div>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-bold text-forged-text">
+          {score === null ? 'No data yet' :
+            score >= 75 ? 'On track this week' :
+            score >= 50 ? 'Keep building' :
+            'Needs attention'}
+        </p>
+        <p className="text-[11px] text-forged-text2 mt-0.5">
+          Weighted from nutrition, logging, and consistency.
+        </p>
+        <p className="text-[10px] text-forged-text2 mt-0.5">
+          {week.daysWithFood} of 7 days logged
+        </p>
+      </div>
+    </div>
+  )
+}
+
+function CompareTile({ label, value, unit, delta, deltaUnit, goodDirection }: {
+  label: string
+  value: number | string
+  unit: string
+  delta: number
+  deltaUnit: string
+  goodDirection: 'up' | 'down'
 }) {
-  const pct = Math.min((value / goal) * 100, 100)
-  const over = value > goal
+  const isGood = goodDirection === 'up' ? delta > 0 : delta < 0
+  const isNeutral = delta === 0 || isNaN(delta)
+  const color = isNeutral ? 'text-forged-text2'
+    : isGood ? 'text-forged-green' : 'text-forged-red'
+
+  const deltaText = isNeutral ? 'same as last week'
+    : `${delta > 0 ? '+' : ''}${typeof delta === 'number' ? delta.toFixed(delta % 1 === 0 ? 0 : 1) : delta}${deltaUnit} vs last`
+
+  return (
+    <div className="bg-forged-bg rounded-xl p-3">
+      <p className="text-[9px] font-bold text-forged-text2 uppercase tracking-wider">{label}</p>
+      <p className="text-lg font-black text-forged-text mt-1 tabular-nums">
+        {value}
+        {unit && <span className="text-xs font-medium text-forged-text2 ml-0.5">{unit}</span>}
+      </p>
+      <p className={`text-[10px] font-bold mt-0.5 ${color}`}>{deltaText}</p>
+    </div>
+  )
+}
+
+function WeightJourney({ start, startDate, current, currentDate, goal, goalDate, progress, lost }: {
+  start?: number
+  startDate?: string
+  current: number
+  currentDate?: string
+  goal?: number
+  goalDate?: string
+  progress: number | null
+  lost: number
+}) {
+  const fmtDate = (d?: string): string => {
+    if (!d) return '--'
+    return new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+  }
+
+  if (!start) {
+    return (
+      <div className="text-center py-4">
+        <p className="text-sm text-forged-text2">Log weight + set goals to see your journey</p>
+      </div>
+    )
+  }
+
   return (
     <div>
-      <div className="flex justify-between items-center mb-1">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-          <span className="text-xs text-forged-text font-semibold">{label}</span>
+      <div className="grid grid-cols-3 gap-2 mb-3">
+        <div className="text-center">
+          <p className="text-[9px] text-forged-text2 font-bold uppercase">Start</p>
+          <p className="text-base font-black text-forged-text tabular-nums mt-1">{start}</p>
+          <p className="text-[9px] text-forged-text2 mt-0.5">{fmtDate(startDate)}</p>
         </div>
-        <span className="text-xs tabular-nums">
-          <span className={`font-bold ${over ? 'text-forged-red' : 'text-forged-text'}`}>{value}</span>
-          <span className="text-forged-text2">/{goal}{unit}</span>
-        </span>
+        <div className="text-center">
+          <p className="text-[9px] text-forged-purple font-bold uppercase">Now</p>
+          <p className="text-base font-black text-forged-purple tabular-nums mt-1">{current || '--'}</p>
+          <p className="text-[9px] text-forged-text2 mt-0.5">{fmtDate(currentDate) || 'Today'}</p>
+        </div>
+        <div className="text-center">
+          <p className="text-[9px] text-forged-text2 font-bold uppercase">Goal</p>
+          <p className="text-base font-black text-forged-text tabular-nums mt-1">{goal ?? '--'}</p>
+          <p className="text-[9px] text-forged-text2 mt-0.5">{goalDate ? fmtDate(goalDate) : 'Set date'}</p>
+        </div>
       </div>
-      <div className="h-2.5 rounded-full bg-forged-surface2 overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, backgroundColor: color }} />
+      {progress !== null && goal && (
+        <>
+          <div className="h-2 rounded-full bg-forged-surface2 overflow-hidden mb-2">
+            <div
+              className="h-full rounded-full bg-forged-purple transition-all duration-1000 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+          <p className="text-[11px] text-forged-text2 text-center">
+            {progress.toFixed(0)}% of the way · {lost.toFixed(1)} lbs lost · {Math.max(0, current - goal).toFixed(1)} to go
+          </p>
+        </>
+      )}
+    </div>
+  )
+}
+
+function InsightList({ insights }: { insights: Insight[] }) {
+  if (insights.length === 0) {
+    return (
+      <p className="text-[11px] text-forged-text2 text-center py-3">
+        Keep logging for personalized insights.
+      </p>
+    )
+  }
+
+  const colorFor = (kind: Insight['kind']): string => {
+    if (kind === 'good') return 'border-forged-green'
+    if (kind === 'warn') return 'border-yellow-500'
+    return 'border-forged-red'
+  }
+
+  return (
+    <div className="flex flex-col gap-2">
+      {insights.map((ins, i) => (
+        <div
+          key={i}
+          className={`bg-forged-bg border-l-[3px] rounded-r-xl py-2 px-3 ${colorFor(ins.kind)}`}
+        >
+          <p className="text-xs font-bold text-forged-text">{ins.title}</p>
+          <p className="text-[10px] text-forged-text2 mt-0.5">{ins.detail}</p>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function PRRow({ label, value, date }: { label: string; value: string; date?: string }) {
+  const isRecord = value !== 'No record'
+  return (
+    <div className="flex justify-between items-center py-2 border-b border-forged-border last:border-0">
+      <span className="text-xs text-forged-text font-bold">{label}</span>
+      <div className="text-right">
+        <span className={`text-xs font-black tabular-nums
+          ${isRecord ? 'text-forged-purple' : 'text-forged-text2'}`}>{value}</span>
+        {date && isRecord && (
+          <span className="text-[10px] text-forged-text2 ml-2">
+            {new Date(date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+          </span>
+        )}
       </div>
     </div>
   )
 }
 
-// ══════════════════════════════════
-// HABIT CARD
-// ══════════════════════════════════
-function HabitCard({ label, count, total, icon, showTotal = true, unit }: {
-  label: string; count: number; total: number; icon: React.ReactNode
-  showTotal?: boolean; unit?: string
-}) {
+function MilestoneBadge({ label, hit, remaining }: { label: string; hit: boolean; remaining: string }) {
   return (
-    <div className="bg-forged-bg border border-forged-border rounded-xl p-3
-      hover:border-forged-purple/25 transition-all">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="w-7 h-7 rounded-lg bg-forged-purple/10 flex items-center justify-center">
-          <Icon d={icon} size={13} className="text-forged-purple" />
-        </div>
-        <p className="text-[10px] text-forged-text2 font-bold uppercase leading-tight flex-1">{label}</p>
-      </div>
-      <p className="text-xl font-black text-forged-text tabular-nums">
-        {count}
-        {showTotal && <span className="text-forged-text2 text-sm font-semibold">/{total}</span>}
-        {unit && <span className="text-forged-text2 text-[10px] font-medium ml-1">{unit}</span>}
+    <div
+      className={`rounded-xl p-3 text-center transition-all
+        ${hit
+          ? 'bg-forged-bg border border-forged-purple'
+          : 'bg-forged-bg border border-forged-border opacity-60'}`}
+    >
+      <p className={`text-[11px] font-black ${hit ? 'text-forged-purple' : 'text-forged-text2'}`}>
+        {label}
       </p>
-      {showTotal && total > 0 && (
-        <div className="h-1.5 rounded-full bg-forged-surface2 overflow-hidden mt-2">
-          <div className="h-full rounded-full bg-forged-purple transition-all duration-700"
-            style={{ width: `${Math.min((count / total) * 100, 100)}%` }} />
-        </div>
-      )}
+      <p className="text-[9px] text-forged-text2 mt-0.5">
+        {hit ? 'Unlocked' : remaining}
+      </p>
+    </div>
+  )
+}
+
+function AvgStat({ value, label }: { value: string; label: string }) {
+  return (
+    <div className="text-center">
+      <p className="text-lg font-black text-forged-text tabular-nums">{value}</p>
+      <p className="text-[9px] text-forged-text2 font-bold uppercase mt-0.5">{label}</p>
     </div>
   )
 }
