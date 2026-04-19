@@ -50,21 +50,24 @@ export interface AutoKindInfo {
  * every user starts with. The rest are opt-in via the "Add Goal" flow.
  */
 export const AUTO_KIND_CATALOG: AutoKindInfo[] = [
-  { kind: 'mealLogged',       label: 'Log at least 1 meal',       defaultCadence: 'daily', numeric: false, description: 'Triggers when any food is logged today.' },
-  { kind: 'workoutDone',      label: 'Complete a workout',        defaultCadence: 'daily', numeric: false, description: 'Triggers when a workout is finished today.' },
-  { kind: 'fastActive',       label: 'Start a fast',              defaultCadence: 'daily', numeric: false, description: 'Triggers when a fasting timer is running.' },
-  { kind: 'proteinHit',       label: 'Hit protein goal',          defaultCadence: 'daily', numeric: false, description: 'Uses your protein goal from Food settings.' },
-  { kind: 'underCalories',    label: 'Stay under calorie goal',   defaultCadence: 'daily', numeric: false, description: 'Uses your calorie goal from Food settings.' },
-  { kind: 'waterGlasses',     label: 'Drink water',               defaultTarget: 8,  defaultUnit: 'glasses', defaultCadence: 'daily', numeric: true, userEntered: true, description: 'Tap + each glass. Resets daily.' },
-  { kind: 'stepsWalked',      label: 'Walk steps',                defaultTarget: 10000, defaultUnit: 'steps', defaultCadence: 'daily', numeric: true, userEntered: true, description: 'Enter today\'s step count manually.' },
-  { kind: 'workoutsThisWeek', label: 'Workouts this week',        defaultTarget: 4,  defaultUnit: 'workouts', defaultCadence: 'weekly', numeric: true, description: 'Auto-counts workout completions this week.' },
-  { kind: 'weightLoggedToday',label: 'Log weight today',          defaultCadence: 'daily', numeric: false, description: 'Triggers when a weight entry exists for today.' },
-  { kind: 'caloriesLogged',   label: 'Log any calories',          defaultCadence: 'daily', numeric: false, description: 'Triggers when any food is logged (even one item).' },
+  // ─── Fully automatic (we can actually detect these) ───
+  { kind: 'mealLogged',       label: 'Log at least 1 meal',       defaultCadence: 'daily', numeric: false, description: 'Auto-checks when any food is logged today.' },
+  { kind: 'caloriesLogged',   label: 'Log any calories',          defaultCadence: 'daily', numeric: false, description: 'Auto-checks when food is logged.' },
+  { kind: 'fastActive',       label: 'Start a fast',              defaultCadence: 'daily', numeric: false, description: 'Auto-checks when a fasting timer is running.' },
+  { kind: 'fastTargetHit',    label: 'Complete fast target',      defaultCadence: 'daily', numeric: false, description: 'Auto-checks when a fast reaches its target hours.' },
+  { kind: 'proteinHit',       label: 'Hit protein goal',          defaultCadence: 'daily', numeric: false, description: 'Auto-checks using your protein goal from Food settings.' },
+  { kind: 'underCalories',    label: 'Stay under calorie goal',   defaultCadence: 'daily', numeric: false, description: 'Auto-checks using your calorie goal from Food settings.' },
   { kind: 'macroHit',         label: 'Hit fiber goal',            defaultTarget: 30, defaultUnit: 'g', defaultCadence: 'daily', numeric: true, macroKey: 'fiber', description: 'Auto-tracks from food log. Target 30g fiber.' },
-  { kind: 'sleepHours',       label: 'Sleep hours',               defaultTarget: 8,  defaultUnit: 'hours', defaultCadence: 'daily', numeric: true, userEntered: true, description: 'Log how many hours you slept last night.' },
-  { kind: 'gymDaysPerWeek',   label: 'Gym days per week',         defaultTarget: 5,  defaultUnit: 'days', defaultCadence: 'weekly', numeric: true, description: 'Auto-counts workout days this week.' },
-  { kind: 'fastTargetHit',    label: 'Complete fast target',      defaultCadence: 'daily', numeric: false, description: 'Triggers when a fast reaches its target hours.' },
-  { kind: 'bodyweightChange', label: 'Bodyweight vs goal',        defaultCadence: 'manual', numeric: false, description: 'Check when current weight equals or beats your target.' },
+
+  // ─── Tap to check / enter (we can\'t auto-detect these without extra logs) ───
+  { kind: 'workoutDone',      label: 'Complete a workout',        defaultCadence: 'daily',  numeric: false, description: 'Tap to check off when you finish a workout.' },
+  { kind: 'workoutsThisWeek', label: 'Workouts this week',        defaultTarget: 4,  defaultUnit: 'workouts', defaultCadence: 'weekly', numeric: true, userEntered: true, description: 'Tap + each time you complete a workout.' },
+  { kind: 'gymDaysPerWeek',   label: 'Gym days per week',         defaultTarget: 5,  defaultUnit: 'days',     defaultCadence: 'weekly', numeric: true, userEntered: true, description: 'Tap + each gym day. Resets weekly.' },
+  { kind: 'weightLoggedToday',label: 'Log weight today',          defaultCadence: 'daily', numeric: false, description: 'Tap to check off after logging weight.' },
+  { kind: 'waterGlasses',     label: 'Drink water',               defaultTarget: 8,  defaultUnit: 'glasses',  defaultCadence: 'daily',  numeric: true, userEntered: true, description: 'Tap + each glass. Resets daily.' },
+  { kind: 'stepsWalked',      label: 'Walk steps',                defaultTarget: 10000, defaultUnit: 'steps', defaultCadence: 'daily', numeric: true, userEntered: true, description: 'Enter today\'s step count manually.' },
+  { kind: 'sleepHours',       label: 'Sleep hours',               defaultTarget: 8,  defaultUnit: 'hours',    defaultCadence: 'daily',  numeric: true, userEntered: true, description: 'Log how many hours you slept last night.' },
+  { kind: 'bodyweightChange', label: 'Bodyweight vs goal',        defaultCadence: 'manual', numeric: false, description: 'Manually check when you hit your target weight.' },
 ]
 
 /**

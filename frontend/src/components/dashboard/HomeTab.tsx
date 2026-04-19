@@ -104,6 +104,14 @@ export function HomeTab({
   /**
    * Compute whether a goal is complete + return its current progress value
    * (if numeric). Handles every auto-kind we support.
+   *
+   * Three buckets:
+   *  1. Truly auto (derived from app data): meal logged, fast active, fast target hit,
+   *     protein hit, under calories, calories logged, macro hit
+   *  2. Tap to check (user confirms, app can't detect): workout done, weight logged,
+   *     bodyweight change
+   *  3. Tap to increment (user logs progress): water, steps, sleep, workouts/week,
+   *     gym days/week
    */
   const computeGoalState = (goal: DailyGoal): { done: boolean; current?: number } => {
     if (!goal.autoKind) {
@@ -117,26 +125,22 @@ export function HomeTab({
     const userValue = getCurrentValue(goal, goalValues)
 
     switch (goal.autoKind) {
+      // Truly auto
       case 'mealLogged':
         return { done: todayFood.length > 0 }
-      case 'workoutDone':
-        return { done: false }
+      case 'caloriesLogged':
+        return { done: macros.cal > 0 }
       case 'fastActive':
         return { done: activeFast !== null }
+      case 'fastTargetHit': {
+        if (!activeFast) return { done: false }
+        const elapsedHours = (Date.now() - new Date(activeFast.startTime).getTime()) / 3600000
+        return { done: elapsedHours >= activeFast.targetHours }
+      }
       case 'proteinHit':
         return { done: macros.protein >= goals.protein, current: macros.protein }
       case 'underCalories':
         return { done: macros.cal > 0 && macros.cal <= goals.calories, current: macros.cal }
-      case 'waterGlasses':
-        return { done: target > 0 && userValue >= target, current: userValue }
-      case 'stepsWalked':
-        return { done: target > 0 && userValue >= target, current: userValue }
-      case 'workoutsThisWeek':
-        return { done: false, current: 0 }
-      case 'weightLoggedToday':
-        return { done: false }
-      case 'caloriesLogged':
-        return { done: macros.cal > 0 }
       case 'macroHit': {
         if (goal.macroKey === 'fiber') return { done: macros.fiber >= target, current: macros.fiber }
         if (goal.macroKey === 'protein') return { done: macros.protein >= target, current: macros.protein }
@@ -144,14 +148,27 @@ export function HomeTab({
         if (goal.macroKey === 'fat') return { done: macros.fat >= target, current: macros.fat }
         return { done: false }
       }
-      case 'sleepHours':
-        return { done: target > 0 && userValue >= target, current: userValue }
-      case 'gymDaysPerWeek':
-        return { done: false, current: 0 }
-      case 'fastTargetHit':
-        return { done: false }
+
+      // Tap to check
+      case 'workoutDone':
+        return { done: getCurrentCheck(goal, goalChecks).checked }
+      case 'weightLoggedToday':
+        return { done: getCurrentCheck(goal, goalChecks).checked }
       case 'bodyweightChange':
         return { done: getCurrentCheck(goal, goalChecks).checked }
+
+      // Tap to increment
+      case 'waterGlasses':
+        return { done: target > 0 && userValue >= target, current: userValue }
+      case 'stepsWalked':
+        return { done: target > 0 && userValue >= target, current: userValue }
+      case 'sleepHours':
+        return { done: target > 0 && userValue >= target, current: userValue }
+      case 'workoutsThisWeek':
+        return { done: target > 0 && userValue >= target, current: userValue }
+      case 'gymDaysPerWeek':
+        return { done: target > 0 && userValue >= target, current: userValue }
+
       default:
         return { done: false }
     }
@@ -168,6 +185,9 @@ export function HomeTab({
     if (hour < 17) return 'Good afternoon'
     return 'Good evening'
   }
+
+  // Auto-kinds the user actively confirms (tap-to-check)
+  const TAP_CHECK_KINDS = ['workoutDone', 'weightLoggedToday', 'bodyweightChange']
 
   return (
     <div className="flex flex-col gap-4">
@@ -358,6 +378,9 @@ export function HomeTab({
           const streak = getStreak(goal, goalChecks)
           const info = goal.autoKind ? getAutoKindInfo(goal.autoKind) : undefined
           const allowIncrement = info?.userEntered === true
+          const allowTapCheck =
+            !goal.autoKind ||
+            TAP_CHECK_KINDS.includes(goal.autoKind)
 
           return (
             <GoalRow
@@ -367,7 +390,7 @@ export function HomeTab({
               current={current}
               streak={streak}
               allowIncrement={allowIncrement}
-              onToggle={goal.autoKind ? undefined : () => handleToggleGoal(goal)}
+              onToggle={allowTapCheck ? () => handleToggleGoal(goal) : undefined}
               onIncrement={allowIncrement ? () => handleIncrementValue(goal, 1) : undefined}
               onDecrement={allowIncrement ? () => handleIncrementValue(goal, -1) : undefined}
               onSetValue={allowIncrement ? (v) => handleSetValue(goal, v) : undefined}
@@ -477,10 +500,10 @@ interface GoalRowProps {
 /**
  * Single daily-goal row:
  *  - Thin left accent stripe (purple when done, muted otherwise)
- *  - Checkbox (auto-derived or tap-to-toggle for manual)
+ *  - Checkbox (tap-to-toggle for manual or tap-to-check auto kinds)
  *  - Label with optional target "current / target unit"
  *  - Progress bar when there's a numeric target
- *  - [- N +] controls for user-entered goals (water, steps, sleep)
+ *  - [- N +] controls for user-entered goals (water, steps, sleep, workouts/week)
  *  - Small streak counter on the right
  */
 function GoalRow({
