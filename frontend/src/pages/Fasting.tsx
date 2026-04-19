@@ -27,6 +27,8 @@ import {
   saveCustomFasts,
   saveCustomEatHours,
   clearCustomEatHours,
+  clearCustomStartTime,
+  clearCustomTargetHours,
   FASTING_LEGEND,
 } from '../components/fasting/fastingConstants'
 
@@ -102,6 +104,8 @@ export default function FastingPage({ onBack }: FastingPageProps) {
         saveFasts(updated)
       }
       clearCustomEatHours(activeFast.id)
+      clearCustomStartTime(activeFast.id)
+      clearCustomTargetHours(activeFast.id)
       setActiveFast(null)
       setIsStale(false)
     } catch (err) {
@@ -146,6 +150,8 @@ export default function FastingPage({ onBack }: FastingPageProps) {
       setHistory(updated)
       saveFasts(updated)
       clearCustomEatHours(activeFast.id)
+      clearCustomStartTime(activeFast.id)
+      clearCustomTargetHours(activeFast.id)
       setActiveFast(null)
       setIsStale(false)
       setView('home')
@@ -249,6 +255,7 @@ export default function FastingPage({ onBack }: FastingPageProps) {
           todayFood={todayFood}
           onFoodLogged={(log) => setTodayFood((prev) => [...prev, log])}
           onFoodDeleted={(logId) => setTodayFood((prev) => prev.filter((l) => l.id !== logId))}
+          onFastEdited={() => setActiveFast((prev) => (prev ? { ...prev } : prev))}
         />
       )}
 

@@ -207,3 +207,63 @@ export function clearCustomEatHours(fastId: string): void {
     // ignore
   }
 }
+
+const START_TIME_KEY = 'forged:starttime'
+const TARGET_HOURS_KEY = 'forged:targethours'
+
+/**
+ * Load a saved start-time override for a fast (ISO string, or null).
+ */
+export function loadCustomStartTime(fastId: string): string | null {
+  try {
+    return localStorage.getItem(`${START_TIME_KEY}:${fastId}`)
+  } catch {
+    return null
+  }
+}
+
+export function saveCustomStartTime(fastId: string, isoTime: string): void {
+  try {
+    localStorage.setItem(`${START_TIME_KEY}:${fastId}`, isoTime)
+  } catch {
+    // ignore
+  }
+}
+
+export function clearCustomStartTime(fastId: string): void {
+  try {
+    localStorage.removeItem(`${START_TIME_KEY}:${fastId}`)
+  } catch {
+    // ignore
+  }
+}
+
+/**
+ * Load a saved target-hours override for a fast (or null).
+ */
+export function loadCustomTargetHours(fastId: string): number | null {
+  try {
+    const raw = localStorage.getItem(`${TARGET_HOURS_KEY}:${fastId}`)
+    if (!raw) return null
+    const n = parseFloat(raw)
+    return isNaN(n) ? null : n
+  } catch {
+    return null
+  }
+}
+
+export function saveCustomTargetHours(fastId: string, hours: number): void {
+  try {
+    localStorage.setItem(`${TARGET_HOURS_KEY}:${fastId}`, String(hours))
+  } catch {
+    // ignore
+  }
+}
+
+export function clearCustomTargetHours(fastId: string): void {
+  try {
+    localStorage.removeItem(`${TARGET_HOURS_KEY}:${fastId}`)
+  } catch {
+    // ignore
+  }
+}
