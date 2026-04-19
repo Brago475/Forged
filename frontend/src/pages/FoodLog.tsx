@@ -7,6 +7,7 @@ import { MacroBar } from '../components/food/MacroBar'
 import { GoalEditorModal } from '../components/food/GoalEditorModal'
 import { NutritionDetailModal } from '../components/food/NutritionDetailModal'
 import { loadGoals, saveGoals, getWarnLevel, type FoodGoals } from '../components/food/goalStorage'
+import { describeMacros } from '../components/food/macroDescription'
 
 // ══════════════════════════════════
 // ICONS
@@ -759,8 +760,15 @@ function FoodSearch({ mealType, date, onAdded }: {
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-forged-text truncate">{food.name}</p>
                 {food.brand && <p className="text-[10px] text-forged-text2">{food.brand}</p>}
-                <p className="text-[10px] text-forged-text2 mt-0.5">
-                  P:{food.protein ?? 0}g &middot; C:{food.carbs ?? 0}g &middot; F:{food.fat ?? 0}g
+                <p className="text-[10px] text-forged-text2 mt-0.5 italic truncate">
+                  {describeMacros({
+                    protein: food.protein ?? 0,
+                    carbs: food.carbs ?? 0,
+                    fat: food.fat ?? 0,
+                    fiber: food.fiber ?? 0,
+                    sugar: food.sugar ?? 0,
+                    calories: food.calories ?? 0,
+                  })}
                 </p>
               </div>
               <div className="flex items-center gap-2 ml-3">
@@ -864,7 +872,6 @@ function QuickCreateFood({ mealType, date, onCreated, onCancel }: {
     </div>
   )
 }
-
 // ══════════════════════════════════
 // FOOD LOG ROW
 // ══════════════════════════════════
@@ -874,6 +881,9 @@ function FoodLogRow({ log, onDelete }: { log: FoodLogType; onDelete: () => void 
   const p = (log.food?.protein ?? 0) * log.servings
   const c = (log.food?.carbs ?? 0) * log.servings
   const f = (log.food?.fat ?? 0) * log.servings
+  const fiber = (log.food?.fiber ?? 0) * log.servings
+  const sugar = (log.food?.sugar ?? 0) * log.servings
+  const description = describeMacros({ protein: p, carbs: c, fat: f, fiber, sugar, calories: cals })
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -884,7 +894,7 @@ function FoodLogRow({ log, onDelete }: { log: FoodLogType; onDelete: () => void 
   return (
     <div className="py-3 border-b border-forged-text2/10 last:border-0
       hover:bg-forged-surface2/50 transition-colors rounded-lg px-2 group">
-      <div className="flex items-center justify-between mb-1.5">
+      <div className="flex items-center justify-between mb-1">
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold text-forged-text truncate">
             {log.food?.name || 'Food'}
@@ -908,6 +918,7 @@ function FoodLogRow({ log, onDelete }: { log: FoodLogType; onDelete: () => void 
           </button>
         </div>
       </div>
+      <p className="text-[10px] text-forged-text2 mb-1.5 italic">{description}</p>
       <MacroBar protein={p} carbs={c} fat={f} compact />
     </div>
   )

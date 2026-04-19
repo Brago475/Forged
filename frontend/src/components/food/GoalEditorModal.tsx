@@ -26,6 +26,30 @@ const FIELDS: FieldConfig[] = [
   { key: 'fat',      label: 'Fat',      letter: 'F', color: '#e74c3c', unit: 'g',   hint: 'Hormones & absorption', calPerGram: 9 },
 ]
 
+interface Preset {
+  label: string
+  p: number
+  c: number
+  f: number
+}
+
+const POPULAR_PRESETS: Preset[] = [
+  { label: 'Balanced',     p: 30, c: 40, f: 30 },
+  { label: 'High Protein', p: 40, c: 30, f: 30 },
+  { label: 'Low Carb',     p: 35, c: 25, f: 40 },
+  { label: 'Keto',         p: 25, c: 5,  f: 70 },
+]
+
+const ALL_PRESETS: Preset[] = [
+  ...POPULAR_PRESETS,
+  { label: 'Bodybuilding',  p: 40, c: 40, f: 20 },
+  { label: 'Cutting',       p: 45, c: 30, f: 25 },
+  { label: 'Bulking',       p: 25, c: 55, f: 20 },
+  { label: 'Endurance',     p: 20, c: 60, f: 20 },
+  { label: 'Mediterranean', p: 20, c: 50, f: 30 },
+  { label: 'Plant-based',   p: 20, c: 60, f: 20 },
+]
+
 const macroToCal = (p: number, c: number, f: number): number =>
   Math.round(p * 4 + c * 4 + f * 9)
 
@@ -82,6 +106,7 @@ export function GoalEditorModal({ initial, onSave, onClose }: GoalEditorModalPro
   const [goals, setGoals] = useState<FoodGoals>(initial)
   const [mode, setMode] = useState<Mode>('grams')
   const [pcts, setPcts] = useState(() => gramsToPct(initial))
+  const [showMorePresets, setShowMorePresets] = useState<boolean>(false)
 
   const updateCalories = (v: string): void => {
     const n = Math.max(0, parseInt(v) || 0)
@@ -330,14 +355,27 @@ export function GoalEditorModal({ initial, onSave, onClose }: GoalEditorModalPro
         {/* Quick presets (only in percent mode) */}
         {mode === 'percent' && (
           <div className="mb-4">
-            <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider mb-2">
-              Quick Splits
-            </p>
-            <div className="grid grid-cols-4 gap-1.5">
-              <PresetButton label="Balanced" sub="30/40/30" onClick={() => applyPreset(30, 40, 30)} active={pcts.p === 30 && pcts.c === 40 && pcts.f === 30} />
-              <PresetButton label="High Protein" sub="40/30/30" onClick={() => applyPreset(40, 30, 30)} active={pcts.p === 40 && pcts.c === 30 && pcts.f === 30} />
-              <PresetButton label="Low Carb" sub="35/25/40" onClick={() => applyPreset(35, 25, 40)} active={pcts.p === 35 && pcts.c === 25 && pcts.f === 40} />
-              <PresetButton label="Keto" sub="25/5/70" onClick={() => applyPreset(25, 5, 70)} active={pcts.p === 25 && pcts.c === 5 && pcts.f === 70} />
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider">
+                Quick Splits
+              </p>
+              <button
+                onClick={() => setShowMorePresets((s) => !s)}
+                className="text-[10px] font-bold text-forged-purple hover:brightness-110 transition-all"
+              >
+                {showMorePresets ? 'Show less' : 'View more'}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-1.5">
+              {(showMorePresets ? ALL_PRESETS : POPULAR_PRESETS).map((preset) => (
+                <PresetButton
+                  key={preset.label}
+                  label={preset.label}
+                  sub={`${preset.p}/${preset.c}/${preset.f}`}
+                  onClick={() => applyPreset(preset.p, preset.c, preset.f)}
+                  active={pcts.p === preset.p && pcts.c === preset.c && pcts.f === preset.f}
+                />
+              ))}
             </div>
           </div>
         )}
