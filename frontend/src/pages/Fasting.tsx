@@ -9,6 +9,7 @@ import { SectionLabel } from '../components/ui/SectionLabel'
 import { MiniStat } from '../components/ui/MiniStat'
 import { Calendar } from '../components/ui/Calendar'
 import { Icon, I } from '../components/ui/Icon'
+import { FastDetailModal } from '../components/fasting/FastDetailModal'
 
 import { TimerCard } from '../components/fasting/TimerCard'
 import { ConfirmCard } from '../components/fasting/ConfirmCard'
@@ -39,6 +40,7 @@ interface FastingPageProps {
 }
 
 export default function FastingPage({ onBack }: FastingPageProps) {
+  const [selectedHistoryFast, setSelectedHistoryFast] = useState<FastRecord | null>(null)
   const [view, setView] = useState<View>('home')
   const [activeFast, setActiveFast] = useState<FastingLog | null>(null)
   const [isStale, setIsStale] = useState<boolean>(false)
@@ -334,11 +336,16 @@ export default function FastingPage({ onBack }: FastingPageProps) {
                     (end.getTime() - start.getTime()) / 3600000
                   ).toFixed(1)
 
+                  const startTimeStr = start.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+                  const endTimeStr = end.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+
                   return (
-                    <div
+                    <button
                       key={fast.id}
-                      className="flex items-center justify-between py-3
-                        border-b border-forged-text2/10 last:border-0"
+                      onClick={() => setSelectedHistoryFast(fast)}
+                      className="flex items-center justify-between py-3 px-2 -mx-2 rounded-lg
+                        border-b border-forged-text2/10 last:border-0
+                        hover:bg-forged-surface2/50 active:scale-[0.99] transition-all text-left"
                     >
                       <div className="flex items-center gap-3">
                         <div
@@ -351,27 +358,18 @@ export default function FastingPage({ onBack }: FastingPageProps) {
                               {fast.name || preset.name}
                             </p>
                             <span className="text-[9px] text-forged-text2">
-                              · {preset.id}
+                              &middot; {preset.id}
                             </span>
                           </div>
                           <p className="text-[10px] text-forged-text2">
-                            {start.toLocaleDateString('en-US', {
-                              month: 'short',
-                              day: 'numeric',
-                            })}{' '}
-                            · {durationHours}h · {fast.meals} meal
-                            {fast.meals !== 1 ? 's' : ''}
+                            {start.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                            {' '}&middot; {startTimeStr}-{endTimeStr}
+                            {' '}&middot; {durationHours}h
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => handleDeleteHistory(fast.id)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center
-                          text-forged-text2 hover:text-forged-red transition-colors"
-                      >
-                        <Icon d={I.trash} size={12} />
-                      </button>
-                    </div>
+                      <Icon d={I.chevron} size={14} className="text-forged-text2" />
+                    </button>
                   )
                 })}
               </div>
@@ -379,7 +377,15 @@ export default function FastingPage({ onBack }: FastingPageProps) {
           </Card>
         </>
       )}
+{selectedHistoryFast && (
+        <FastDetailModal
+          fast={selectedHistoryFast}
+          onClose={() => setSelectedHistoryFast(null)}
+          onDelete={handleDeleteHistory}
+        />
+      )}
 
+      <div className="h-4" />
       <div className="h-4" />
     </div>
   )
