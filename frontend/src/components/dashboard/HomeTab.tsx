@@ -12,7 +12,6 @@ import { HeroCalorieRing } from './HeroCalorieRing'
 import { MacroCard } from './MacroCard'
 import { MacroCardSmall } from './MacroCardSmall'
 import { QuickAction } from './QuickAction'
-import { CheckItem } from './CheckItem'
 import { StatChip } from './StatChip'
 import { WorkoutSnapshot } from './WorkoutSnapshot'
 import { FoodSnapshot } from './FoodSnapshot'
@@ -20,6 +19,18 @@ import { MiniWeightChart } from './MiniWeightChart'
 import { InsightCard } from './InsightCard'
 import { GoalEditorModal } from '../food/GoalEditorModal'
 import { loadGoals, saveGoals, type FoodGoals } from '../food/goalStorage'
+import {
+  loadDailyGoals,
+  saveDailyGoals,
+  loadGoalChecks,
+  saveGoalChecks,
+  getCurrentCheck,
+  toggleGoalCheck,
+  getStreak,
+  type DailyGoal,
+  type GoalCheck,
+} from './goalsStorage'
+import { GoalsManagerModal } from './GoalsManagerModal'
 
 interface HomeTabProps {
   stats: DashboardStats | null
@@ -37,6 +48,7 @@ interface HomeTabProps {
  * preview, and a contextual insight at the bottom.
  *
  * Food goals sync with the Food Log page via localStorage.
+ * Daily goals (checklist) sync via their own storage module.
  */
 export function HomeTab({
   stats,
@@ -49,10 +61,38 @@ export function HomeTab({
 }: HomeTabProps) {
   const [goals, setGoals] = useState<FoodGoals>(loadGoals)
   const [showGoalEditor, setShowGoalEditor] = useState<boolean>(false)
+  const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>(loadDailyGoals)
+  const [goalChecks, setGoalChecks] = useState<GoalCheck[]>(loadGoalChecks)
+  const [showGoalsManager, setShowGoalsManager] = useState<boolean>(false)
 
   const handleSaveGoals = (next: FoodGoals): void => {
     setGoals(next)
     saveGoals(next)
+  }
+
+  const handleSaveDailyGoals = (next: DailyGoal[]): void => {
+    setDailyGoals(next)
+    saveDailyGoals(next)
+  }
+
+  const handleToggleGoal = (goal: DailyGoal): void => {
+    const next = toggleGoalCheck(goal.id, goal, goalChecks)
+    setGoalChecks(next)
+    saveGoalChecks(next)
+  }
+
+  /**
+   * Compute whether an auto-goal is done based on live app state.
+   */
+  const isAutoDone = (goal: DailyGoal): boolean => {
+    switch (goal.autoKind) {
+      case 'mealLogged':    return todayFood.length > 0
+      case 'workoutDone':   return false
+      case 'fastActive':    return activeFast !== null
+      case 'proteinHit':    return macros.protein >= goals.protein
+      case 'underCalories': return macros.cal > 0 && macros.cal <= goals.calories
+      default: return false
+    }
   }
 
   const calLeft = Math.max(goals.calories - macros.cal, 0)
@@ -240,42 +280,44 @@ export function HomeTab({
         </div>
       </Card>
 
-      {/* Today's goals */}
+      {/* Today's Goals (user-managed checklist) */}
       <Card delay={270}>
         <div className="flex justify-between items-center mb-3">
           <SectionLabel>Today's Goals</SectionLabel>
           <button
-            onClick={() => setShowGoalEditor(true)}
+            onClick={() => setShowGoalsManager(true)}
             className="text-xs text-forged-purple font-black hover:text-forged-text transition-colors -mt-2 flex items-center gap-1"
           >
-            <Icon d={I.edit} size={12} sw={2} />Edit
+            <Icon d={I.edit} size={12} sw={2} />Manage
           </button>
         </div>
-        <CheckItem
-          done={todayFood.length > 0}
-          label={
-            todayFood.length > 0
-              ? `${todayFood.length} meal${todayFood.length > 1 ? 's' : ''} logged`
-              : 'Log at least 1 meal'
-          }
-        />
-        <CheckItem done={false} label="Complete a workout" />
-        <CheckItem
-          done={activeFast !== null}
-          label={activeFast ? 'Fasting active' : 'Start a fast'}
-        />
-        <CheckItem
-          done={macros.protein >= goals.protein}
-          label={
-            macros.protein >= goals.protein
-              ? `Hit ${goals.protein}g protein`
-              : `Hit ${goals.protein}g protein (${macros.protein}g so far)`
-          }
-        />
-        <CheckItem
-          done={macros.cal > 0 && macros.cal <= goals.calories}
-          label={`Stay under ${goals.calories} cal`}
-        />
+        {dailyGoals.filter(g => !g.hidden).sort((a, b) => a.order - b.order).map(goal => {
+          const done = goal.autoKind
+            ? isAutoDone(goal)
+            : getCurrentCheck(goal, goalChecks).checked
+          const streak = getStreak(goal, goalChecks)
+          return (
+            <GoalCheckRow
+              key={goal.id}
+              goal={goal}
+              done={done}
+              streak={streak}
+              onToggle={goal.autoKind ? undefined : () => handleToggleGoal(goal)}
+              extraContext={
+                goal.autoKind === 'proteinHit'
+                  ? done ? `${goals.protein}g hit` : `${Math.round(macros.protein)}g / ${goals.protein}g`
+                  : goal.autoKind === 'underCalories'
+                    ? `${Math.round(macros.cal)} / ${goals.calories} cal`
+                    : undefined
+              }
+            />
+          )
+        })}
+        {dailyGoals.filter(g => !g.hidden).length === 0 && (
+          <p className="text-[11px] text-forged-text2 text-center py-3">
+            No goals yet. Tap Manage to add some.
+          </p>
+        )}
       </Card>
 
       {/* Workout snapshot */}
@@ -335,13 +377,90 @@ export function HomeTab({
         <InsightCard macros={macros} streak={stats?.currentStreak ?? 0} proteinGoal={goals.protein} />
       </Card>
 
-      {/* Goal Editor Modal */}
+      {/* Goal Editor Modal (food macros) */}
       {showGoalEditor && (
         <GoalEditorModal
           initial={goals}
           onSave={handleSaveGoals}
           onClose={() => setShowGoalEditor(false)}
         />
+      )}
+
+      {/* Goals Manager Modal (daily checklist) */}
+      {showGoalsManager && (
+        <GoalsManagerModal
+          initial={dailyGoals}
+          onSave={handleSaveDailyGoals}
+          onClose={() => setShowGoalsManager(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+// ──────────────────────────────────
+// GOAL CHECK ROW
+// ──────────────────────────────────
+interface GoalCheckRowProps {
+  goal: DailyGoal
+  done: boolean
+  streak: number
+  onToggle?: () => void
+  extraContext?: string
+}
+
+/**
+ * Single goal row — shows a label, completion state, optional streak,
+ * and (for custom goals) a tap-to-toggle checkbox.
+ */
+function GoalCheckRow({ goal, done, streak, onToggle, extraContext }: GoalCheckRowProps) {
+  const interactive = !!onToggle
+
+  return (
+    <div
+      onClick={onToggle}
+      className={`flex items-center justify-between py-2.5 border-b border-forged-border last:border-0
+        ${interactive ? 'cursor-pointer hover:bg-forged-surface2/40 -mx-2 px-2 rounded-lg transition-colors' : ''}`}
+    >
+      <div className="flex items-center gap-3 flex-1 min-w-0">
+        <div
+          className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all
+            ${done
+              ? 'bg-forged-purple text-white'
+              : 'border-2 border-forged-border'}`}
+        >
+          {done && (
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <p className={`text-xs font-bold truncate ${done ? 'text-forged-text2 line-through' : 'text-forged-text'}`}>
+              {goal.label}
+              {goal.target && !goal.autoKind && (
+                <span className="text-forged-text2 font-medium ml-1">
+                  {goal.target}{goal.targetUnit ? ` ${goal.targetUnit}` : ''}
+                </span>
+              )}
+            </p>
+            {goal.cadence !== 'daily' && (
+              <span className="text-[8px] font-black text-forged-text2 uppercase tracking-wider flex-shrink-0">
+                {goal.cadence}
+              </span>
+            )}
+          </div>
+          {extraContext && (
+            <p className="text-[10px] text-forged-text2 mt-0.5">{extraContext}</p>
+          )}
+        </div>
+      </div>
+      {streak > 0 && (
+        <span className="text-[10px] font-black text-forged-purple tabular-nums flex-shrink-0 ml-2">
+          🔥 {streak}
+        </span>
       )}
     </div>
   )
