@@ -2,6 +2,8 @@ import type { FoodLog } from '../../types'
 import { MacroBar } from './MacroBar'
 import type { FoodGoals } from './goalStorage'
 import { getWarnLevel } from './goalStorage'
+import { useState } from 'react'
+import { FullBreakdownModal } from './FullBreakdownModal'
 
 interface NutritionDetailModalProps {
   logs: FoodLog[]
@@ -23,6 +25,7 @@ const WARN_COLORS: Record<string, string> = {
 }
 
 export function NutritionDetailModal({ logs, goals, onClose }: NutritionDetailModalProps) {
+  const [showFull, setShowFull] = useState<boolean>(false)
   const totals = {
     cal: logs.reduce((s, l) => s + (l.food?.calories ?? 0) * l.servings, 0),
     protein: logs.reduce((s, l) => s + (l.food?.protein ?? 0) * l.servings, 0),
@@ -240,14 +243,31 @@ export function NutritionDetailModal({ logs, goals, onClose }: NutritionDetailMo
           </div>
         </div>
 
-        <button
-          onClick={onClose}
-          className="w-full py-3 rounded-xl text-sm font-black
-            bg-forged-purple text-white
-            hover:brightness-110 active:scale-[0.98] transition-all"
-        >
-          Close
-        </button>
+        <div className="flex gap-2 mt-3">
+          <button
+            onClick={onClose}
+            className="flex-1 py-3 rounded-xl text-sm font-black
+              bg-forged-surface2 text-forged-text2 border border-forged-border
+              hover:text-forged-text active:scale-[0.98] transition-all"
+          >
+            Close
+          </button>
+          <button
+            onClick={() => setShowFull(true)}
+            className="flex-1 py-3 rounded-xl text-sm font-black text-white
+              bg-forged-purple hover:brightness-110 active:scale-[0.98] transition-all
+              flex items-center justify-center gap-1.5"
+          >
+            Full Breakdown →
+          </button>
+        </div>
+
+        {showFull && (
+          <FullBreakdownModal
+            logs={logs}
+            onClose={() => setShowFull(false)}
+          />
+        )}
       </div>
     </div>
   )
