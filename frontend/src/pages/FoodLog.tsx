@@ -3,6 +3,10 @@ import { api } from '../hooks/api'
 import type { FoodLog as FoodLogType, Food, FoodDaySummary } from '../types'
 import { loadFasts, getPreset } from '../components/fasting/fastingConstants'
 import type { FastingLog } from '../types'
+import { MacroBar } from '../components/food/MacroBar'
+import { GoalEditorModal } from '../components/food/GoalEditorModal'
+import { NutritionDetailModal } from '../components/food/NutritionDetailModal'
+import { loadGoals, saveGoals, getWarnLevel, type FoodGoals } from '../components/food/goalStorage'
 
 // ══════════════════════════════════
 // ICONS
@@ -340,14 +344,21 @@ type MealKey = typeof MEALS[number]['key']
 interface FoodLogProps {
   onNavigate?: (tab: string) => void
 }
-
-export default function FoodLog({ onNavigate }: FoodLogProps = {}) {
+  export default function FoodLog({ onNavigate }: FoodLogProps = {}) {
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
   const [logs, setLogs] = useState<FoodLogType[]>([])
   const [loading, setLoading] = useState(true)
   const [addingTo, setAddingTo] = useState<MealKey | null>(null)
   const [showCalendar, setShowCalendar] = useState(false)
   const [menuOpen, setMenuOpen] = useState<MealKey | null>(null)
+  const [goals, setGoals] = useState<FoodGoals>(loadGoals)
+  const [showGoalEditor, setShowGoalEditor] = useState<boolean>(false)
+  const [showNutritionDetail, setShowNutritionDetail] = useState<boolean>(false)
+
+  const handleSaveGoals = (next: FoodGoals): void => {
+    setGoals(next)
+    saveGoals(next)
+  }
 
   const loadLogs = useCallback(async () => {
     setLoading(true)
@@ -471,63 +482,87 @@ export default function FoodLog({ onNavigate }: FoodLogProps = {}) {
       {/* ── Fasting section ── */}
       <FastingSection date={date} onNavigate={onNavigate} />
 
-      {/* ── Daily Summary ── */}
-      <Card delay={60} hero className="!p-5">
-        <div className="flex items-baseline justify-between mb-3">
-          <div>
-            <span className="text-5xl font-black text-forged-text tabular-nums">{totals.cal}</span>
-            <span className="text-sm text-forged-text2 ml-2">eaten</span>
-          </div>
-          <div className="text-right">
-            <p className="text-xl font-black text-forged-text tabular-nums">{remaining}</p>
-            <p className="text-xs text-forged-text2">remaining</p>
-          </div>
-        </div>
-
-        <div className="h-3 rounded-full bg-forged-surface2 overflow-hidden mb-3">
-          <div className={`h-full rounded-full transition-all duration-700 ease-out
-            ${totals.cal > calGoal ? 'bg-forged-red' : 'bg-forged-purple'}`}
-            style={{ width: `${calPct}%` }} />
-        </div>
-
-        <div className="flex items-center justify-between text-xs mb-4">
-          <span className="text-forged-text2">Goal: <span className="font-bold text-forged-text">{calGoal} cal</span></span>
-          <span className={`font-black ${totals.cal <= calGoal ? 'text-forged-green' : 'text-forged-red'}`}>
-            {totals.cal <= calGoal ? 'On Track' : 'Over Goal'}
-          </span>
-        </div>
-
-        {/* Macros */}
-        <div className="grid grid-cols-3 gap-4 pt-4 border-t border-forged-text2/10">
-          <MacroMini label="Protein" value={totals.protein} goal={180} />
-          <MacroMini label="Carbs" value={totals.carbs} goal={250} />
-          <MacroMini label="Fat" value={totals.fat} goal={65} />
-        </div>
-      </Card>
-
-      {/* ── Nutrition Graph ── */}
-      {logs.length > 0 && (
-        <Card delay={100}>
-          <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest mb-4">Nutrition Breakdown</p>
-
-          {/* Donut chart + legend */}
-          <div className="flex items-center gap-6">
-            <MacroDonut protein={totals.protein} carbs={totals.carbs} fat={totals.fat} />
-            <div className="flex-1 flex flex-col gap-2">
-              <NutritionBar label="Protein" value={totals.protein} goal={180} color="#9b59b6" unit="g" />
-              <NutritionBar label="Carbs" value={totals.carbs} goal={250} color="#3498db" unit="g" />
-              <NutritionBar label="Fat" value={totals.fat} goal={65} color="#e74c3c" unit="g" />
+      {/* ── Daily Summary (clickable to edit goals) ── */}
+      <button
+        onClick={() => setShowGoalEditor(true)}
+        className="text-left w-full"
+      >
+        <Card delay={60} hero className="!p-5 hover:border-forged-purple/40 transition-all">
+          <div className="flex items-baseline justify-between mb-3">
+            <div>
+              <span className="text-5xl font-black text-forged-text tabular-nums">{totals.cal}</span>
+              <span className="text-sm text-forged-text2 ml-2">eaten</span>
+            </div>
+            <div className="text-right">
+              <p className={`text-xl font-black tabular-nums
+                ${totals.cal > goals.calories ? 'text-forged-red' : 'text-forged-text'}`}>
+                {totals.cal > goals.calories ? `+${totals.cal - goals.calories}` : Math.max(goals.calories - totals.cal, 0)}
+              </p>
+              <p className="text-xs text-forged-text2">
+                {totals.cal > goals.calories ? 'over goal' : 'remaining'}
+              </p>
             </div>
           </div>
 
-          {/* Secondary nutrients */}
-          <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t border-forged-text2/10">
-            <NutrientChip label="Fiber" value={totals.fiber} unit="g" />
-            <NutrientChip label="Sugar" value={totals.sugar} unit="g" />
-            <NutrientChip label="Sodium" value={totals.sodium} unit="mg" />
-            <NutrientChip label="Calories" value={totals.cal} unit="cal" />
+          <div className="h-3 rounded-full bg-forged-surface2 overflow-hidden mb-3">
+            <div className={`h-full rounded-full transition-all duration-700 ease-out
+              ${totals.cal > goals.calories
+                ? 'bg-forged-red'
+                : getWarnLevel(totals.cal, goals.calories) === 'close'
+                  ? 'bg-yellow-500'
+                  : 'bg-forged-purple'}`}
+              style={{ width: `${Math.min((totals.cal / goals.calories) * 100, 100)}%` }} />
           </div>
+
+          <div className="flex items-center justify-between text-xs mb-4">
+            <span className="text-forged-text2">
+              Goal: <span className="font-bold text-forged-text">{goals.calories} cal</span>
+            </span>
+            <StatusPill level={getWarnLevel(totals.cal, goals.calories)} />
+          </div>
+
+          <div className="grid grid-cols-3 gap-4 pt-4 border-t border-forged-text2/10">
+            <MacroMini label="Protein" value={totals.protein} goal={goals.protein} />
+            <MacroMini label="Carbs" value={totals.carbs} goal={goals.carbs} />
+            <MacroMini label="Fat" value={totals.fat} goal={goals.fat} />
+          </div>
+
+          <p className="text-[10px] text-forged-text2 text-center mt-3 font-bold uppercase tracking-wider">
+            Tap to edit goals
+          </p>
         </Card>
+      </button>
+
+      {/* ── Nutrition Graph (click for detail modal) ── */}
+      {logs.length > 0 && (
+        <button
+          onClick={() => setShowNutritionDetail(true)}
+          className="text-left w-full"
+        >
+          <Card delay={100} className="hover:border-forged-purple/40 transition-all">
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-[11px] font-bold text-forged-text2 uppercase tracking-widest">
+                Nutrition Breakdown
+              </p>
+              <span className="text-[10px] text-forged-purple font-bold">View all →</span>
+            </div>
+
+            <div className="mb-3">
+              <MacroBar
+                protein={totals.protein}
+                carbs={totals.carbs}
+                fat={totals.fat}
+              />
+            </div>
+
+            <div className="grid grid-cols-4 gap-3 mt-4 pt-4 border-t border-forged-text2/10">
+              <NutrientChip label="Fiber" value={totals.fiber} unit="g" />
+              <NutrientChip label="Sugar" value={totals.sugar} unit="g" />
+              <NutrientChip label="Sodium" value={totals.sodium} unit="mg" />
+              <NutrientChip label="Calories" value={totals.cal} unit="cal" />
+            </div>
+          </Card>
+        </button>
       )}
 
       {/* ── Meal Sections ── */}
@@ -608,16 +643,27 @@ export default function FoodLog({ onNavigate }: FoodLogProps = {}) {
       {/* ── Daily total footer ── */}
       {logs.length > 0 && (
         <Card delay={500}>
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-2">
             <span className="text-sm font-bold text-forged-text2">Daily Total</span>
-            <div className="flex items-center gap-4">
-              <span className="text-xs text-forged-text2 tabular-nums">P:{totals.protein}g</span>
-              <span className="text-xs text-forged-text2 tabular-nums">C:{totals.carbs}g</span>
-              <span className="text-xs text-forged-text2 tabular-nums">F:{totals.fat}g</span>
-              <span className="text-sm font-black text-forged-text tabular-nums">{totals.cal} cal</span>
-            </div>
+            <span className="text-sm font-black text-forged-text tabular-nums">{totals.cal} cal</span>
           </div>
+          <MacroBar protein={totals.protein} carbs={totals.carbs} fat={totals.fat} />
         </Card>
+      )}
+{showGoalEditor && (
+        <GoalEditorModal
+          initial={goals}
+          onSave={handleSaveGoals}
+          onClose={() => setShowGoalEditor(false)}
+        />
+      )}
+
+      {showNutritionDetail && (
+        <NutritionDetailModal
+          logs={logs}
+          goals={goals}
+          onClose={() => setShowNutritionDetail(false)}
+        />
       )}
 
       {/* Animations */}
@@ -903,27 +949,33 @@ function FoodLogRow({ log, onDelete }: { log: FoodLogType; onDelete: () => void 
   }
 
   return (
-    <div className="flex items-center justify-between py-3 border-b border-forged-text2/10 last:border-0
+    <div className="py-3 border-b border-forged-text2/10 last:border-0
       hover:bg-forged-surface2/50 transition-colors rounded-lg px-2 group">
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold text-forged-text">{log.food?.name || 'Food'}</p>
-        <p className="text-[11px] text-forged-text2">
-          P:{p}g &middot; C:{c}g &middot; F:{f}g
-          {log.servings !== 1 && <span className="text-forged-purple font-bold"> &middot; {log.servings}x</span>}
-        </p>
+      <div className="flex items-center justify-between mb-1.5">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-semibold text-forged-text truncate">
+            {log.food?.name || 'Food'}
+            {log.servings !== 1 && (
+              <span className="ml-1.5 text-[10px] text-forged-purple font-bold">
+                {log.servings}x
+              </span>
+            )}
+          </p>
+        </div>
+        <div className="flex items-center gap-2 ml-2">
+          <span className="text-sm font-black text-forged-text tabular-nums">{cals} cal</span>
+          <button onClick={handleDelete} disabled={deleting}
+            className="w-7 h-7 rounded-lg flex items-center justify-center
+              opacity-0 group-hover:opacity-100 transition-all
+              text-forged-text2 hover:text-forged-red hover:bg-forged-red/10 active:scale-95">
+            {deleting
+              ? <div className="w-3 h-3 border-2 border-forged-red border-t-transparent rounded-full animate-spin" />
+              : <Icon d={I.x} size={14} sw={2} />
+            }
+          </button>
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        <span className="text-sm font-black text-forged-text tabular-nums">{cals} cal</span>
-        <button onClick={handleDelete} disabled={deleting}
-          className="w-7 h-7 rounded-lg flex items-center justify-center
-            opacity-0 group-hover:opacity-100 transition-all
-            text-forged-text2 hover:text-forged-red hover:bg-forged-red/10 active:scale-95">
-          {deleting
-            ? <div className="w-3 h-3 border-2 border-forged-red border-t-transparent rounded-full animate-spin" />
-            : <Icon d={I.x} size={14} sw={2} />
-          }
-        </button>
-      </div>
+      <MacroBar protein={p} carbs={c} fat={f} compact />
     </div>
   )
 }
@@ -952,8 +1004,9 @@ function SearchOption({ icon, label, onClick }: {
 // MACRO MINI
 // ══════════════════════════════════
 function MacroMini({ label, value, goal }: { label: string; value: number; goal: number }) {
-  const pct = Math.min((value / goal) * 100, 100)
-  const over = value > goal
+  const pct = goal > 0 ? Math.min((value / goal) * 100, 100) : 0
+  const level = getWarnLevel(value, goal)
+  const barColor = level === 'over' ? 'bg-forged-red' : level === 'close' ? 'bg-yellow-500' : 'bg-forged-purple'
   return (
     <div className="text-center">
       <p className="text-[10px] text-forged-text2 font-bold uppercase tracking-wider">{label}</p>
@@ -961,12 +1014,25 @@ function MacroMini({ label, value, goal }: { label: string; value: number; goal:
         {value}<span className="text-forged-text2 text-[11px] font-semibold">/{goal}g</span>
       </p>
       <div className="h-1.5 rounded-full bg-forged-surface2 overflow-hidden mt-1.5">
-        <div className={`h-full rounded-full transition-all duration-700 ${over ? 'bg-forged-red' : 'bg-forged-purple'}`}
+        <div className={`h-full rounded-full transition-all duration-700 ${barColor}`}
           style={{ width: `${pct}%` }} />
       </div>
-      {over && <p className="text-[9px] text-forged-red font-bold mt-1">+{value - goal}g over</p>}
+      {level === 'over' && <p className="text-[9px] text-forged-red font-bold mt-1">+{value - goal}g over</p>}
+      {level === 'close' && <p className="text-[9px] text-yellow-600 font-bold mt-1">Almost there</p>}
     </div>
   )
+}
+// ══════════════════════════════════
+// STATUS PILL
+// ══════════════════════════════════
+function StatusPill({ level }: { level: 'ok' | 'close' | 'over' }) {
+  if (level === 'over') {
+    return <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-forged-red/15 text-forged-red">Over Goal</span>
+  }
+  if (level === 'close') {
+    return <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-yellow-500/15 text-yellow-600">Almost</span>
+  }
+  return <span className="text-[10px] font-black px-2 py-0.5 rounded-full bg-forged-green/15 text-forged-green">On Track</span>
 }
 
 // ══════════════════════════════════
