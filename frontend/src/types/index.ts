@@ -6,6 +6,8 @@ export interface User {
   heightInches?: number
   startingWeight?: number
   goalWeight?: number
+  createdAt?: string
+
 }
 
 export interface WeightEntry {

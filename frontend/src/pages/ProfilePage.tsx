@@ -14,9 +14,6 @@ import {
   type ProfileExtras,
   type Preferences,
   type Sex,
-  type ActivityLevel,
-  type GoalType,
-  type WorkoutStyle,
 } from '../components/profile/profileStorage'
 import {
   EditBioModal,
@@ -95,7 +92,7 @@ export default function ProfilePage({ user: initialUser, onLogout }: {
   const [devMode, setDevMode] = useState<boolean>(false)
 
   // Modal state
-  const [modal, setModal] = useState
+  const [modal, setModal] = useState<
     'bio' | 'vitals' | 'lifestyle' | 'health' | 'foodGoals' | 'bodyGoals' | 'data' | null
   >(null)
 
