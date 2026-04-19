@@ -379,9 +379,6 @@ interface FoodLogProps {
     sugar: logs.reduce((s, l) => s + (l.food?.sugar ?? 0) * l.servings, 0),
     sodium: logs.reduce((s, l) => s + (l.food?.sodium ?? 0) * l.servings, 0),
   }
-  const calGoal = 2400
-  const remaining = Math.max(calGoal - totals.cal, 0)
-  const calPct = Math.min((totals.cal / calGoal) * 100, 100)
 
   // ── Date helpers ──
   const todayStr = new Date().toISOString().split('T')[0]
@@ -668,70 +665,6 @@ interface FoodLogProps {
 
       {/* Animations */}
       <style>{`@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}`}</style>
-    </div>
-  )
-}
-
-// ══════════════════════════════════
-// MACRO DONUT (SVG pie chart)
-// ══════════════════════════════════
-function MacroDonut({ protein, carbs, fat }: { protein: number; carbs: number; fat: number }) {
-  const total = protein * 4 + carbs * 4 + fat * 9
-  if (total === 0) {
-    return (
-      <div className="w-24 h-24 rounded-full border-4 border-forged-border flex items-center justify-center flex-shrink-0">
-        <span className="text-xs text-forged-text2">No data</span>
-      </div>
-    )
-  }
-
-  const pCal = protein * 4, cCal = carbs * 4, fCal = fat * 9
-  const pPct = pCal / total, cPct = cCal / total, fPct = fCal / total
-  const sz = 96, cx = sz / 2, cy = sz / 2, r = 36, sw = 14
-
-  const makeArc = (startPct: number, pct: number) => {
-    if (pct <= 0) return ''
-    const start = startPct * 2 * Math.PI - Math.PI / 2
-    const end = (startPct + pct) * 2 * Math.PI - Math.PI / 2
-    const large = pct > 0.5 ? 1 : 0
-    return `M ${cx + r * Math.cos(start)} ${cy + r * Math.sin(start)} A ${r} ${r} 0 ${large} 1 ${cx + r * Math.cos(end)} ${cy + r * Math.sin(end)}`
-  }
-
-  return (
-    <div className="relative flex-shrink-0" style={{ width: sz, height: sz }}>
-      <svg width={sz} height={sz}>
-        <circle cx={cx} cy={cy} r={r} fill="none" stroke="var(--border)" strokeWidth={sw} opacity={0.3} />
-        {pPct > 0 && <path d={makeArc(0, pPct)} fill="none" stroke="#9b59b6" strokeWidth={sw} strokeLinecap="round" />}
-        {cPct > 0 && <path d={makeArc(pPct, cPct)} fill="none" stroke="#3498db" strokeWidth={sw} strokeLinecap="round" />}
-        {fPct > 0 && <path d={makeArc(pPct + cPct, fPct)} fill="none" stroke="#e74c3c" strokeWidth={sw} strokeLinecap="round" />}
-      </svg>
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <span className="text-lg font-black text-forged-text tabular-nums">{total}</span>
-        <span className="text-[9px] text-forged-text2">cal</span>
-      </div>
-    </div>
-  )
-}
-
-// ══════════════════════════════════
-// NUTRITION BAR
-// ══════════════════════════════════
-function NutritionBar({ label, value, goal, color, unit }: {
-  label: string; value: number; goal: number; color: string; unit: string
-}) {
-  const pct = Math.min((value / goal) * 100, 100)
-  return (
-    <div>
-      <div className="flex justify-between items-center mb-1">
-        <div className="flex items-center gap-1.5">
-          <div className="w-2 h-2 rounded-full" style={{ backgroundColor: color }} />
-          <span className="text-xs text-forged-text font-semibold">{label}</span>
-        </div>
-        <span className="text-xs text-forged-text2 tabular-nums">{value}/{goal}{unit}</span>
-      </div>
-      <div className="h-2 rounded-full bg-forged-surface2 overflow-hidden">
-        <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: color }} />
-      </div>
     </div>
   )
 }
