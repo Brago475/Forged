@@ -24,11 +24,17 @@ import {
   saveDailyGoals,
   loadGoalChecks,
   saveGoalChecks,
+  loadGoalValues,
+  saveGoalValues,
   getCurrentCheck,
+  getCurrentValue,
+  setCurrentValue,
   toggleGoalCheck,
   getStreak,
+  getAutoKindInfo,
   type DailyGoal,
   type GoalCheck,
+  type GoalValue,
 } from './goalsStorage'
 import { GoalsManagerModal } from './GoalsManagerModal'
 
@@ -63,6 +69,7 @@ export function HomeTab({
   const [showGoalEditor, setShowGoalEditor] = useState<boolean>(false)
   const [dailyGoals, setDailyGoals] = useState<DailyGoal[]>(loadDailyGoals)
   const [goalChecks, setGoalChecks] = useState<GoalCheck[]>(loadGoalChecks)
+  const [goalValues, setGoalValues] = useState<GoalValue[]>(loadGoalValues)
   const [showGoalsManager, setShowGoalsManager] = useState<boolean>(false)
 
   const handleSaveGoals = (next: FoodGoals): void => {
@@ -81,17 +88,72 @@ export function HomeTab({
     saveGoalChecks(next)
   }
 
+  const handleIncrementValue = (goal: DailyGoal, delta: number): void => {
+    const current = getCurrentValue(goal, goalValues)
+    const next = setCurrentValue(goal, Math.max(0, current + delta), goalValues)
+    setGoalValues(next)
+    saveGoalValues(next)
+  }
+
+  const handleSetValue = (goal: DailyGoal, value: number): void => {
+    const next = setCurrentValue(goal, value, goalValues)
+    setGoalValues(next)
+    saveGoalValues(next)
+  }
+
   /**
-   * Compute whether an auto-goal is done based on live app state.
+   * Compute whether a goal is complete + return its current progress value
+   * (if numeric). Handles every auto-kind we support.
    */
-  const isAutoDone = (goal: DailyGoal): boolean => {
+  const computeGoalState = (goal: DailyGoal): { done: boolean; current?: number } => {
+    if (!goal.autoKind) {
+      const current = getCurrentValue(goal, goalValues)
+      const target = goal.target ?? 0
+      const done = target > 0 ? current >= target : getCurrentCheck(goal, goalChecks).checked
+      return { done, current: goal.target ? current : undefined }
+    }
+
+    const target = goal.target ?? 0
+    const userValue = getCurrentValue(goal, goalValues)
+
     switch (goal.autoKind) {
-      case 'mealLogged':    return todayFood.length > 0
-      case 'workoutDone':   return false
-      case 'fastActive':    return activeFast !== null
-      case 'proteinHit':    return macros.protein >= goals.protein
-      case 'underCalories': return macros.cal > 0 && macros.cal <= goals.calories
-      default: return false
+      case 'mealLogged':
+        return { done: todayFood.length > 0 }
+      case 'workoutDone':
+        return { done: false }
+      case 'fastActive':
+        return { done: activeFast !== null }
+      case 'proteinHit':
+        return { done: macros.protein >= goals.protein, current: macros.protein }
+      case 'underCalories':
+        return { done: macros.cal > 0 && macros.cal <= goals.calories, current: macros.cal }
+      case 'waterGlasses':
+        return { done: target > 0 && userValue >= target, current: userValue }
+      case 'stepsWalked':
+        return { done: target > 0 && userValue >= target, current: userValue }
+      case 'workoutsThisWeek':
+        return { done: false, current: 0 }
+      case 'weightLoggedToday':
+        return { done: false }
+      case 'caloriesLogged':
+        return { done: macros.cal > 0 }
+      case 'macroHit': {
+        if (goal.macroKey === 'fiber') return { done: macros.fiber >= target, current: macros.fiber }
+        if (goal.macroKey === 'protein') return { done: macros.protein >= target, current: macros.protein }
+        if (goal.macroKey === 'carbs') return { done: macros.carbs >= target, current: macros.carbs }
+        if (goal.macroKey === 'fat') return { done: macros.fat >= target, current: macros.fat }
+        return { done: false }
+      }
+      case 'sleepHours':
+        return { done: target > 0 && userValue >= target, current: userValue }
+      case 'gymDaysPerWeek':
+        return { done: false, current: 0 }
+      case 'fastTargetHit':
+        return { done: false }
+      case 'bodyweightChange':
+        return { done: getCurrentCheck(goal, goalChecks).checked }
+      default:
+        return { done: false }
     }
   }
 
@@ -292,24 +354,23 @@ export function HomeTab({
           </button>
         </div>
         {dailyGoals.filter(g => !g.hidden).sort((a, b) => a.order - b.order).map(goal => {
-          const done = goal.autoKind
-            ? isAutoDone(goal)
-            : getCurrentCheck(goal, goalChecks).checked
+          const { done, current } = computeGoalState(goal)
           const streak = getStreak(goal, goalChecks)
+          const info = goal.autoKind ? getAutoKindInfo(goal.autoKind) : undefined
+          const allowIncrement = info?.userEntered === true
+
           return (
-            <GoalCheckRow
+            <GoalRow
               key={goal.id}
               goal={goal}
               done={done}
+              current={current}
               streak={streak}
+              allowIncrement={allowIncrement}
               onToggle={goal.autoKind ? undefined : () => handleToggleGoal(goal)}
-              extraContext={
-                goal.autoKind === 'proteinHit'
-                  ? done ? `${goals.protein}g hit` : `${Math.round(macros.protein)}g / ${goals.protein}g`
-                  : goal.autoKind === 'underCalories'
-                    ? `${Math.round(macros.cal)} / ${goals.calories} cal`
-                    : undefined
-              }
+              onIncrement={allowIncrement ? () => handleIncrementValue(goal, 1) : undefined}
+              onDecrement={allowIncrement ? () => handleIncrementValue(goal, -1) : undefined}
+              onSetValue={allowIncrement ? (v) => handleSetValue(goal, v) : undefined}
             />
           )
         })}
@@ -399,32 +460,54 @@ export function HomeTab({
 }
 
 // ──────────────────────────────────
-// GOAL CHECK ROW
+// GOAL ROW
 // ──────────────────────────────────
-interface GoalCheckRowProps {
+interface GoalRowProps {
   goal: DailyGoal
   done: boolean
+  current?: number
   streak: number
+  allowIncrement: boolean
   onToggle?: () => void
-  extraContext?: string
+  onIncrement?: () => void
+  onDecrement?: () => void
+  onSetValue?: (v: number) => void
 }
 
 /**
- * Single goal row — shows a label, completion state, optional streak,
- * and (for custom goals) a tap-to-toggle checkbox.
+ * Single daily-goal row:
+ *  - Thin left accent stripe (purple when done, muted otherwise)
+ *  - Checkbox (auto-derived or tap-to-toggle for manual)
+ *  - Label with optional target "current / target unit"
+ *  - Progress bar when there's a numeric target
+ *  - [- N +] controls for user-entered goals (water, steps, sleep)
+ *  - Small streak counter on the right
  */
-function GoalCheckRow({ goal, done, streak, onToggle, extraContext }: GoalCheckRowProps) {
+function GoalRow({
+  goal, done, current, streak, allowIncrement,
+  onToggle, onIncrement, onDecrement, onSetValue,
+}: GoalRowProps) {
   const interactive = !!onToggle
+  const target = goal.target ?? 0
+  const hasTarget = target > 0 && current != null
+  const pct = hasTarget ? Math.min((current / target) * 100, 100) : 0
 
   return (
     <div
-      onClick={onToggle}
-      className={`flex items-center justify-between py-2.5 border-b border-forged-border last:border-0
+      className={`flex items-stretch gap-2.5 py-2.5 border-b border-forged-border last:border-0
         ${interactive ? 'cursor-pointer hover:bg-forged-surface2/40 -mx-2 px-2 rounded-lg transition-colors' : ''}`}
+      onClick={interactive ? onToggle : undefined}
     >
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      {/* Left accent stripe */}
+      <div
+        className={`w-[3px] rounded-full flex-shrink-0 self-stretch transition-colors
+          ${done ? 'bg-forged-purple' : 'bg-forged-border'}`}
+      />
+
+      {/* Checkbox */}
+      <div className="flex items-center flex-shrink-0">
         <div
-          className={`w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all
+          className={`w-5 h-5 rounded-md flex items-center justify-center transition-all
             ${done
               ? 'bg-forged-purple text-white'
               : 'border-2 border-forged-border'}`}
@@ -436,32 +519,92 @@ function GoalCheckRow({ goal, done, streak, onToggle, extraContext }: GoalCheckR
             </svg>
           )}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <p className={`text-xs font-bold truncate ${done ? 'text-forged-text2 line-through' : 'text-forged-text'}`}>
+      </div>
+
+      {/* Content */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <p className={`text-xs font-bold truncate
+              ${done ? 'text-forged-text2 line-through' : 'text-forged-text'}`}>
               {goal.label}
-              {goal.target && !goal.autoKind && (
-                <span className="text-forged-text2 font-medium ml-1">
-                  {goal.target}{goal.targetUnit ? ` ${goal.targetUnit}` : ''}
-                </span>
-              )}
             </p>
+            {goal.autoKind && (
+              <span className="w-1.5 h-1.5 rounded-full bg-forged-purple flex-shrink-0" title="Auto-tracked" />
+            )}
             {goal.cadence !== 'daily' && (
               <span className="text-[8px] font-black text-forged-text2 uppercase tracking-wider flex-shrink-0">
                 {goal.cadence}
               </span>
             )}
           </div>
-          {extraContext && (
-            <p className="text-[10px] text-forged-text2 mt-0.5">{extraContext}</p>
-          )}
+
+          {/* Right meta: value or streak */}
+          <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            {hasTarget && (
+              <span className="text-[11px] font-bold tabular-nums text-forged-text">
+                {Math.round(current!)} / {target}{goal.targetUnit ? ` ${goal.targetUnit}` : ''}
+              </span>
+            )}
+            {streak > 0 && (
+              <span className="flex items-center gap-0.5 text-[10px] font-black text-forged-purple tabular-nums">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M13 2s1 4 4 6.5c2.5 2.1 3.5 5 3.5 7.5a7.5 7.5 0 01-15 0c0-2.5 1-4.5 3-6 0 2 1 3 2 3 0-5 2.5-8 2.5-11z" />
+                </svg>
+                {streak}
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Progress bar */}
+        {hasTarget && (
+          <div className="mt-1.5 h-1 rounded-full bg-forged-surface2 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all duration-500
+                ${done ? 'bg-forged-purple' : 'bg-forged-purple/60'}`}
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        )}
+
+        {/* Increment controls for user-entered goals */}
+        {allowIncrement && onDecrement && onIncrement && (
+          <div className="flex items-center gap-1 mt-2" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={onDecrement}
+              className="w-7 h-7 rounded-lg flex items-center justify-center
+                bg-forged-surface2 text-forged-text2 hover:text-forged-text
+                active:scale-95 transition-all"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+            <input
+              type="number"
+              value={current ?? 0}
+              onChange={(e) => onSetValue?.(parseInt(e.target.value) || 0)}
+              className="w-14 h-7 px-1 bg-forged-surface2 rounded-lg text-xs font-black text-forged-text
+                text-center tabular-nums outline-none focus:ring-2 focus:ring-forged-purple/50"
+            />
+            <button
+              onClick={onIncrement}
+              className="w-7 h-7 rounded-lg flex items-center justify-center
+                bg-forged-purple text-white hover:brightness-110
+                active:scale-95 transition-all"
+            >
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" strokeWidth="3" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
-      {streak > 0 && (
-        <span className="text-[10px] font-black text-forged-purple tabular-nums flex-shrink-0 ml-2">
-          🔥 {streak}
-        </span>
-      )}
     </div>
   )
 }
