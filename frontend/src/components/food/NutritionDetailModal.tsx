@@ -2,8 +2,7 @@ import type { FoodLog } from '../../types'
 import { MacroBar } from './MacroBar'
 import type { FoodGoals } from './goalStorage'
 import { getWarnLevel } from './goalStorage'
-import { useState } from 'react'
-import { FullBreakdownModal } from './FullBreakdownModal'
+import { NutritionLabel, type NutritionData } from './NutritionLabel'
 
 interface NutritionDetailModalProps {
   logs: FoodLog[]
@@ -18,14 +17,7 @@ const MEAL_LABELS: Record<string, string> = {
   snack: 'Snacks',
 }
 
-const WARN_COLORS: Record<string, string> = {
-  ok: '#2ecc71',
-  close: '#eab308',
-  over: '#991B1B',
-}
-
 export function NutritionDetailModal({ logs, goals, onClose }: NutritionDetailModalProps) {
-  const [showFull, setShowFull] = useState<boolean>(false)
   const totals = {
     cal: logs.reduce((s, l) => s + (l.food?.calories ?? 0) * l.servings, 0),
     protein: logs.reduce((s, l) => s + (l.food?.protein ?? 0) * l.servings, 0),
@@ -36,42 +28,22 @@ export function NutritionDetailModal({ logs, goals, onClose }: NutritionDetailMo
     sodium: logs.reduce((s, l) => s + (l.food?.sodium ?? 0) * l.servings, 0),
   }
 
-  const pCal = totals.protein * 4
-  const cCal = totals.carbs * 4
-  const fCal = totals.fat * 9
-  const totalMacroCal = pCal + cCal + fCal
+  // Build a NutritionData for the whole day
+  const dailyData: NutritionData = {
+    calories: totals.cal,
+    protein: totals.protein,
+    carbs: totals.carbs,
+    fiber: totals.fiber,
+    sugar: totals.sugar,
+    fat: totals.fat,
+    sodium: totals.sodium,
+    // All other fields remain undefined until Tier 2 backend adds them.
+  }
 
   // Sort foods by calorie contribution
-  const foodsByCalories = [...logs]
-    .map(l => ({
-      log: l,
-      cal: (l.food?.calories ?? 0) * l.servings,
-    }))
-    .sort((a, b) => b.cal - a.cal)
-
-  // Group by meal
-  const byMeal: Record<string, FoodLog[]> = {}
-  logs.forEach(l => {
-    const k = l.mealType || 'snack'
-    if (!byMeal[k]) byMeal[k] = []
-    byMeal[k].push(l)
-  })
-
-  const Warn = ({ value, goal }: { value: number; goal: number }) => {
-    const level = getWarnLevel(value, goal)
-    if (level === 'ok') return null
-    return (
-      <span
-        className="text-[9px] font-bold px-1.5 py-0.5 rounded-full"
-        style={{
-          backgroundColor: WARN_COLORS[level] + '20',
-          color: WARN_COLORS[level],
-        }}
-      >
-        {level === 'close' ? 'Close' : 'Over'}
-      </span>
-    )
-  }
+  const foodsByCalories = [...logs].sort(
+    (a, b) => (b.food?.calories ?? 0) * b.servings - (a.food?.calories ?? 0) * a.servings
+  )
 
   return (
     <div
@@ -84,10 +56,13 @@ export function NutritionDetailModal({ logs, goals, onClose }: NutritionDetailMo
           p-5 w-full max-w-lg shadow-2xl max-h-[92vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between mb-5">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-black text-forged-text">Nutrition Breakdown</h2>
-            <p className="text-[11px] text-forged-text2">{logs.length} item{logs.length !== 1 ? 's' : ''} logged</p>
+            <p className="text-[11px] text-forged-text2">
+              {logs.length} item{logs.length !== 1 ? 's' : ''} · {Math.round(totals.cal)} cal
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -102,53 +77,12 @@ export function NutritionDetailModal({ logs, goals, onClose }: NutritionDetailMo
           </button>
         </div>
 
-        {/* Macro split */}
-        <div className="bg-forged-bg border border-forged-border rounded-xl p-4 mb-4">
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider">
-              Macro Calorie Split
-            </p>
-            <span className="text-sm font-black text-forged-text tabular-nums">{totals.cal} cal</span>
-          </div>
-          <MacroBar
-            protein={totals.protein}
-            carbs={totals.carbs}
-            fat={totals.fat}
-          />
-          {totalMacroCal > 0 && (
-            <div className="grid grid-cols-3 gap-2 mt-3">
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#9b59b6' }} />
-                  <span className="text-[9px] font-bold text-forged-text2 uppercase">Protein</span>
-                </div>
-                <p className="text-xs font-black text-forged-text tabular-nums mt-0.5">
-                  {Math.round((pCal / totalMacroCal) * 100)}%
-                </p>
-                <p className="text-[9px] text-forged-text2 tabular-nums">{pCal} cal</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#3498db' }} />
-                  <span className="text-[9px] font-bold text-forged-text2 uppercase">Carbs</span>
-                </div>
-                <p className="text-xs font-black text-forged-text tabular-nums mt-0.5">
-                  {Math.round((cCal / totalMacroCal) * 100)}%
-                </p>
-                <p className="text-[9px] text-forged-text2 tabular-nums">{cCal} cal</p>
-              </div>
-              <div className="text-center">
-                <div className="flex items-center justify-center gap-1">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#e74c3c' }} />
-                  <span className="text-[9px] font-bold text-forged-text2 uppercase">Fat</span>
-                </div>
-                <p className="text-xs font-black text-forged-text tabular-nums mt-0.5">
-                  {Math.round((fCal / totalMacroCal) * 100)}%
-                </p>
-                <p className="text-[9px] text-forged-text2 tabular-nums">{fCal} cal</p>
-              </div>
-            </div>
-          )}
+        {/* Macro split visual */}
+        <div className="mb-4">
+          <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider mb-2">
+            Macro Split
+          </p>
+          <MacroBar protein={totals.protein} carbs={totals.carbs} fat={totals.fat} />
         </div>
 
         {/* Goal progress */}
@@ -164,110 +98,59 @@ export function NutritionDetailModal({ logs, goals, onClose }: NutritionDetailMo
           </div>
         </div>
 
-        {/* Per meal */}
-        {Object.keys(byMeal).length > 0 && (
-          <div className="mb-4">
-            <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider mb-2">
-              By Meal
-            </p>
-            <div className="flex flex-col gap-2">
-              {Object.entries(byMeal).map(([mealKey, mealLogs]) => {
-                const mealCal = mealLogs.reduce((s, l) => s + (l.food?.calories ?? 0) * l.servings, 0)
-                const mealP = mealLogs.reduce((s, l) => s + (l.food?.protein ?? 0) * l.servings, 0)
-                const mealC = mealLogs.reduce((s, l) => s + (l.food?.carbs ?? 0) * l.servings, 0)
-                const mealF = mealLogs.reduce((s, l) => s + (l.food?.fat ?? 0) * l.servings, 0)
-                return (
-                  <div key={mealKey} className="bg-forged-bg border border-forged-border rounded-xl p-3">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-[11px] font-black text-forged-text uppercase tracking-wider">
-                        {MEAL_LABELS[mealKey] || mealKey}
-                      </span>
-                      <span className="text-xs font-black text-forged-text tabular-nums">{mealCal} cal</span>
-                    </div>
-                    <MacroBar protein={mealP} carbs={mealC} fat={mealF} compact />
-                  </div>
-                )
-              })}
-            </div>
-          </div>
-        )}
+        {/* Daily Nutrition Label */}
+        <div className="mb-4">
+          <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider mb-2">
+            Daily Total
+          </p>
+          <NutritionLabel
+            title="All meals combined"
+            subtitle={`${logs.length} item${logs.length !== 1 ? 's' : ''}`}
+            data={dailyData}
+            alwaysOpen
+          />
+        </div>
 
-        {/* Top foods */}
+        {/* Per-food Nutrition Labels */}
         {foodsByCalories.length > 0 && (
           <div className="mb-4">
             <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider mb-2">
-              Foods by Calories
+              Foods (tap to expand)
             </p>
-            <div className="flex flex-col gap-1.5">
-              {foodsByCalories.map(({ log }) => {
-                const p = (log.food?.protein ?? 0) * log.servings
-                const c = (log.food?.carbs ?? 0) * log.servings
-                const f = (log.food?.fat ?? 0) * log.servings
-                const cal = (log.food?.calories ?? 0) * log.servings
+            <div className="flex flex-col gap-2">
+              {foodsByCalories.map((log) => {
+                const perFood: NutritionData = {
+                  servings: log.servings !== 1 ? log.servings : undefined,
+                  calories: (log.food?.calories ?? 0) * log.servings,
+                  protein: (log.food?.protein ?? 0) * log.servings,
+                  carbs: (log.food?.carbs ?? 0) * log.servings,
+                  fiber: log.food?.fiber != null ? log.food.fiber * log.servings : undefined,
+                  sugar: log.food?.sugar != null ? log.food.sugar * log.servings : undefined,
+                  fat: (log.food?.fat ?? 0) * log.servings,
+                  sodium: log.food?.sodium != null ? log.food.sodium * log.servings : undefined,
+                }
                 return (
-                  <div
+                  <NutritionLabel
                     key={log.id}
-                    className="bg-forged-bg border border-forged-border rounded-xl p-2.5"
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-bold text-forged-text truncate">
-                          {log.food?.name || 'Food'}
-                        </p>
-                        <p className="text-[9px] text-forged-text2">
-                          {MEAL_LABELS[log.mealType || 'snack']}
-                          {log.servings !== 1 && ` · ${log.servings}x`}
-                        </p>
-                      </div>
-                      <span className="text-xs font-black text-forged-text tabular-nums ml-2">
-                        {cal} cal
-                      </span>
-                    </div>
-                    <MacroBar protein={p} carbs={c} fat={f} compact />
-                  </div>
+                    title={log.food?.name || 'Food'}
+                    subtitle={MEAL_LABELS[log.mealType || 'snack']}
+                    data={perFood}
+                    defaultOpen={false}
+                  />
                 )
               })}
             </div>
           </div>
         )}
 
-        {/* Other nutrients */}
-        <div className="mb-5">
-          <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider mb-2">
-            Other Nutrients
-          </p>
-          <div className="grid grid-cols-3 gap-2">
-            <NutrientCell label="Fiber" value={totals.fiber} unit="g" warn={<Warn value={totals.fiber} goal={30} />} />
-            <NutrientCell label="Sugar" value={totals.sugar} unit="g" warn={<Warn value={totals.sugar} goal={50} />} />
-            <NutrientCell label="Sodium" value={totals.sodium} unit="mg" warn={<Warn value={totals.sodium} goal={2300} />} />
-          </div>
-        </div>
-
-        <div className="flex gap-2 mt-3">
-          <button
-            onClick={onClose}
-            className="flex-1 py-3 rounded-xl text-sm font-black
-              bg-forged-surface2 text-forged-text2 border border-forged-border
-              hover:text-forged-text active:scale-[0.98] transition-all"
-          >
-            Close
-          </button>
-          <button
-            onClick={() => setShowFull(true)}
-            className="flex-1 py-3 rounded-xl text-sm font-black text-white
-              bg-forged-purple hover:brightness-110 active:scale-[0.98] transition-all
-              flex items-center justify-center gap-1.5"
-          >
-            Full Breakdown →
-          </button>
-        </div>
-
-        {showFull && (
-          <FullBreakdownModal
-            logs={logs}
-            onClose={() => setShowFull(false)}
-          />
-        )}
+        {/* Close */}
+        <button
+          onClick={onClose}
+          className="w-full py-3 rounded-xl text-sm font-black text-white
+            bg-forged-purple hover:brightness-110 active:scale-[0.98] transition-all"
+        >
+          Close
+        </button>
       </div>
     </div>
   )
@@ -277,9 +160,10 @@ function GoalRow({ label, value, goal, color, unit }: {
   label: string; value: number; goal: number; color: string; unit: string
 }) {
   const pct = goal > 0 ? Math.min((value / goal) * 100, 100) : 0
-  const over = value > goal
   const level = getWarnLevel(value, goal)
+  const barColor = level === 'over' ? '#991B1B' : level === 'close' ? '#eab308' : color
   const statusColor = level === 'ok' ? '#2ecc71' : level === 'close' ? '#eab308' : '#991B1B'
+
   return (
     <div className="bg-forged-bg border border-forged-border rounded-xl p-2.5">
       <div className="flex items-center justify-between mb-1.5">
@@ -299,22 +183,9 @@ function GoalRow({ label, value, goal, color, unit }: {
       <div className="h-1.5 rounded-full bg-forged-surface2 overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700"
-          style={{ width: `${pct}%`, backgroundColor: over ? '#991B1B' : color }}
+          style={{ width: `${pct}%`, backgroundColor: barColor }}
         />
       </div>
-    </div>
-  )
-}
-
-function NutrientCell({ label, value, unit, warn }: {
-  label: string; value: number; unit: string; warn?: React.ReactNode
-}) {
-  return (
-    <div className="bg-forged-bg border border-forged-border rounded-xl p-2 text-center">
-      <p className="text-[9px] text-forged-text2 font-bold uppercase tracking-wider">{label}</p>
-      <p className="text-sm font-black text-forged-text tabular-nums mt-0.5">{Math.round(value)}</p>
-      <p className="text-[8px] text-forged-text2">{unit}</p>
-      {warn && <div className="mt-1">{warn}</div>}
     </div>
   )
 }
