@@ -1,18 +1,14 @@
 import { useState, useEffect, useCallback } from 'react'
 import { api } from '../hooks/api'
-import { useTheme } from '../hooks/useTheme'
 import type { User } from '../types'
 import {
   loadProfileExtras,
   saveProfileExtras,
-  loadPreferences,
-  savePreferences,
   computeAchievements,
   GOAL_TYPE_LABEL,
   ACTIVITY_LEVEL_LABEL,
   WORKOUT_STYLE_LABEL,
   type ProfileExtras,
-  type Preferences,
   type Sex,
 } from '../components/profile/profileStorage'
 import {
@@ -21,7 +17,6 @@ import {
   EditLifestyleModal,
   EditHealthModal,
 } from '../components/profile/ProfileEditModals'
-import { DataExportModal } from '../components/profile/DataExportModal'
 import { GoalEditorModal } from '../components/food/GoalEditorModal'
 import { loadGoals as loadFoodGoals, saveGoals as saveFoodGoals, type FoodGoals } from '../components/food/goalStorage'
 import { BodyGoalsModal } from '../components/progress/BodyGoalsModal'
@@ -33,19 +28,10 @@ import { loadBodyGoals, saveBodyGoals, type BodyGoals } from '../components/prog
 const I = {
   edit: <><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></>,
   target: <><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></>,
-  sun: <><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></>,
-  moon: <><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></>,
-  logout: <><path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></>,
   user: <><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></>,
-  lock: <><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></>,
-  trash: <><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></>,
-  settings: <><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83-2.83l.06-.06A1.65 1.65 0 004.68 15a1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 012.83-2.83l.06.06A1.65 1.65 0 009 4.68a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 2.83l-.06.06A1.65 1.65 0 0019.4 9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></>,
   heart: <><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></>,
   pulse: <><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></>,
   trophy: <><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></>,
-  database: <><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5"/></>,
-  key: <><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 11-7.778 7.778 5.5 5.5 0 017.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></>,
-  chef: <><path d="M6 13.87A4 4 0 017.41 6a5.11 5.11 0 011.05-1.54 5 5 0 017.08 0A5.11 5.11 0 0116.59 6 4 4 0 0118 13.87V21H6v-7.13z"/><line x1="6" y1="17" x2="18" y2="17"/></>,
 }
 
 function Icon({ d, size = 20, className = '', sw = 1.8 }: {
@@ -78,22 +64,19 @@ function Card({ children, className = '', delay = 0 }: {
 // ══════════════════════════════════
 // PROFILE PAGE
 // ══════════════════════════════════
-export default function ProfilePage({ user: initialUser, onLogout }: {
+export default function ProfilePage({ user: initialUser, onLogout: _onLogout }: {
   user: User | null
   onLogout: () => void
 }) {
-  const { theme, toggleTheme } = useTheme()
   const [user, setUser] = useState<User | null>(initialUser)
   const [extras, setExtras] = useState<ProfileExtras>(loadProfileExtras)
-  const [prefs, setPrefs] = useState<Preferences>(loadPreferences)
   const [foodGoals, setFoodGoals] = useState<FoodGoals>(loadFoodGoals)
   const [bodyGoals, setBodyGoals] = useState<BodyGoals>(loadBodyGoals)
   const [dashStats, setDashStats] = useState<any>(null)
-  const [devMode, setDevMode] = useState<boolean>(false)
 
   // Modal state
-  const [modal, setModal] = useState<
-    'bio' | 'vitals' | 'lifestyle' | 'health' | 'foodGoals' | 'bodyGoals' | 'data' | null
+  const [modal, setModal] = useState <
+    'bio' | 'vitals' | 'lifestyle' | 'health' | 'foodGoals' | 'bodyGoals' | null
   >(null)
 
   const loadStats = useCallback(async () => {
@@ -131,16 +114,9 @@ export default function ProfilePage({ user: initialUser, onLogout }: {
         const updated = await api.auth.updateProfile({ heightInches: next.heightInches })
         setUser(updated ?? (user ? { ...user, heightInches: next.heightInches } : null))
       } catch {
-        // Fallback: keep locally if backend doesn't accept it
         if (user) setUser({ ...user, heightInches: next.heightInches })
       }
     }
-  }
-
-  const handlePrefsPatch = (patch: Partial<Preferences>): void => {
-    const next = { ...prefs, ...patch }
-    setPrefs(next)
-    savePreferences(next)
   }
 
   const handleFoodGoalsSave = (next: FoodGoals): void => {
@@ -334,132 +310,6 @@ export default function ProfilePage({ user: initialUser, onLogout }: {
         </div>
       </Card>
 
-      {/* ── 7. Preferences ── */}
-      <Card delay={480}>
-        <SectionHeader icon={I.settings} title="Preferences" />
-        <div className="flex flex-col gap-2 mt-3">
-          <PrefRow label="Theme" icon={theme === 'dark' ? I.moon : I.sun}>
-            <button onClick={toggleTheme}
-              className="text-xs font-black text-forged-purple hover:brightness-110 capitalize">
-              {theme}
-            </button>
-          </PrefRow>
-          <PrefRow label="Weight">
-            <UnitToggle
-              options={[{ v: 'lbs', l: 'lbs' }, { v: 'kg', l: 'kg' }]}
-              value={prefs.weightUnit}
-              onChange={(v) => handlePrefsPatch({ weightUnit: v as 'lbs' | 'kg' })}
-            />
-          </PrefRow>
-          <PrefRow label="Height">
-            <UnitToggle
-              options={[{ v: 'in', l: 'in' }, { v: 'cm', l: 'cm' }]}
-              value={prefs.heightUnit}
-              onChange={(v) => handlePrefsPatch({ heightUnit: v as 'in' | 'cm' })}
-            />
-          </PrefRow>
-          <PrefRow label="Distance">
-            <UnitToggle
-              options={[{ v: 'mi', l: 'mi' }, { v: 'km', l: 'km' }]}
-              value={prefs.distanceUnit}
-              onChange={(v) => handlePrefsPatch({ distanceUnit: v as 'mi' | 'km' })}
-            />
-          </PrefRow>
-          <PrefRow label="Energy">
-            <UnitToggle
-              options={[{ v: 'cal', l: 'cal' }, { v: 'kj', l: 'kJ' }]}
-              value={prefs.energyUnit}
-              onChange={(v) => handlePrefsPatch({ energyUnit: v as 'cal' | 'kj' })}
-            />
-          </PrefRow>
-        </div>
-      </Card>
-
-      {/* ── 8. Data & Privacy ── */}
-      <Card delay={550}>
-        <SectionHeader icon={I.database} title="Data & Privacy" />
-        <button
-          onClick={() => setModal('data')}
-          className="w-full mt-3 py-3 rounded-xl text-sm font-black
-            bg-forged-bg border border-forged-border
-            hover:border-forged-purple/40 active:scale-[0.99] transition-all
-            flex items-center justify-between px-4"
-        >
-          <span className="text-forged-text">Export, import, or clear data</span>
-          <span className="text-forged-text2">→</span>
-        </button>
-      </Card>
-
-      {/* ── 9. Account ── */}
-      <Card delay={620}>
-        <SectionHeader icon={I.lock} title="Account" />
-        <div className="flex flex-col gap-2 mt-3">
-          <button
-            className="w-full flex items-center justify-between p-3 rounded-xl
-              bg-forged-bg border border-forged-border
-              hover:border-forged-purple/30 transition-all text-left"
-          >
-            <div className="flex items-center gap-3">
-              <Icon d={I.key} size={16} className="text-forged-text2" />
-              <span className="text-sm text-forged-text font-medium">Change password</span>
-            </div>
-            <span className="text-xs text-forged-text2">→</span>
-          </button>
-
-          <button
-            onClick={onLogout}
-            className="w-full flex items-center justify-between p-3 rounded-xl
-              bg-forged-bg border border-forged-border
-              hover:border-forged-red/30 transition-all text-left group"
-          >
-            <div className="flex items-center gap-3">
-              <Icon d={I.logout} size={16} className="text-forged-text2 group-hover:text-forged-red transition-colors" />
-              <span className="text-sm text-forged-text font-medium group-hover:text-forged-red transition-colors">
-                Sign out
-              </span>
-            </div>
-          </button>
-
-          <button
-            onClick={() => setModal('data')}
-            className="w-full flex items-center justify-between p-3 rounded-xl
-              bg-forged-bg border border-forged-border
-              hover:border-forged-red/30 transition-all text-left group"
-          >
-            <div className="flex items-center gap-3">
-              <Icon d={I.trash} size={16} className="text-forged-text2 group-hover:text-forged-red transition-colors" />
-              <span className="text-sm text-forged-text font-medium group-hover:text-forged-red transition-colors">
-                Delete local data
-              </span>
-            </div>
-          </button>
-        </div>
-      </Card>
-
-      {/* ── 10. App info ── */}
-      <div className="text-center py-2 flex flex-col gap-1">
-        <p className="text-[10px] text-forged-text2 font-bold">FORGED v1.0.0</p>
-        <button
-          onClick={() => setDevMode(!devMode)}
-          className="text-[9px] text-forged-text2 hover:text-forged-purple transition-colors"
-        >
-          {devMode ? 'Hide debug info' : 'Show debug info'}
-        </button>
-      </div>
-
-      {devMode && (
-        <Card delay={0}>
-          <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider mb-2">Debug</p>
-          <div className="bg-forged-bg rounded-lg p-3 text-[10px] text-forged-text2 font-mono overflow-x-auto">
-            <p>theme: {theme}</p>
-            <p>prefs: {JSON.stringify(prefs)}</p>
-            <p>extras keys: {Object.keys(extras).join(', ') || 'none'}</p>
-            <p>dashStats keys: {dashStats ? Object.keys(dashStats).join(', ') : 'loading'}</p>
-            <p>user: {user ? `{${Object.keys(user).join(', ')}}` : 'null'}</p>
-          </div>
-        </Card>
-      )}
-
       {/* ── MODALS ── */}
       {modal === 'bio' && (
         <EditBioModal
@@ -504,9 +354,6 @@ export default function ProfilePage({ user: initialUser, onLogout }: {
           onSave={handleBodyGoalsSave}
           onClose={() => setModal(null)}
         />
-      )}
-      {modal === 'data' && (
-        <DataExportModal onClose={() => setModal(null)} />
       )}
     </div>
   )
@@ -654,45 +501,6 @@ function TagSection({ label, items, empty, color }: {
           ))}
         </div>
       )}
-    </div>
-  )
-}
-
-function PrefRow({ label, icon, children }: {
-  label: string
-  icon?: React.ReactNode
-  children: React.ReactNode
-}) {
-  return (
-    <div className="flex items-center justify-between p-3 rounded-xl bg-forged-bg border border-forged-border">
-      <div className="flex items-center gap-3">
-        {icon && <Icon d={icon} size={16} className="text-forged-text2" />}
-        <span className="text-sm text-forged-text font-medium">{label}</span>
-      </div>
-      {children}
-    </div>
-  )
-}
-
-function UnitToggle({ options, value, onChange }: {
-  options: Array<{ v: string; l: string }>
-  value: string
-  onChange: (v: string) => void
-}) {
-  return (
-    <div className="flex bg-forged-surface2 rounded-lg p-0.5 gap-0.5">
-      {options.map(opt => (
-        <button
-          key={opt.v}
-          onClick={() => onChange(opt.v)}
-          className={`px-3 py-1 text-[11px] font-black rounded-md transition-all
-            ${value === opt.v
-              ? 'bg-forged-purple text-white'
-              : 'text-forged-text2 hover:text-forged-text'}`}
-        >
-          {opt.l}
-        </button>
-      ))}
     </div>
   )
 }
