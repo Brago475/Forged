@@ -33,7 +33,7 @@ const LOTTIE = {
 }
 
 // ══════════════════════════════════
-// Lottie loader
+// Lottie loader — returns null if load fails
 // ══════════════════════════════════
 function useLottie(url: string) {
   const [data, setData] = useState<any>(null)
@@ -43,12 +43,9 @@ function useLottie(url: string) {
   return data
 }
 
-function LottiePlayer({ src, className = '' }: {
-  src: string
-  className?: string
-}) {
+function LottiePlayer({ src, className = '' }: { src: string, className?: string }) {
   const data = useLottie(src)
-  if (!data) return <div className={`${className} bg-white/[0.03] rounded-xl`} />
+  if (!data) return null
   return <Lottie animationData={data} loop autoplay className={className} />
 }
 
@@ -63,7 +60,7 @@ export default function Login({ onLogin }: Props) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// MOBILE — with corner lotties and big logo
+// MOBILE — tight logo box, no standalone lotties
 // ══════════════════════════════════════════════════════════════════════
 function MobileLogin({ onLogin }: Props) {
   const [email, setEmail] = useState('')
@@ -91,20 +88,13 @@ function MobileLogin({ onLogin }: Props) {
           background: 'radial-gradient(ellipse at 50% 30%, rgba(159,122,234,0.25) 0%, transparent 55%), radial-gradient(ellipse at 50% 80%, rgba(212,168,83,0.12) 0%, transparent 60%)'
         }} />
 
-      <div className="absolute top-8 right-8 w-24 h-24 opacity-70 pointer-events-none">
-        <LottiePlayer src={LOTTIE.fitness} className="w-full h-full" />
-      </div>
-      <div className="absolute bottom-8 left-8 w-20 h-20 opacity-60 pointer-events-none">
-        <LottiePlayer src={LOTTIE.loading} className="w-full h-full" />
-      </div>
-
       <div className="relative w-full max-w-sm flex flex-col items-center">
         <div className="flex flex-col items-center mb-10" style={{ animation: 'fadeInUp 0.8s ease-out both' }}>
           <div className="relative mb-6">
             <div className="absolute inset-0 rounded-full blur-3xl"
               style={{ background: 'radial-gradient(circle, rgba(159,122,234,0.5), transparent 70%)' }} />
-            <div className="relative w-48 h-48 rounded-3xl bg-white flex items-center justify-center shadow-2xl">
-              <img src="/forgedlogo.png" alt="FORGED" className="w-40 h-40 object-contain" />
+            <div className="relative w-32 h-32 rounded-2xl bg-white flex items-center justify-center shadow-2xl p-3">
+              <img src="/forgedlogo.png" alt="FORGED" className="w-full h-full object-contain" />
             </div>
           </div>
           <p className="text-white text-4xl font-black tracking-[0.3em] mt-2">FORGED</p>
@@ -167,8 +157,8 @@ function WebLanding({ onLogin }: Props) {
         style={{ background: 'linear-gradient(180deg, rgba(15,10,31,0.85) 0%, rgba(15,10,31,0) 100%)' }}>
         <div className="max-w-7xl mx-auto px-10 py-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center shadow-lg">
-              <img src="/forgedlogo.png" alt="" className="w-12 h-12 object-contain" />
+            <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-lg p-2">
+              <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain" />
             </div>
             <span className="text-white text-2xl font-black tracking-[0.25em]">FORGED</span>
           </div>
@@ -199,6 +189,7 @@ function WebLanding({ onLogin }: Props) {
         </div>
       </nav>
 
+      {/* HERO — Lottie inline with tagline, not standalone */}
       <section className="relative min-h-[92vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img src={PHOTO.hero} alt="" className="w-full h-full object-cover opacity-30" />
@@ -247,10 +238,15 @@ function WebLanding({ onLogin }: Props) {
             </div>
           </div>
 
+          {/* Hero right: iPhone with screenshot, Lottie floating as corner accent */}
           <div className="relative hidden lg:flex items-center justify-center"
             style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
-            <div className="w-full max-w-md">
-              <LottiePlayer src={LOTTIE.fitness} className="w-full h-auto" />
+            <div className="relative">
+              <IPhoneFrame screenshot={SCREENSHOTS.dashboard} />
+              {/* Lottie as corner accent, floating over the phone's top-right */}
+              <div className="absolute -top-12 -right-12 w-28 h-28 pointer-events-none">
+                <LottiePlayer src={LOTTIE.fitness} className="w-full h-full" />
+              </div>
             </div>
           </div>
         </div>
@@ -295,16 +291,17 @@ function WebLanding({ onLogin }: Props) {
         imageLeft={false}
       />
 
+      {/* FINAL CTA — Lottie inline with headline */}
       <section ref={loginRef} className="relative py-32 overflow-hidden">
         <div className="absolute inset-0"
           style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.25) 0%, transparent 65%)' }} />
         <div className="relative max-w-md mx-auto px-6 text-center">
-          <div className="flex justify-center mb-6">
-            <div className="w-32 h-32">
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <div className="w-16 h-16 flex-shrink-0">
               <LottiePlayer src={LOTTIE.loading} className="w-full h-full" />
             </div>
+            <h2 className="text-white text-5xl font-black tracking-tight">Ready to forge?</h2>
           </div>
-          <h2 className="text-white text-5xl font-black mb-4 tracking-tight">Ready to forge?</h2>
           <p className="text-white/70 text-base mb-10">
             Create your account. First workout in 90 seconds.
           </p>
@@ -315,8 +312,8 @@ function WebLanding({ onLogin }: Props) {
       <footer className="py-16 px-10">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-lg">
-              <img src="/forgedlogo.png" alt="" className="w-11 h-11 object-contain" />
+            <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-lg p-2">
+              <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain" />
             </div>
             <div>
               <p className="text-white text-lg font-black tracking-[0.25em]">FORGED</p>
@@ -349,7 +346,7 @@ function IPhoneFrame({ screenshot }: { screenshot: string }) {
         boxShadow: '0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.08)',
       }}>
       <div className="relative w-full h-full rounded-[42px] overflow-hidden bg-black">
-        <img src={screenshot} alt="FORGED app" className="w-full h-full object-contain bg-[#0a0a0c]" />
+        <img src={screenshot} alt="" className="w-full h-full object-contain bg-[#0a0a0c]" />
         <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-[78px] h-[20px] bg-black rounded-full z-10" />
       </div>
     </div>
@@ -374,31 +371,49 @@ function DesktopFrame({ screenshot }: { screenshot: string }) {
         </div>
       </div>
       <div className="bg-black rounded-lg overflow-hidden aspect-[16/10]">
-        <img src={screenshot} alt="FORGED desktop" className="w-full h-full object-contain bg-[#0a0a0c]" />
+        <img src={screenshot} alt="" className="w-full h-full object-contain bg-[#0a0a0c]" />
       </div>
     </div>
   )
 }
 
 // ══════════════════════════════════
-// Photo Frame
+// Photo Frame — can host a Lottie as corner accent
 // ══════════════════════════════════
-function PhotoFrame({ photo, className = '' }: { photo: string, className?: string }) {
+function PhotoFrame({ photo, className = '', lottie, accentColor }: {
+  photo: string
+  className?: string
+  lottie?: string
+  accentColor?: string
+}) {
   return (
     <div className={`relative rounded-3xl overflow-hidden border border-white/[0.1] ${className}`}
       style={{ boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
       <img src={photo} alt="" className="w-full h-full object-cover" />
       <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+      {/* Lottie attached as corner accent on the photo */}
+      {lottie && (
+        <div className="absolute top-4 right-4 w-20 h-20 pointer-events-none">
+          {accentColor && (
+            <div className="absolute inset-0 rounded-full blur-xl opacity-50"
+              style={{ background: `radial-gradient(circle, ${accentColor}, transparent 70%)` }} />
+          )}
+          <div className="relative w-full h-full">
+            <LottiePlayer src={lottie} className="w-full h-full" />
+          </div>
+        </div>
+      )}
     </div>
   )
 }
 
 // ══════════════════════════════════
-// FEATURE HEADER
+// FEATURE HEADER — supports inline Lottie next to the kicker
 // ══════════════════════════════════
-function FeatureHeader({ number, kicker, kickerColor, title, description, pills }: {
+function FeatureHeader({ number, kicker, kickerColor, title, description, pills, lottie }: {
   number: string; kicker: string; kickerColor: string
   title: string; description: string; pills: string[]
+  lottie?: string
 }) {
   const isGold = kickerColor === '#D4A853'
   const pillClass = isGold
@@ -411,6 +426,11 @@ function FeatureHeader({ number, kicker, kickerColor, title, description, pills 
         <span className="text-sm font-black tracking-[0.35em]" style={{ color: kickerColor }}>{number}</span>
         <span className="h-[1px] w-12" style={{ backgroundColor: kickerColor, opacity: 0.5 }} />
         <span className="text-sm font-black tracking-[0.25em]" style={{ color: kickerColor }}>{kicker}</span>
+        {lottie && (
+          <div className="w-10 h-10 ml-auto flex-shrink-0">
+            <LottiePlayer src={lottie} className="w-full h-full" />
+          </div>
+        )}
       </div>
       <h2 className="text-white text-5xl xl:text-6xl font-black leading-[1.08] tracking-tight mb-6">{title}</h2>
       <p className="text-white/75 text-lg leading-relaxed mb-8 max-w-xl">{description}</p>
@@ -424,7 +444,7 @@ function FeatureHeader({ number, kicker, kickerColor, title, description, pills 
 }
 
 // ══════════════════════════════════
-// HOW IT WORKS
+// HOW IT WORKS — tilt cards, Lottie inside each
 // ══════════════════════════════════
 function HowItWorksSection() {
   const [visible, setVisible] = useState(false)
@@ -471,10 +491,8 @@ function TiltStepCard({ step, index, visible }: {
   const onMove = (e: React.MouseEvent) => {
     if (!cardRef.current) return
     const rect = cardRef.current.getBoundingClientRect()
-    const centerX = rect.left + rect.width / 2
-    const centerY = rect.top + rect.height / 2
-    const dx = (e.clientX - centerX) / (rect.width / 2)
-    const dy = (e.clientY - centerY) / (rect.height / 2)
+    const dx = (e.clientX - rect.left - rect.width / 2) / (rect.width / 2)
+    const dy = (e.clientY - rect.top - rect.height / 2) / (rect.height / 2)
     setTilt({ x: dy * -8, y: dx * 8 })
   }
 
@@ -508,7 +526,7 @@ function TiltStepCard({ step, index, visible }: {
 }
 
 // ══════════════════════════════════
-// FEATURE SPLIT
+// FEATURE SPLIT — photo hosts the Lottie as corner accent
 // ══════════════════════════════════
 function FeatureSplit({ id, number, kicker, kickerColor, title, description, pills, mainPhoto, overlayScreenshot, lottie, imageLeft }: {
   id: string; number: string; kicker: string; kickerColor: string
@@ -523,12 +541,19 @@ function FeatureSplit({ id, number, kicker, kickerColor, title, description, pil
     return () => obs.disconnect()
   }, [])
 
+  const visual = (
+    <div className="relative">
+      <PhotoFrame photo={mainPhoto} className="aspect-[4/5] w-full" lottie={lottie} accentColor={kickerColor} />
+      <div className="absolute -bottom-8 -right-8 z-10"><IPhoneFrame screenshot={overlayScreenshot} /></div>
+    </div>
+  )
+
   return (
     <section id={id} ref={ref} className="py-28 px-10 relative">
       <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[1fr_1.2fr] gap-16 items-center">
         {imageLeft && (
           <div className={`order-2 lg:order-1 transition-all duration-700 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
-            <SplitVisual photo={mainPhoto} screenshot={overlayScreenshot} lottie={lottie} accentColor={kickerColor} />
+            {visual}
           </div>
         )}
         <div className={`order-1 ${imageLeft ? 'lg:order-2' : ''} transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
@@ -536,7 +561,7 @@ function FeatureSplit({ id, number, kicker, kickerColor, title, description, pil
         </div>
         {!imageLeft && (
           <div className={`order-2 transition-all duration-700 delay-200 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
-            <SplitVisual photo={mainPhoto} screenshot={overlayScreenshot} lottie={lottie} accentColor={kickerColor} />
+            {visual}
           </div>
         )}
       </div>
@@ -544,21 +569,8 @@ function FeatureSplit({ id, number, kicker, kickerColor, title, description, pil
   )
 }
 
-function SplitVisual({ photo, screenshot, lottie, accentColor }: { photo: string; screenshot: string; lottie: string; accentColor: string }) {
-  return (
-    <div className="relative">
-      <PhotoFrame photo={photo} className="aspect-[4/5] w-full" />
-      <div className="absolute -bottom-8 -right-8 z-10"><IPhoneFrame screenshot={screenshot} /></div>
-      <div className="absolute -bottom-4 -left-8 w-36 h-36 z-10">
-        <div className="absolute inset-0 rounded-full blur-2xl opacity-40" style={{ background: `radial-gradient(circle, ${accentColor}, transparent 70%)` }} />
-        <div className="relative w-full h-full"><LottiePlayer src={lottie} className="w-full h-full" /></div>
-      </div>
-    </div>
-  )
-}
-
 // ══════════════════════════════════
-// FEATURE COLLAGE
+// FEATURE COLLAGE — Lottie in header instead of floating
 // ══════════════════════════════════
 function FeatureCollage({ id, number, kicker, kickerColor, title, description, pills, mainPhoto, overlayScreenshot, secondaryScreenshot, lottie, imageLeft }: {
   id: string; number: string; kicker: string; kickerColor: string
@@ -573,12 +585,29 @@ function FeatureCollage({ id, number, kicker, kickerColor, title, description, p
     return () => obs.disconnect()
   }, [])
 
+  const visual = (
+    <div className="relative min-h-[500px]">
+      {/* Big photo taking top-left, hosts Lottie as corner accent */}
+      <div className="absolute top-0 left-0 w-[70%] z-0">
+        <PhotoFrame photo={mainPhoto} className="aspect-[4/3]" lottie={lottie} accentColor={kickerColor} />
+      </div>
+      {/* Secondary desktop screenshot top-right */}
+      <div className="absolute top-12 right-0 w-[42%] z-10 hidden md:block">
+        <DesktopFrame screenshot={secondaryScreenshot} />
+      </div>
+      {/* Primary iPhone screenshot bottom-right */}
+      <div className="absolute bottom-0 right-8 z-20 hidden md:block" style={{ transform: 'scale(0.85)', transformOrigin: 'bottom right' }}>
+        <IPhoneFrame screenshot={overlayScreenshot} />
+      </div>
+    </div>
+  )
+
   return (
     <section id={id} ref={ref} className="py-28 px-10 relative">
       <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[1.1fr_1fr] gap-16 items-center">
         {imageLeft && (
           <div className={`order-2 lg:order-1 transition-all duration-700 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
-            <CollageVisual photo={mainPhoto} overlayScreenshot={overlayScreenshot} secondaryScreenshot={secondaryScreenshot} lottie={lottie} accentColor={kickerColor} />
+            {visual}
           </div>
         )}
         <div className={`order-1 ${imageLeft ? 'lg:order-2' : ''} transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
@@ -586,7 +615,7 @@ function FeatureCollage({ id, number, kicker, kickerColor, title, description, p
         </div>
         {!imageLeft && (
           <div className={`order-2 transition-all duration-700 delay-200 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
-            <CollageVisual photo={mainPhoto} overlayScreenshot={overlayScreenshot} secondaryScreenshot={secondaryScreenshot} lottie={lottie} accentColor={kickerColor} />
+            {visual}
           </div>
         )}
       </div>
@@ -594,26 +623,8 @@ function FeatureCollage({ id, number, kicker, kickerColor, title, description, p
   )
 }
 
-function CollageVisual({ photo, overlayScreenshot, secondaryScreenshot, lottie, accentColor }: {
-  photo: string; overlayScreenshot: string; secondaryScreenshot: string; lottie: string; accentColor: string
-}) {
-  return (
-    <div className="relative min-h-[500px]">
-      <div className="absolute top-0 left-0 w-[70%] z-0"><PhotoFrame photo={photo} className="aspect-[4/3]" /></div>
-      <div className="absolute top-12 right-0 w-[42%] z-10 hidden md:block"><DesktopFrame screenshot={secondaryScreenshot} /></div>
-      <div className="absolute bottom-0 right-8 z-20 hidden md:block" style={{ transform: 'scale(0.85)', transformOrigin: 'bottom right' }}>
-        <IPhoneFrame screenshot={overlayScreenshot} />
-      </div>
-      <div className="absolute bottom-8 left-8 w-28 h-28 z-30">
-        <div className="absolute inset-0 rounded-full blur-2xl opacity-50" style={{ background: `radial-gradient(circle, ${accentColor}, transparent 70%)` }} />
-        <div className="relative w-full h-full"><LottiePlayer src={lottie} className="w-full h-full" /></div>
-      </div>
-    </div>
-  )
-}
-
 // ══════════════════════════════════
-// FEATURE SIDE-BY-SIDE
+// FEATURE SIDE-BY-SIDE — Lottie on the photo
 // ══════════════════════════════════
 function FeatureSideBySide({ id, number, kicker, kickerColor, title, description, pills, mainPhoto, screenshot, lottie, imageLeft }: {
   id: string; number: string; kicker: string; kickerColor: string
@@ -628,12 +639,19 @@ function FeatureSideBySide({ id, number, kicker, kickerColor, title, description
     return () => obs.disconnect()
   }, [])
 
+  const visual = (
+    <div className="flex gap-4 items-end">
+      <PhotoFrame photo={mainPhoto} className="flex-1 aspect-[3/4]" lottie={lottie} accentColor={kickerColor} />
+      <div className="flex-shrink-0"><IPhoneFrame screenshot={screenshot} /></div>
+    </div>
+  )
+
   return (
     <section id={id} ref={ref} className="py-28 px-10 relative">
       <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[1fr_1.2fr] gap-16 items-center">
         {imageLeft && (
           <div className={`order-2 lg:order-1 transition-all duration-700 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
-            <SideBySideVisual photo={mainPhoto} screenshot={screenshot} lottie={lottie} accentColor={kickerColor} />
+            {visual}
           </div>
         )}
         <div className={`order-1 ${imageLeft ? 'lg:order-2' : ''} transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
@@ -641,28 +659,11 @@ function FeatureSideBySide({ id, number, kicker, kickerColor, title, description
         </div>
         {!imageLeft && (
           <div className={`order-2 transition-all duration-700 delay-200 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
-            <SideBySideVisual photo={mainPhoto} screenshot={screenshot} lottie={lottie} accentColor={kickerColor} />
+            {visual}
           </div>
         )}
       </div>
     </section>
-  )
-}
-
-function SideBySideVisual({ photo, screenshot, lottie, accentColor }: { photo: string; screenshot: string; lottie: string; accentColor: string }) {
-  return (
-    <div className="relative">
-      <div className="flex gap-4 items-end">
-        <PhotoFrame photo={photo} className="flex-1 aspect-[3/4]" />
-        <div className="flex-shrink-0"><IPhoneFrame screenshot={screenshot} /></div>
-      </div>
-      <div className="flex justify-center -mt-6">
-        <div className="w-32 h-32 relative">
-          <div className="absolute inset-0 rounded-full blur-2xl opacity-50" style={{ background: `radial-gradient(circle, ${accentColor}, transparent 70%)` }} />
-          <div className="relative w-full h-full"><LottiePlayer src={lottie} className="w-full h-full" /></div>
-        </div>
-      </div>
-    </div>
   )
 }
 
