@@ -1,25 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
 import Lottie from 'lottie-react'
+import * as THREE from 'three'
 import { api } from '../hooks/api'
 
 interface Props {
   onLogin: (token: string) => void
 }
 
-const SCREENSHOTS = {
-  dashboard: '/screenshots/ss-dashboard.png',
-  workout: '/screenshots/ss-workout.png',
-  routines: '/screenshots/ss-routines.png',
-  foodlog: '/screenshots/ss-foodlog.png',
-  recap: '/screenshots/ss-recap.png',
-}
-
+// Free high-quality Unsplash fitness photos
 const PHOTO = {
-  hero: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1600&q=85&auto=format&fit=crop',
-  lifting: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=1200&q=85&auto=format&fit=crop',
-  nutrition: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1200&q=85&auto=format&fit=crop',
-  transformation: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=1200&q=85&auto=format&fit=crop',
+  hero: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1800&q=90&auto=format&fit=crop',
+  training: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=1600&q=90&auto=format&fit=crop',
+  nutrition: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1600&q=90&auto=format&fit=crop',
+  transformation: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=1600&q=90&auto=format&fit=crop',
 }
 
 const LOTTIE = {
@@ -33,7 +27,7 @@ const LOTTIE = {
 }
 
 // ══════════════════════════════════
-// Lottie loader — returns null if load fails
+// Lottie loader
 // ══════════════════════════════════
 function useLottie(url: string) {
   const [data, setData] = useState<any>(null)
@@ -60,7 +54,7 @@ export default function Login({ onLogin }: Props) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// MOBILE — tight logo box, no standalone lotties
+// MOBILE — logo fills box
 // ══════════════════════════════════════════════════════════════════════
 function MobileLogin({ onLogin }: Props) {
   const [email, setEmail] = useState('')
@@ -88,12 +82,16 @@ function MobileLogin({ onLogin }: Props) {
           background: 'radial-gradient(ellipse at 50% 30%, rgba(159,122,234,0.25) 0%, transparent 55%), radial-gradient(ellipse at 50% 80%, rgba(212,168,83,0.12) 0%, transparent 60%)'
         }} />
 
-      <div className="relative w-full max-w-sm flex flex-col items-center">
+      {/* Three.js particle field background */}
+      <ParticleField />
+
+      <div className="relative w-full max-w-sm flex flex-col items-center z-10">
         <div className="flex flex-col items-center mb-10" style={{ animation: 'fadeInUp 0.8s ease-out both' }}>
           <div className="relative mb-6">
             <div className="absolute inset-0 rounded-full blur-3xl"
               style={{ background: 'radial-gradient(circle, rgba(159,122,234,0.5), transparent 70%)' }} />
-            <div className="relative w-32 h-32 rounded-2xl bg-white flex items-center justify-center shadow-2xl p-3">
+            {/* Logo: tight padding, fills the white box */}
+            <div className="relative w-36 h-36 rounded-2xl bg-white flex items-center justify-center shadow-2xl p-1">
               <img src="/forgedlogo.png" alt="FORGED" className="w-full h-full object-contain" />
             </div>
           </div>
@@ -151,13 +149,18 @@ function WebLanding({ onLogin }: Props) {
   const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
   return (
-    <div className="bg-[#0f0a1f] min-h-screen text-white">
+    <div className="bg-[#0f0a1f] min-h-screen text-white relative">
+
+      {/* Global particle field — lives behind everything */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <ParticleField />
+      </div>
 
       <nav className="sticky top-0 z-50 backdrop-blur-xl"
         style={{ background: 'linear-gradient(180deg, rgba(15,10,31,0.85) 0%, rgba(15,10,31,0) 100%)' }}>
         <div className="max-w-7xl mx-auto px-10 py-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-lg p-2">
+            <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-lg p-1">
               <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain" />
             </div>
             <span className="text-white text-2xl font-black tracking-[0.25em]">FORGED</span>
@@ -189,15 +192,18 @@ function WebLanding({ onLogin }: Props) {
         </div>
       </nav>
 
-      {/* HERO — Lottie inline with tagline, not standalone */}
+      {/* HERO — cinematic photo + floating 3D dumbbells + Lottie on top */}
       <section className="relative min-h-[92vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
-          <img src={PHOTO.hero} alt="" className="w-full h-full object-cover opacity-30" />
+          <img src={PHOTO.hero} alt="" className="w-full h-full object-cover opacity-35" />
           <div className="absolute inset-0"
             style={{
-              background: 'linear-gradient(135deg, rgba(15,10,31,0.9) 0%, rgba(42,27,74,0.8) 50%, rgba(92,44,24,0.75) 100%)'
+              background: 'linear-gradient(135deg, rgba(15,10,31,0.9) 0%, rgba(42,27,74,0.75) 50%, rgba(92,44,24,0.7) 100%)'
             }} />
         </div>
+
+        {/* Floating 3D dumbbells */}
+        <DumbbellsCanvas />
 
         <div className="absolute inset-0 pointer-events-none"
           style={{ background: 'radial-gradient(ellipse at 70% 40%, rgba(159,122,234,0.3) 0%, transparent 60%)' }} />
@@ -238,14 +244,14 @@ function WebLanding({ onLogin }: Props) {
             </div>
           </div>
 
-          {/* Hero right: iPhone with screenshot, Lottie floating as corner accent */}
+          {/* Hero right: big Lottie character ON TOP of hero, no phone frames */}
           <div className="relative hidden lg:flex items-center justify-center"
             style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
-            <div className="relative">
-              <IPhoneFrame screenshot={SCREENSHOTS.dashboard} />
-              {/* Lottie as corner accent, floating over the phone's top-right */}
-              <div className="absolute -top-12 -right-12 w-28 h-28 pointer-events-none">
-                <LottiePlayer src={LOTTIE.fitness} className="w-full h-full" />
+            <div className="relative w-full max-w-lg">
+              <div className="absolute inset-0 rounded-full blur-3xl opacity-60"
+                style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.5), transparent 70%)' }} />
+              <div className="relative">
+                <LottiePlayer src={LOTTIE.fitness} className="w-full h-auto" />
               </div>
             </div>
           </div>
@@ -254,39 +260,36 @@ function WebLanding({ onLogin }: Props) {
 
       <HowItWorksSection />
 
-      <FeatureSplit
+      {/* TRAINING — big photo with Lottie on top + 3D barbell */}
+      <FeatureSection
         id="feat-training"
         number="01" kicker="TRAINING" kickerColor="#a78bfa"
         title="Every rep. Every set. Every PR."
         description="Live volume tracking, automatic PR detection, rest timers that actually work, and a library of every exercise you have ever done."
         pills={['Live volume', 'PR detection', 'Rest timer', 'Cardio + strength']}
-        mainPhoto={PHOTO.lifting}
-        overlayScreenshot={SCREENSHOTS.workout}
+        photo={PHOTO.training}
         lottie={LOTTIE.weightlifting}
         imageLeft={false}
       />
 
-      <FeatureCollage
+      <FeatureSection
         id="feat-nutrition"
         number="02" kicker="NUTRITION" kickerColor="#D4A853"
         title="Know what you eat. Hit your numbers."
         description="Barcode scan, photo capture, custom recipes, and daily macro goals that adjust to your training."
         pills={['Barcode scan', 'Macro goals', 'Custom recipes', 'Fasting tracker']}
-        mainPhoto={PHOTO.nutrition}
-        overlayScreenshot={SCREENSHOTS.foodlog}
-        secondaryScreenshot={SCREENSHOTS.dashboard}
+        photo={PHOTO.nutrition}
         lottie={LOTTIE.fasting}
         imageLeft={true}
       />
 
-      <FeatureSideBySide
+      <FeatureSection
         id="feat-transformation"
         number="03" kicker="TRANSFORMATION" kickerColor="#a78bfa"
         title="See the change. Own the progress."
         description="Weekly recaps, progress photos with privacy lock, streak tracking, and transformations you can actually share."
         pills={['Weekly recap', 'Streaks', 'Achievements', 'Measurements']}
-        mainPhoto={PHOTO.transformation}
-        screenshot={SCREENSHOTS.recap}
+        photo={PHOTO.transformation}
         lottie={LOTTIE.running}
         imageLeft={false}
       />
@@ -309,10 +312,10 @@ function WebLanding({ onLogin }: Props) {
         </div>
       </section>
 
-      <footer className="py-16 px-10">
+      <footer className="py-16 px-10 relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-lg p-2">
+            <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-lg p-1">
               <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain" />
             </div>
             <div>
@@ -336,110 +339,352 @@ function WebLanding({ onLogin }: Props) {
 }
 
 // ══════════════════════════════════
-// iPhone Frame
+// Three.js ParticleField — purple/gold dots drifting
 // ══════════════════════════════════
-function IPhoneFrame({ screenshot }: { screenshot: string }) {
-  return (
-    <div className="relative w-[240px] rounded-[46px] bg-gradient-to-br from-[#1a1a1e] to-[#0a0a0c] p-[4px] shadow-2xl"
-      style={{
-        aspectRatio: '9 / 19.5',
-        boxShadow: '0 40px 80px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.08)',
-      }}>
-      <div className="relative w-full h-full rounded-[42px] overflow-hidden bg-black">
-        <img src={screenshot} alt="" className="w-full h-full object-contain bg-[#0a0a0c]" />
-        <div className="absolute top-2.5 left-1/2 -translate-x-1/2 w-[78px] h-[20px] bg-black rounded-full z-10" />
-      </div>
-    </div>
-  )
+function ParticleField() {
+  const mountRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!mountRef.current) return
+    const mount = mountRef.current
+    const width = mount.clientWidth
+    const height = mount.clientHeight
+
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
+    camera.position.z = 5
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
+    renderer.setSize(width, height)
+    renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setClearColor(0x000000, 0)
+    mount.appendChild(renderer.domElement)
+
+    // Particles
+    const particleCount = 150
+    const geometry = new THREE.BufferGeometry()
+    const positions = new Float32Array(particleCount * 3)
+    const colors = new Float32Array(particleCount * 3)
+
+    const purple = new THREE.Color('#a78bfa')
+    const gold = new THREE.Color('#D4A853')
+
+    for (let i = 0; i < particleCount; i++) {
+      positions[i * 3] = (Math.random() - 0.5) * 10
+      positions[i * 3 + 1] = (Math.random() - 0.5) * 10
+      positions[i * 3 + 2] = (Math.random() - 0.5) * 5
+      const c = Math.random() > 0.7 ? gold : purple
+      colors[i * 3] = c.r
+      colors[i * 3 + 1] = c.g
+      colors[i * 3 + 2] = c.b
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
+
+    const material = new THREE.PointsMaterial({
+      size: 0.04,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.7,
+      blending: THREE.AdditiveBlending,
+    })
+
+    const points = new THREE.Points(geometry, material)
+    scene.add(points)
+
+    let frameId: number
+    const animate = () => {
+      points.rotation.y += 0.0005
+      points.rotation.x += 0.0002
+      const pos = geometry.attributes.position.array as Float32Array
+      for (let i = 0; i < particleCount; i++) {
+        pos[i * 3 + 1] += 0.002
+        if (pos[i * 3 + 1] > 5) pos[i * 3 + 1] = -5
+      }
+      geometry.attributes.position.needsUpdate = true
+      renderer.render(scene, camera)
+      frameId = requestAnimationFrame(animate)
+    }
+    animate()
+
+    const onResize = () => {
+      if (!mount) return
+      const w = mount.clientWidth
+      const h = mount.clientHeight
+      camera.aspect = w / h
+      camera.updateProjectionMatrix()
+      renderer.setSize(w, h)
+    }
+    window.addEventListener('resize', onResize)
+
+    return () => {
+      cancelAnimationFrame(frameId)
+      window.removeEventListener('resize', onResize)
+      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement)
+      renderer.dispose()
+      geometry.dispose()
+      material.dispose()
+    }
+  }, [])
+
+  return <div ref={mountRef} className="absolute inset-0 w-full h-full pointer-events-none" />
 }
 
 // ══════════════════════════════════
-// Desktop Frame
+// Three.js Dumbbells — floating in hero
 // ══════════════════════════════════
-function DesktopFrame({ screenshot }: { screenshot: string }) {
-  return (
-    <div className="bg-gradient-to-br from-[#1a1a1e] to-[#0a0a0c] rounded-t-xl p-2 pb-0 shadow-2xl"
-      style={{ boxShadow: '0 30px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.08)' }}>
-      <div className="flex items-center gap-1.5 px-3 py-2 mb-2">
-        <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-        <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-        <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-        <div className="flex-1 flex justify-center">
-          <div className="bg-white/5 rounded-md px-3 py-0.5 text-[9px] text-white/40 font-bold tracking-wide">
-            forgedgyms.com
-          </div>
-        </div>
-      </div>
-      <div className="bg-black rounded-lg overflow-hidden aspect-[16/10]">
-        <img src={screenshot} alt="" className="w-full h-full object-contain bg-[#0a0a0c]" />
-      </div>
-    </div>
-  )
+function DumbbellsCanvas() {
+  const mountRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!mountRef.current) return
+    const mount = mountRef.current
+    const width = mount.clientWidth
+    const height = mount.clientHeight
+
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000)
+    camera.position.z = 10
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
+    renderer.setSize(width, height)
+    renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setClearColor(0x000000, 0)
+    mount.appendChild(renderer.domElement)
+
+    const light1 = new THREE.DirectionalLight(0xffffff, 1)
+    light1.position.set(5, 5, 5)
+    scene.add(light1)
+    const light2 = new THREE.PointLight(0x7c3aed, 2, 20)
+    light2.position.set(-3, 2, 4)
+    scene.add(light2)
+    const light3 = new THREE.PointLight(0xD4A853, 1.5, 20)
+    light3.position.set(3, -2, 4)
+    scene.add(light3)
+    scene.add(new THREE.AmbientLight(0x404080, 0.5))
+
+    const dumbbells: { group: THREE.Group; speed: number; offset: number }[] = []
+
+    const makeDumbbell = (color: number) => {
+      const group = new THREE.Group()
+      const barMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.9, roughness: 0.3 })
+      const plateMat = new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.4 })
+
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.5, 16), barMat)
+      bar.rotation.z = Math.PI / 2
+      group.add(bar)
+
+      const plateGeom = new THREE.CylinderGeometry(0.35, 0.35, 0.2, 24)
+      const p1 = new THREE.Mesh(plateGeom, plateMat); p1.rotation.z = Math.PI / 2; p1.position.x = 0.7; group.add(p1)
+      const p2 = new THREE.Mesh(plateGeom, plateMat); p2.rotation.z = Math.PI / 2; p2.position.x = -0.7; group.add(p2)
+
+      return group
+    }
+
+    const colors = [0x7c3aed, 0xD4A853, 0xa78bfa, 0x5b21b6, 0xD4A853, 0x7c3aed]
+    for (let i = 0; i < 6; i++) {
+      const d = makeDumbbell(colors[i])
+      d.position.x = (Math.random() - 0.5) * 12
+      d.position.y = (Math.random() - 0.5) * 6
+      d.position.z = (Math.random() - 0.5) * 4
+      d.rotation.x = Math.random() * Math.PI
+      d.rotation.y = Math.random() * Math.PI
+      scene.add(d)
+      dumbbells.push({ group: d, speed: 0.002 + Math.random() * 0.004, offset: Math.random() * Math.PI * 2 })
+    }
+
+    let frameId: number
+    const clock = new THREE.Clock()
+    const animate = () => {
+      const t = clock.getElapsedTime()
+      dumbbells.forEach((d) => {
+        d.group.rotation.x += d.speed
+        d.group.rotation.y += d.speed * 0.7
+        d.group.position.y += Math.sin(t + d.offset) * 0.003
+      })
+      renderer.render(scene, camera)
+      frameId = requestAnimationFrame(animate)
+    }
+    animate()
+
+    const onResize = () => {
+      if (!mount) return
+      const w = mount.clientWidth
+      const h = mount.clientHeight
+      camera.aspect = w / h
+      camera.updateProjectionMatrix()
+      renderer.setSize(w, h)
+    }
+    window.addEventListener('resize', onResize)
+
+    return () => {
+      cancelAnimationFrame(frameId)
+      window.removeEventListener('resize', onResize)
+      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement)
+      renderer.dispose()
+    }
+  }, [])
+
+  return <div ref={mountRef} className="absolute inset-0 w-full h-full pointer-events-none z-[5]" />
 }
 
 // ══════════════════════════════════
-// Photo Frame — can host a Lottie as corner accent
+// Three.js Rotating Barbell — for feature sections
 // ══════════════════════════════════
-function PhotoFrame({ photo, className = '', lottie, accentColor }: {
-  photo: string
-  className?: string
-  lottie?: string
-  accentColor?: string
-}) {
-  return (
-    <div className={`relative rounded-3xl overflow-hidden border border-white/[0.1] ${className}`}
-      style={{ boxShadow: '0 30px 60px rgba(0,0,0,0.5)' }}>
-      <img src={photo} alt="" className="w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-      {/* Lottie attached as corner accent on the photo */}
-      {lottie && (
-        <div className="absolute top-4 right-4 w-20 h-20 pointer-events-none">
-          {accentColor && (
-            <div className="absolute inset-0 rounded-full blur-xl opacity-50"
-              style={{ background: `radial-gradient(circle, ${accentColor}, transparent 70%)` }} />
-          )}
-          <div className="relative w-full h-full">
-            <LottiePlayer src={lottie} className="w-full h-full" />
-          </div>
-        </div>
-      )}
-    </div>
-  )
+function BarbellCanvas({ accentColor }: { accentColor: string }) {
+  const mountRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!mountRef.current) return
+    const mount = mountRef.current
+    const width = mount.clientWidth
+    const height = mount.clientHeight
+
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100)
+    camera.position.z = 6
+
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
+    renderer.setSize(width, height)
+    renderer.setPixelRatio(window.devicePixelRatio)
+    renderer.setClearColor(0x000000, 0)
+    mount.appendChild(renderer.domElement)
+
+    scene.add(new THREE.AmbientLight(0x606090, 0.6))
+    const l1 = new THREE.DirectionalLight(0xffffff, 1)
+    l1.position.set(3, 3, 5)
+    scene.add(l1)
+    const glow = new THREE.PointLight(new THREE.Color(accentColor).getHex(), 2, 10)
+    glow.position.set(0, 0, 2)
+    scene.add(glow)
+
+    const group = new THREE.Group()
+    const barMat = new THREE.MeshStandardMaterial({ color: 0x999999, metalness: 0.95, roughness: 0.2 })
+    const plateMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(accentColor), metalness: 0.7, roughness: 0.3 })
+
+    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 4, 16), barMat)
+    bar.rotation.z = Math.PI / 2
+    group.add(bar)
+
+    const plateGeom = new THREE.CylinderGeometry(0.6, 0.6, 0.25, 32)
+    for (let i = 0; i < 2; i++) {
+      const plateOuter = new THREE.Mesh(plateGeom, plateMat); plateOuter.rotation.z = Math.PI / 2
+      plateOuter.position.x = i === 0 ? 1.8 : -1.8; group.add(plateOuter)
+      const plateInner = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.28, 32), plateMat)
+      plateInner.rotation.z = Math.PI / 2
+      plateInner.position.x = i === 0 ? 1.5 : -1.5; group.add(plateInner)
+    }
+
+    scene.add(group)
+
+    let frameId: number
+    const animate = () => {
+      group.rotation.y += 0.006
+      group.rotation.x = Math.sin(Date.now() * 0.0005) * 0.15
+      renderer.render(scene, camera)
+      frameId = requestAnimationFrame(animate)
+    }
+    animate()
+
+    const onResize = () => {
+      if (!mount) return
+      const w = mount.clientWidth
+      const h = mount.clientHeight
+      camera.aspect = w / h
+      camera.updateProjectionMatrix()
+      renderer.setSize(w, h)
+    }
+    window.addEventListener('resize', onResize)
+
+    return () => {
+      cancelAnimationFrame(frameId)
+      window.removeEventListener('resize', onResize)
+      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement)
+      renderer.dispose()
+    }
+  }, [accentColor])
+
+  return <div ref={mountRef} className="absolute inset-0 w-full h-full pointer-events-none" />
 }
 
 // ══════════════════════════════════
-// FEATURE HEADER — supports inline Lottie next to the kicker
+// FEATURE SECTION — big photo background + Lottie on top + 3D barbell
 // ══════════════════════════════════
-function FeatureHeader({ number, kicker, kickerColor, title, description, pills, lottie }: {
-  number: string; kicker: string; kickerColor: string
+function FeatureSection({ id, number, kicker, kickerColor, title, description, pills, photo, lottie, imageLeft }: {
+  id: string; number: string; kicker: string; kickerColor: string
   title: string; description: string; pills: string[]
-  lottie?: string
+  photo: string; lottie: string; imageLeft: boolean
 }) {
+  const [visible, setVisible] = useState(false)
+  const ref = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(([entry]) => entry.isIntersecting && setVisible(true), { threshold: 0.15 })
+    if (ref.current) obs.observe(ref.current)
+    return () => obs.disconnect()
+  }, [])
+
   const isGold = kickerColor === '#D4A853'
   const pillClass = isGold
     ? 'bg-[#D4A853]/15 text-[#D4A853] border border-[#D4A853]/30'
     : 'bg-[#7c3aed]/20 text-[#a78bfa] border border-[#7c3aed]/30'
 
+  const visual = (
+    <div className="relative w-full aspect-[4/5] rounded-3xl overflow-hidden border border-white/[0.1]"
+      style={{ boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
+      {/* Big photo as the entire visual */}
+      <img src={photo} alt="" className="w-full h-full object-cover" />
+      <div className="absolute inset-0"
+        style={{ background: `linear-gradient(180deg, transparent 30%, rgba(15,10,31,0.6) 100%)` }} />
+
+      {/* 3D rotating barbell overlay */}
+      <div className="absolute inset-0">
+        <BarbellCanvas accentColor={kickerColor} />
+      </div>
+
+      {/* Lottie big, on top of photo */}
+      <div className="absolute bottom-6 right-6 w-48 h-48 pointer-events-none">
+        <div className="absolute inset-0 rounded-full blur-2xl opacity-50"
+          style={{ background: `radial-gradient(circle, ${kickerColor}, transparent 70%)` }} />
+        <div className="relative w-full h-full">
+          <LottiePlayer src={lottie} className="w-full h-full" />
+        </div>
+      </div>
+    </div>
+  )
+
   return (
-    <div>
-      <div className="flex items-center gap-4 mb-6">
-        <span className="text-sm font-black tracking-[0.35em]" style={{ color: kickerColor }}>{number}</span>
-        <span className="h-[1px] w-12" style={{ backgroundColor: kickerColor, opacity: 0.5 }} />
-        <span className="text-sm font-black tracking-[0.25em]" style={{ color: kickerColor }}>{kicker}</span>
-        {lottie && (
-          <div className="w-10 h-10 ml-auto flex-shrink-0">
-            <LottiePlayer src={lottie} className="w-full h-full" />
+    <section id={id} ref={ref} className="py-28 px-10 relative z-10">
+      <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[1fr_1.2fr] gap-16 items-center">
+        {imageLeft && (
+          <div className={`order-2 lg:order-1 transition-all duration-700 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
+            {visual}
+          </div>
+        )}
+
+        <div className={`order-1 ${imageLeft ? 'lg:order-2' : ''} transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="flex items-center gap-4 mb-6">
+            <span className="text-sm font-black tracking-[0.35em]" style={{ color: kickerColor }}>{number}</span>
+            <span className="h-[1px] w-12" style={{ backgroundColor: kickerColor, opacity: 0.5 }} />
+            <span className="text-sm font-black tracking-[0.25em]" style={{ color: kickerColor }}>{kicker}</span>
+          </div>
+          <h2 className="text-white text-5xl xl:text-6xl font-black leading-[1.08] tracking-tight mb-6">{title}</h2>
+          <p className="text-white/75 text-lg leading-relaxed mb-8 max-w-xl">{description}</p>
+          <div className="flex flex-wrap gap-2">
+            {pills.map(p => (
+              <span key={p} className={`px-4 py-2 rounded-lg text-xs font-black tracking-[0.1em] ${pillClass}`}>{p}</span>
+            ))}
+          </div>
+        </div>
+
+        {!imageLeft && (
+          <div className={`order-2 transition-all duration-700 delay-200 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
+            {visual}
           </div>
         )}
       </div>
-      <h2 className="text-white text-5xl xl:text-6xl font-black leading-[1.08] tracking-tight mb-6">{title}</h2>
-      <p className="text-white/75 text-lg leading-relaxed mb-8 max-w-xl">{description}</p>
-      <div className="flex flex-wrap gap-2">
-        {pills.map(p => (
-          <span key={p} className={`px-4 py-2 rounded-lg text-xs font-black tracking-[0.1em] ${pillClass}`}>{p}</span>
-        ))}
-      </div>
-    </div>
+    </section>
   )
 }
 
@@ -451,10 +696,7 @@ function HowItWorksSection() {
   const ref = useRef<HTMLElement>(null)
 
   useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([entry]) => entry.isIntersecting && setVisible(true),
-      { threshold: 0.2 }
-    )
+    const obs = new IntersectionObserver(([entry]) => entry.isIntersecting && setVisible(true), { threshold: 0.2 })
     if (ref.current) obs.observe(ref.current)
     return () => obs.disconnect()
   }, [])
@@ -466,7 +708,7 @@ function HowItWorksSection() {
   ]
 
   return (
-    <section id="how-it-works" ref={ref} className="py-32 px-10 relative">
+    <section id="how-it-works" ref={ref} className="py-32 px-10 relative z-10">
       <div className="max-w-7xl mx-auto">
         <div className={`text-center mb-20 transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <p className="text-[#D4A853] text-sm font-black tracking-[0.3em] mb-4">HOW IT WORKS</p>
@@ -522,148 +764,6 @@ function TiltStepCard({ step, index, visible }: {
       <h3 className="text-white text-3xl font-black mb-3 tracking-tight text-center">{step.title}</h3>
       <p className="text-white/60 text-base leading-relaxed text-center">{step.desc}</p>
     </div>
-  )
-}
-
-// ══════════════════════════════════
-// FEATURE SPLIT — photo hosts the Lottie as corner accent
-// ══════════════════════════════════
-function FeatureSplit({ id, number, kicker, kickerColor, title, description, pills, mainPhoto, overlayScreenshot, lottie, imageLeft }: {
-  id: string; number: string; kicker: string; kickerColor: string
-  title: string; description: string; pills: string[]
-  mainPhoto: string; overlayScreenshot: string; lottie: string; imageLeft: boolean
-}) {
-  const [visible, setVisible] = useState(false)
-  const ref = useRef<HTMLElement>(null)
-  useEffect(() => {
-    const obs = new IntersectionObserver(([entry]) => entry.isIntersecting && setVisible(true), { threshold: 0.15 })
-    if (ref.current) obs.observe(ref.current)
-    return () => obs.disconnect()
-  }, [])
-
-  const visual = (
-    <div className="relative">
-      <PhotoFrame photo={mainPhoto} className="aspect-[4/5] w-full" lottie={lottie} accentColor={kickerColor} />
-      <div className="absolute -bottom-8 -right-8 z-10"><IPhoneFrame screenshot={overlayScreenshot} /></div>
-    </div>
-  )
-
-  return (
-    <section id={id} ref={ref} className="py-28 px-10 relative">
-      <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[1fr_1.2fr] gap-16 items-center">
-        {imageLeft && (
-          <div className={`order-2 lg:order-1 transition-all duration-700 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
-            {visual}
-          </div>
-        )}
-        <div className={`order-1 ${imageLeft ? 'lg:order-2' : ''} transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <FeatureHeader number={number} kicker={kicker} kickerColor={kickerColor} title={title} description={description} pills={pills} />
-        </div>
-        {!imageLeft && (
-          <div className={`order-2 transition-all duration-700 delay-200 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
-            {visual}
-          </div>
-        )}
-      </div>
-    </section>
-  )
-}
-
-// ══════════════════════════════════
-// FEATURE COLLAGE — Lottie in header instead of floating
-// ══════════════════════════════════
-function FeatureCollage({ id, number, kicker, kickerColor, title, description, pills, mainPhoto, overlayScreenshot, secondaryScreenshot, lottie, imageLeft }: {
-  id: string; number: string; kicker: string; kickerColor: string
-  title: string; description: string; pills: string[]
-  mainPhoto: string; overlayScreenshot: string; secondaryScreenshot: string; lottie: string; imageLeft: boolean
-}) {
-  const [visible, setVisible] = useState(false)
-  const ref = useRef<HTMLElement>(null)
-  useEffect(() => {
-    const obs = new IntersectionObserver(([entry]) => entry.isIntersecting && setVisible(true), { threshold: 0.15 })
-    if (ref.current) obs.observe(ref.current)
-    return () => obs.disconnect()
-  }, [])
-
-  const visual = (
-    <div className="relative min-h-[500px]">
-      {/* Big photo taking top-left, hosts Lottie as corner accent */}
-      <div className="absolute top-0 left-0 w-[70%] z-0">
-        <PhotoFrame photo={mainPhoto} className="aspect-[4/3]" lottie={lottie} accentColor={kickerColor} />
-      </div>
-      {/* Secondary desktop screenshot top-right */}
-      <div className="absolute top-12 right-0 w-[42%] z-10 hidden md:block">
-        <DesktopFrame screenshot={secondaryScreenshot} />
-      </div>
-      {/* Primary iPhone screenshot bottom-right */}
-      <div className="absolute bottom-0 right-8 z-20 hidden md:block" style={{ transform: 'scale(0.85)', transformOrigin: 'bottom right' }}>
-        <IPhoneFrame screenshot={overlayScreenshot} />
-      </div>
-    </div>
-  )
-
-  return (
-    <section id={id} ref={ref} className="py-28 px-10 relative">
-      <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[1.1fr_1fr] gap-16 items-center">
-        {imageLeft && (
-          <div className={`order-2 lg:order-1 transition-all duration-700 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
-            {visual}
-          </div>
-        )}
-        <div className={`order-1 ${imageLeft ? 'lg:order-2' : ''} transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <FeatureHeader number={number} kicker={kicker} kickerColor={kickerColor} title={title} description={description} pills={pills} />
-        </div>
-        {!imageLeft && (
-          <div className={`order-2 transition-all duration-700 delay-200 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
-            {visual}
-          </div>
-        )}
-      </div>
-    </section>
-  )
-}
-
-// ══════════════════════════════════
-// FEATURE SIDE-BY-SIDE — Lottie on the photo
-// ══════════════════════════════════
-function FeatureSideBySide({ id, number, kicker, kickerColor, title, description, pills, mainPhoto, screenshot, lottie, imageLeft }: {
-  id: string; number: string; kicker: string; kickerColor: string
-  title: string; description: string; pills: string[]
-  mainPhoto: string; screenshot: string; lottie: string; imageLeft: boolean
-}) {
-  const [visible, setVisible] = useState(false)
-  const ref = useRef<HTMLElement>(null)
-  useEffect(() => {
-    const obs = new IntersectionObserver(([entry]) => entry.isIntersecting && setVisible(true), { threshold: 0.15 })
-    if (ref.current) obs.observe(ref.current)
-    return () => obs.disconnect()
-  }, [])
-
-  const visual = (
-    <div className="flex gap-4 items-end">
-      <PhotoFrame photo={mainPhoto} className="flex-1 aspect-[3/4]" lottie={lottie} accentColor={kickerColor} />
-      <div className="flex-shrink-0"><IPhoneFrame screenshot={screenshot} /></div>
-    </div>
-  )
-
-  return (
-    <section id={id} ref={ref} className="py-28 px-10 relative">
-      <div className="relative max-w-7xl mx-auto grid lg:grid-cols-[1fr_1.2fr] gap-16 items-center">
-        {imageLeft && (
-          <div className={`order-2 lg:order-1 transition-all duration-700 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
-            {visual}
-          </div>
-        )}
-        <div className={`order-1 ${imageLeft ? 'lg:order-2' : ''} transition-all duration-700 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <FeatureHeader number={number} kicker={kicker} kickerColor={kickerColor} title={title} description={description} pills={pills} />
-        </div>
-        {!imageLeft && (
-          <div className={`order-2 transition-all duration-700 delay-200 ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
-            {visual}
-          </div>
-        )}
-      </div>
-    </section>
   )
 }
 
