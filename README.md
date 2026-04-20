@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="frontend/public/forgedlogo.png" alt="FORGED" width="160" />
+<img src="frontend/public/logo.png" alt="FORGED" width="160" />
 
 # FORGED
 
@@ -214,16 +214,6 @@ All tables use UUID primary keys (`gen_random_uuid()`) and foreign key cascades 
 
 FORGED is deployed on a **Proxmox VM** with public access routed through **Cloudflare Tunnel**. No ports are exposed directly to the internet.
 
-### Traffic flow
-
-```
-User → forgedgyms.com → Cloudflare Edge → Cloudflare Tunnel → Server:3001 (nginx)
-                                                                   ├─ frontend container
-                                                                   └─ backend container (via nginx proxy_pass)
-```
-
-The tunnel config lives at `/etc/cloudflared/config.yml` on the server and routes `forgedgyms.com` to `http://localhost:3001`. All traffic is encrypted end-to-end, the origin server has no inbound ports open to the public internet, and Cloudflare handles DDoS protection and caching at the edge.
-
 ---
 
 ## Design System (FORGE UI)
@@ -281,7 +271,7 @@ All rights reserved. This repository is public for portfolio and reference purpo
 
 ## Author
 
-**James W. Mardi** (Evan Brago)
+**James W. Mardi** 
 
 Computer Science MS Candidate at Kean University (expected May 2027). Building under **TCW Studio** (The Creative Works Studio).
 
