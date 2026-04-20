@@ -8,7 +8,9 @@ import { GoalEditorModal } from '../components/food/GoalEditorModal'
 import { NutritionDetailModal } from '../components/food/NutritionDetailModal'
 import { loadGoals, saveGoals, getWarnLevel, type FoodGoals } from '../components/food/goalStorage'
 import { describeMacros } from '../components/food/macroDescription'
-
+import { BarcodeScanModal } from '../components/foods/BarcodeScanModal'
+import { PhotoFoodModal } from '../components/foods/PhotoFoodModal'
+import type { CustomFood } from '../components/foods/customFoodsStorage'
 // ══════════════════════════════════
 // ICONS
 // ══════════════════════════════════
@@ -350,6 +352,8 @@ interface FoodLogProps {
   const [logs, setLogs] = useState<FoodLogType[]>([])
   const [loading, setLoading] = useState(true)
   const [addingTo, setAddingTo] = useState<MealKey | null>(null)
+  const [scanOpen, setScanOpen] = useState<{ meal: string } | null>(null)
+  const [photoOpen, setPhotoOpen] = useState<{ meal: string } | null>(null)
   const [showCalendar, setShowCalendar] = useState(false)
   const [menuOpen, setMenuOpen] = useState<MealKey | null>(null)
   const [goals, setGoals] = useState<FoodGoals>(loadGoals)
@@ -402,6 +406,20 @@ interface FoodLogProps {
   const mealCals = (key: string) => grouped(key).reduce((s, l) => s + (l.food?.calories ?? 0) * l.servings, 0)
 
   const onFoodAdded = () => { setAddingTo(null); loadLogs() }
+  const handleCustomFoodCapture = (food: CustomFood, mealType: string): void => {
+    // Backend doesn't support custom foods yet — store locally
+    const localKey = `forged:custom-logs:${date}`
+    const existing = JSON.parse(localStorage.getItem(localKey) ?? '[]')
+    existing.push({
+      id: `cl_${crypto.randomUUID()}`,
+      date, mealType, servings: 1,
+      food,
+    })
+    localStorage.setItem(localKey, JSON.stringify(existing))
+    setScanOpen(null)
+    setPhotoOpen(null)
+    loadLogs()
+  }
 
   // ── Copy from yesterday ──
   const copyFromYesterday = async (mealKey: string) => {
@@ -616,7 +634,12 @@ interface FoodLogProps {
 
             {/* Search panel */}
             {isAdding && (
-              <FoodSearch mealType={meal.key} date={date} onAdded={onFoodAdded} />
+              <FoodSearch
+                mealType={meal.key} date={date} onAdded={onFoodAdded}
+                onBarcode={() => setScanOpen({ meal: meal.key })}
+                onPhoto={() => setPhotoOpen({ meal: meal.key })}
+                onRecipes={() => onNavigate?.('recipes')}
+              />
             )}
 
             {/* Logged foods or empty state */}
@@ -663,7 +686,18 @@ interface FoodLogProps {
           onClose={() => setShowNutritionDetail(false)}
         />
       )}
-
+{scanOpen && (
+        <BarcodeScanModal
+          onCapture={food => handleCustomFoodCapture(food, scanOpen.meal)}
+          onClose={() => setScanOpen(null)}
+        />
+      )}
+      {photoOpen && (
+        <PhotoFoodModal
+          onCapture={food => handleCustomFoodCapture(food, photoOpen.meal)}
+          onClose={() => setPhotoOpen(null)}
+        />
+      )}
       {/* Animations */}
       <style>{`@keyframes fadeIn{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:scale(1)}}`}</style>
     </div>
@@ -687,8 +721,12 @@ function NutrientChip({ label, value, unit }: { label: string; value: number; un
 // ══════════════════════════════════
 // FOOD SEARCH
 // ══════════════════════════════════
-function FoodSearch({ mealType, date, onAdded }: {
-  mealType: string; date: string; onAdded: () => void
+function FoodSearch({ mealType, date, onAdded, onBarcode, onPhoto, onRecipes }: {
+  mealType: string; date: string
+  onAdded: () => void
+  onBarcode: () => void
+  onPhoto: () => void
+  onRecipes: () => void
 }) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<Food[]>([])
@@ -735,9 +773,9 @@ function FoodSearch({ mealType, date, onAdded }: {
       {/* Quick options -- show when not typing */}
       {query.length === 0 && !showCreate && (
         <div className="grid grid-cols-4 gap-2 mt-2">
-          <SearchOption icon={I.barcode} label="Barcode" onClick={() => { /* TODO: barcode scanner */ }} />
-          <SearchOption icon={I.book} label="Recipes" onClick={() => { /* TODO: recipes */ }} />
-          <SearchOption icon={I.camera} label="Meal Scan" onClick={() => { /* TODO: photo scan */ }} />
+          <SearchOption icon={I.barcode} label="Barcode" onClick={onBarcode} />
+          <SearchOption icon={I.book} label="Recipes" onClick={onRecipes} />
+          <SearchOption icon={I.camera} label="Photo" onClick={onPhoto} />
           <SearchOption icon={I.history} label="Previous" onClick={() => doSearch('*')} />
         </div>
       )}

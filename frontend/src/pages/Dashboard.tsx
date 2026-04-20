@@ -23,7 +23,6 @@ import SettingsPage from './SettingsPage'
 import WeeklySummaryPage from './WeeklySummary'
 import ProgressPhotosPage from './ProgressPhotos'
 import StreaksPage from './Streaks'
-import PrivacyPage from './Privacy'
 import RecipesPage from './Recipes'
 import FeedbackPage from './Feedback'
 import FastingPage from './Fasting'
@@ -163,7 +162,6 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 {tab === 'weekly' && <WeeklySummaryPage onBack={() => setTab('dashboard')} />}
                 {tab === 'photos' && <ProgressPhotosPage onBack={() => setTab('dashboard')} />}
                 {tab === 'streaks' && <StreaksPage onBack={() => setTab('dashboard')} />}
-                {tab === 'privacy' && <PrivacyPage onBack={() => setTab('dashboard')} />}
                 {tab === 'recipes' && <RecipesPage onBack={() => setTab('dashboard')} />}
                 {tab === 'feedback' && <FeedbackPage onBack={() => setTab('dashboard')} />}
                 {tab === 'fasting' && (

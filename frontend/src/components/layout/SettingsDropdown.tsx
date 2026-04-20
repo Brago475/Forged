@@ -84,10 +84,7 @@ export function SettingsDropdown({
             <Icon d={I.flame} size={16} /><span>Streaks</span>
           </button>
 
-          <button onClick={() => { onNavigate?.('privacy'); setOpen(false) }} className={itemClass}>
-            <Icon d={I.target} size={16} /><span>Privacy</span>
-          </button>
-
+          
           <button onClick={() => { onNavigate?.('recipes'); setOpen(false) }} className={itemClass}>
             <Icon d={I.food} size={16} /><span>Recipes</span>
           </button>
