@@ -8,7 +8,6 @@ interface Props {
   onLogin: (token: string) => void
 }
 
-// Free high-quality Unsplash fitness photos
 const PHOTO = {
   hero: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1800&q=90&auto=format&fit=crop',
   training: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=1600&q=90&auto=format&fit=crop',
@@ -26,9 +25,6 @@ const LOTTIE = {
   loading: '/animations/loading.json',
 }
 
-// ══════════════════════════════════
-// Lottie loader
-// ══════════════════════════════════
 function useLottie(url: string) {
   const [data, setData] = useState<any>(null)
   useEffect(() => {
@@ -54,7 +50,7 @@ export default function Login({ onLogin }: Props) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// MOBILE — logo fills box
+// MOBILE
 // ══════════════════════════════════════════════════════════════════════
 function MobileLogin({ onLogin }: Props) {
   const [email, setEmail] = useState('')
@@ -82,17 +78,14 @@ function MobileLogin({ onLogin }: Props) {
           background: 'radial-gradient(ellipse at 50% 30%, rgba(159,122,234,0.25) 0%, transparent 55%), radial-gradient(ellipse at 50% 80%, rgba(212,168,83,0.12) 0%, transparent 60%)'
         }} />
 
-      {/* Three.js particle field background */}
-      <ParticleField />
-
       <div className="relative w-full max-w-sm flex flex-col items-center z-10">
         <div className="flex flex-col items-center mb-10" style={{ animation: 'fadeInUp 0.8s ease-out both' }}>
           <div className="relative mb-6">
             <div className="absolute inset-0 rounded-full blur-3xl"
               style={{ background: 'radial-gradient(circle, rgba(159,122,234,0.5), transparent 70%)' }} />
-            {/* Logo: tight padding, fills the white box */}
-            <div className="relative w-36 h-36 rounded-2xl bg-white flex items-center justify-center shadow-2xl p-1">
-              <img src="/forgedlogo.png" alt="FORGED" className="w-full h-full object-contain" />
+            {/* BIGGER logo box with scale trick — crops baked-in whitespace */}
+            <div className="relative w-44 h-44 rounded-3xl bg-white flex items-center justify-center shadow-2xl overflow-hidden">
+              <img src="/forgedlogo.png" alt="FORGED" className="w-full h-full object-contain scale-125" />
             </div>
           </div>
           <p className="text-white text-4xl font-black tracking-[0.3em] mt-2">FORGED</p>
@@ -118,7 +111,7 @@ function MobileLogin({ onLogin }: Props) {
             className="mt-3 py-4 rounded-xl text-white font-black text-sm tracking-[0.2em]
               transition-all active:scale-[0.98] disabled:opacity-60"
             style={{
-              background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+              background: '#7c3aed',
               boxShadow: '0 10px 40px rgba(124,58,237,0.5)',
             }}>
             {loading ? 'SIGNING IN...' : 'SIGN IN'}
@@ -151,17 +144,18 @@ function WebLanding({ onLogin }: Props) {
   return (
     <div className="bg-[#0f0a1f] min-h-screen text-white relative">
 
-      {/* Global particle field — lives behind everything */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <ParticleField />
+      {/* 3D DUMBBELLS — background only, behind all content */}
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-50">
+        <DumbbellsCanvas />
       </div>
 
+      {/* NAV */}
       <nav className="sticky top-0 z-50 backdrop-blur-xl"
-        style={{ background: 'linear-gradient(180deg, rgba(15,10,31,0.85) 0%, rgba(15,10,31,0) 100%)' }}>
+        style={{ background: 'rgba(15,10,31,0.85)' }}>
         <div className="max-w-7xl mx-auto px-10 py-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-lg p-1">
-              <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain" />
+            <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center shadow-lg overflow-hidden">
+              <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain scale-125" />
             </div>
             <span className="text-white text-2xl font-black tracking-[0.25em]">FORGED</span>
           </div>
@@ -183,7 +177,7 @@ function WebLanding({ onLogin }: Props) {
               className="px-6 py-3 rounded-xl text-white text-sm font-black tracking-[0.15em]
                 hover:brightness-110 active:scale-95 transition-all"
               style={{
-                background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+                background: '#7c3aed',
                 boxShadow: '0 6px 20px rgba(124,58,237,0.4)',
               }}>
               START HERE
@@ -192,29 +186,15 @@ function WebLanding({ onLogin }: Props) {
         </div>
       </nav>
 
-      {/* HERO — cinematic photo + floating 3D dumbbells + Lottie on top */}
-      <section className="relative min-h-[92vh] flex items-center overflow-hidden">
-        <div className="absolute inset-0">
-          <img src={PHOTO.hero} alt="" className="w-full h-full object-cover opacity-35" />
-          <div className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(135deg, rgba(15,10,31,0.9) 0%, rgba(42,27,74,0.75) 50%, rgba(92,44,24,0.7) 100%)'
-            }} />
-        </div>
-
-        {/* Floating 3D dumbbells */}
-        <DumbbellsCanvas />
-
-        <div className="absolute inset-0 pointer-events-none"
-          style={{ background: 'radial-gradient(ellipse at 70% 40%, rgba(159,122,234,0.3) 0%, transparent 60%)' }} />
-
-        <div className="relative max-w-7xl mx-auto px-10 py-24 grid grid-cols-2 gap-16 items-center w-full z-10">
+      {/* HERO — "Forged your body here" + image card + Lottie peeking corner */}
+      <section className="relative min-h-[92vh] flex items-center overflow-hidden z-10">
+        <div className="relative max-w-7xl mx-auto px-10 py-24 grid grid-cols-2 gap-16 items-center w-full">
           <div>
             <h1 className="text-white text-7xl xl:text-8xl font-black leading-[1.02] tracking-tight mb-8"
               style={{ animation: 'fadeInUp 0.8s 0.2s ease-out both' }}>
-              Forge the body
+              Forged your
               <br />
-              you are working toward.
+              body here.
             </h1>
 
             <p className="text-white/85 text-lg leading-relaxed mb-10 max-w-xl"
@@ -229,7 +209,7 @@ function WebLanding({ onLogin }: Props) {
                   tracking-[0.18em] transition-all active:scale-95
                   hover:brightness-110 flex items-center gap-3"
                 style={{
-                  background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+                  background: '#7c3aed',
                   boxShadow: '0 12px 40px rgba(124,58,237,0.5)',
                 }}>
                 START HERE
@@ -244,14 +224,14 @@ function WebLanding({ onLogin }: Props) {
             </div>
           </div>
 
-          {/* Hero right: big Lottie character ON TOP of hero, no phone frames */}
-          <div className="relative hidden lg:flex items-center justify-center"
+          {/* Right: Image card with Lottie peeking from top-right corner (Discord-style) */}
+          <div className="relative hidden lg:block"
             style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
-            <div className="relative w-full max-w-lg">
-              <div className="absolute inset-0 rounded-full blur-3xl opacity-60"
-                style={{ background: 'radial-gradient(circle, rgba(124,58,237,0.5), transparent 70%)' }} />
-              <div className="relative">
-                <LottiePlayer src={LOTTIE.fitness} className="w-full h-auto" />
+            <div className="relative">
+              <ImageCard photo={PHOTO.hero} className="aspect-[4/5] w-full" />
+              {/* Lottie peeks over top-right, outside the card */}
+              <div className="absolute -top-16 -right-8 w-48 h-48 z-20 pointer-events-none">
+                <LottiePlayer src={LOTTIE.fitness} className="w-full h-full" />
               </div>
             </div>
           </div>
@@ -260,7 +240,6 @@ function WebLanding({ onLogin }: Props) {
 
       <HowItWorksSection />
 
-      {/* TRAINING — big photo with Lottie on top + 3D barbell */}
       <FeatureSection
         id="feat-training"
         number="01" kicker="TRAINING" kickerColor="#a78bfa"
@@ -294,29 +273,46 @@ function WebLanding({ onLogin }: Props) {
         imageLeft={false}
       />
 
-      {/* FINAL CTA — Lottie inline with headline */}
-      <section ref={loginRef} className="relative py-32 overflow-hidden">
+      {/* BIG FINAL CTA — "Get forged." */}
+      <section ref={loginRef} className="relative py-40 px-10 overflow-hidden z-10">
         <div className="absolute inset-0"
-          style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.25) 0%, transparent 65%)' }} />
-        <div className="relative max-w-md mx-auto px-6 text-center">
-          <div className="flex items-center justify-center gap-4 mb-4">
-            <div className="w-16 h-16 flex-shrink-0">
-              <LottiePlayer src={LOTTIE.loading} className="w-full h-full" />
+          style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.35) 0%, transparent 65%)' }} />
+
+        <div className="relative max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+          {/* Left: Big CTA message */}
+          <div>
+            <p className="text-[#D4A853] text-sm font-black tracking-[0.3em] mb-6">
+              START YOUR TRANSFORMATION
+            </p>
+            <h2 className="text-white text-7xl xl:text-8xl font-black tracking-tight mb-8 leading-[0.95]">
+              Get<br />forged.
+            </h2>
+            <p className="text-white/75 text-xl leading-relaxed mb-8 max-w-md">
+              Create your account. First workout in 90 seconds. No credit card, no noise.
+            </p>
+            <div className="flex items-center gap-3">
+              <div className="w-14 h-14 flex-shrink-0">
+                <LottiePlayer src={LOTTIE.loading} className="w-full h-full" />
+              </div>
+              <div className="text-white/60 text-sm">
+                <p className="font-black tracking-wide">Free forever plan</p>
+                <p className="text-white/40 text-xs">No hidden fees. No upsells.</p>
+              </div>
             </div>
-            <h2 className="text-white text-5xl font-black tracking-tight">Ready to forge?</h2>
           </div>
-          <p className="text-white/70 text-base mb-10">
-            Create your account. First workout in 90 seconds.
-          </p>
-          <LoginCard onLogin={onLogin} />
+
+          {/* Right: Login form */}
+          <div>
+            <LoginCard onLogin={onLogin} />
+          </div>
         </div>
       </section>
 
       <footer className="py-16 px-10 relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-4">
-            <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center shadow-lg p-1">
-              <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain" />
+            <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center shadow-lg overflow-hidden">
+              <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain scale-125" />
             </div>
             <div>
               <p className="text-white text-lg font-black tracking-[0.25em]">FORGED</p>
@@ -339,100 +335,26 @@ function WebLanding({ onLogin }: Props) {
 }
 
 // ══════════════════════════════════
-// Three.js ParticleField — purple/gold dots drifting
+// ImageCard — photo with luminosity blend + purple tint so it merges with theme
 // ══════════════════════════════════
-function ParticleField() {
-  const mountRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!mountRef.current) return
-    const mount = mountRef.current
-    const width = mount.clientWidth
-    const height = mount.clientHeight
-
-    const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000)
-    camera.position.z = 5
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
-    renderer.setSize(width, height)
-    renderer.setPixelRatio(window.devicePixelRatio)
-    renderer.setClearColor(0x000000, 0)
-    mount.appendChild(renderer.domElement)
-
-    // Particles
-    const particleCount = 150
-    const geometry = new THREE.BufferGeometry()
-    const positions = new Float32Array(particleCount * 3)
-    const colors = new Float32Array(particleCount * 3)
-
-    const purple = new THREE.Color('#a78bfa')
-    const gold = new THREE.Color('#D4A853')
-
-    for (let i = 0; i < particleCount; i++) {
-      positions[i * 3] = (Math.random() - 0.5) * 10
-      positions[i * 3 + 1] = (Math.random() - 0.5) * 10
-      positions[i * 3 + 2] = (Math.random() - 0.5) * 5
-      const c = Math.random() > 0.7 ? gold : purple
-      colors[i * 3] = c.r
-      colors[i * 3 + 1] = c.g
-      colors[i * 3 + 2] = c.b
-    }
-
-    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-
-    const material = new THREE.PointsMaterial({
-      size: 0.04,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.7,
-      blending: THREE.AdditiveBlending,
-    })
-
-    const points = new THREE.Points(geometry, material)
-    scene.add(points)
-
-    let frameId: number
-    const animate = () => {
-      points.rotation.y += 0.0005
-      points.rotation.x += 0.0002
-      const pos = geometry.attributes.position.array as Float32Array
-      for (let i = 0; i < particleCount; i++) {
-        pos[i * 3 + 1] += 0.002
-        if (pos[i * 3 + 1] > 5) pos[i * 3 + 1] = -5
-      }
-      geometry.attributes.position.needsUpdate = true
-      renderer.render(scene, camera)
-      frameId = requestAnimationFrame(animate)
-    }
-    animate()
-
-    const onResize = () => {
-      if (!mount) return
-      const w = mount.clientWidth
-      const h = mount.clientHeight
-      camera.aspect = w / h
-      camera.updateProjectionMatrix()
-      renderer.setSize(w, h)
-    }
-    window.addEventListener('resize', onResize)
-
-    return () => {
-      cancelAnimationFrame(frameId)
-      window.removeEventListener('resize', onResize)
-      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement)
-      renderer.dispose()
-      geometry.dispose()
-      material.dispose()
-    }
-  }, [])
-
-  return <div ref={mountRef} className="absolute inset-0 w-full h-full pointer-events-none" />
+function ImageCard({ photo, className = '' }: { photo: string, className?: string }) {
+  return (
+    <div className={`relative rounded-3xl overflow-hidden border border-white/[0.1] ${className}`}
+      style={{ boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
+      <img src={photo} alt=""
+        className="w-full h-full object-cover"
+        style={{ filter: 'saturate(0.8) contrast(1.05)', mixBlendMode: 'luminosity' }} />
+      {/* Purple tint layer so it merges with theme */}
+      <div className="absolute inset-0"
+        style={{ background: 'rgba(124,58,237,0.25)' }} />
+      {/* Fallback solid color behind in case blend fails */}
+      <div className="absolute inset-0 -z-10 bg-[#2a1b4a]" />
+    </div>
+  )
 }
 
 // ══════════════════════════════════
-// Three.js Dumbbells — floating in hero
+// Three.js DUMBBELLS — background only, drifts slowly
 // ══════════════════════════════════
 function DumbbellsCanvas() {
   const mountRef = useRef<HTMLDivElement>(null)
@@ -445,7 +367,7 @@ function DumbbellsCanvas() {
 
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 1000)
-    camera.position.z = 10
+    camera.position.z = 14
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
     renderer.setSize(width, height)
@@ -453,45 +375,50 @@ function DumbbellsCanvas() {
     renderer.setClearColor(0x000000, 0)
     mount.appendChild(renderer.domElement)
 
-    const light1 = new THREE.DirectionalLight(0xffffff, 1)
-    light1.position.set(5, 5, 5)
-    scene.add(light1)
-    const light2 = new THREE.PointLight(0x7c3aed, 2, 20)
-    light2.position.set(-3, 2, 4)
-    scene.add(light2)
-    const light3 = new THREE.PointLight(0xD4A853, 1.5, 20)
-    light3.position.set(3, -2, 4)
-    scene.add(light3)
-    scene.add(new THREE.AmbientLight(0x404080, 0.5))
+    scene.add(new THREE.AmbientLight(0x404080, 0.6))
+    const l1 = new THREE.DirectionalLight(0xffffff, 0.8)
+    l1.position.set(5, 5, 5)
+    scene.add(l1)
+    const l2 = new THREE.PointLight(0x7c3aed, 2, 30)
+    l2.position.set(-5, 3, 5)
+    scene.add(l2)
+    const l3 = new THREE.PointLight(0xD4A853, 1.5, 30)
+    l3.position.set(5, -3, 5)
+    scene.add(l3)
 
-    const dumbbells: { group: THREE.Group; speed: number; offset: number }[] = []
+    const dumbbells: { group: THREE.Group; speed: number; offset: number; floatSpeed: number }[] = []
 
     const makeDumbbell = (color: number) => {
       const group = new THREE.Group()
       const barMat = new THREE.MeshStandardMaterial({ color: 0x888888, metalness: 0.9, roughness: 0.3 })
       const plateMat = new THREE.MeshStandardMaterial({ color, metalness: 0.7, roughness: 0.4 })
 
-      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.08, 0.08, 1.5, 16), barMat)
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 2, 16), barMat)
       bar.rotation.z = Math.PI / 2
       group.add(bar)
 
-      const plateGeom = new THREE.CylinderGeometry(0.35, 0.35, 0.2, 24)
-      const p1 = new THREE.Mesh(plateGeom, plateMat); p1.rotation.z = Math.PI / 2; p1.position.x = 0.7; group.add(p1)
-      const p2 = new THREE.Mesh(plateGeom, plateMat); p2.rotation.z = Math.PI / 2; p2.position.x = -0.7; group.add(p2)
+      const plateGeom = new THREE.CylinderGeometry(0.5, 0.5, 0.3, 24)
+      const p1 = new THREE.Mesh(plateGeom, plateMat); p1.rotation.z = Math.PI / 2; p1.position.x = 0.95; group.add(p1)
+      const p2 = new THREE.Mesh(plateGeom, plateMat); p2.rotation.z = Math.PI / 2; p2.position.x = -0.95; group.add(p2)
 
       return group
     }
 
-    const colors = [0x7c3aed, 0xD4A853, 0xa78bfa, 0x5b21b6, 0xD4A853, 0x7c3aed]
-    for (let i = 0; i < 6; i++) {
+    const colors = [0x7c3aed, 0xD4A853, 0xa78bfa, 0x5b21b6, 0xD4A853, 0x7c3aed, 0xa78bfa, 0x7c3aed]
+    for (let i = 0; i < 8; i++) {
       const d = makeDumbbell(colors[i])
-      d.position.x = (Math.random() - 0.5) * 12
-      d.position.y = (Math.random() - 0.5) * 6
-      d.position.z = (Math.random() - 0.5) * 4
+      d.position.x = (Math.random() - 0.5) * 20
+      d.position.y = (Math.random() - 0.5) * 14
+      d.position.z = (Math.random() - 0.5) * 6
       d.rotation.x = Math.random() * Math.PI
       d.rotation.y = Math.random() * Math.PI
       scene.add(d)
-      dumbbells.push({ group: d, speed: 0.002 + Math.random() * 0.004, offset: Math.random() * Math.PI * 2 })
+      dumbbells.push({
+        group: d,
+        speed: 0.001 + Math.random() * 0.002,
+        offset: Math.random() * Math.PI * 2,
+        floatSpeed: 0.0008 + Math.random() * 0.0012,
+      })
     }
 
     let frameId: number
@@ -500,8 +427,8 @@ function DumbbellsCanvas() {
       const t = clock.getElapsedTime()
       dumbbells.forEach((d) => {
         d.group.rotation.x += d.speed
-        d.group.rotation.y += d.speed * 0.7
-        d.group.position.y += Math.sin(t + d.offset) * 0.003
+        d.group.rotation.y += d.speed * 0.6
+        d.group.position.y += Math.sin(t * d.floatSpeed * 10 + d.offset) * 0.003
       })
       renderer.render(scene, camera)
       frameId = requestAnimationFrame(animate)
@@ -526,90 +453,11 @@ function DumbbellsCanvas() {
     }
   }, [])
 
-  return <div ref={mountRef} className="absolute inset-0 w-full h-full pointer-events-none z-[5]" />
+  return <div ref={mountRef} className="absolute inset-0 w-full h-full" />
 }
 
 // ══════════════════════════════════
-// Three.js Rotating Barbell — for feature sections
-// ══════════════════════════════════
-function BarbellCanvas({ accentColor }: { accentColor: string }) {
-  const mountRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!mountRef.current) return
-    const mount = mountRef.current
-    const width = mount.clientWidth
-    const height = mount.clientHeight
-
-    const scene = new THREE.Scene()
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100)
-    camera.position.z = 6
-
-    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true })
-    renderer.setSize(width, height)
-    renderer.setPixelRatio(window.devicePixelRatio)
-    renderer.setClearColor(0x000000, 0)
-    mount.appendChild(renderer.domElement)
-
-    scene.add(new THREE.AmbientLight(0x606090, 0.6))
-    const l1 = new THREE.DirectionalLight(0xffffff, 1)
-    l1.position.set(3, 3, 5)
-    scene.add(l1)
-    const glow = new THREE.PointLight(new THREE.Color(accentColor).getHex(), 2, 10)
-    glow.position.set(0, 0, 2)
-    scene.add(glow)
-
-    const group = new THREE.Group()
-    const barMat = new THREE.MeshStandardMaterial({ color: 0x999999, metalness: 0.95, roughness: 0.2 })
-    const plateMat = new THREE.MeshStandardMaterial({ color: new THREE.Color(accentColor), metalness: 0.7, roughness: 0.3 })
-
-    const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.12, 4, 16), barMat)
-    bar.rotation.z = Math.PI / 2
-    group.add(bar)
-
-    const plateGeom = new THREE.CylinderGeometry(0.6, 0.6, 0.25, 32)
-    for (let i = 0; i < 2; i++) {
-      const plateOuter = new THREE.Mesh(plateGeom, plateMat); plateOuter.rotation.z = Math.PI / 2
-      plateOuter.position.x = i === 0 ? 1.8 : -1.8; group.add(plateOuter)
-      const plateInner = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.45, 0.28, 32), plateMat)
-      plateInner.rotation.z = Math.PI / 2
-      plateInner.position.x = i === 0 ? 1.5 : -1.5; group.add(plateInner)
-    }
-
-    scene.add(group)
-
-    let frameId: number
-    const animate = () => {
-      group.rotation.y += 0.006
-      group.rotation.x = Math.sin(Date.now() * 0.0005) * 0.15
-      renderer.render(scene, camera)
-      frameId = requestAnimationFrame(animate)
-    }
-    animate()
-
-    const onResize = () => {
-      if (!mount) return
-      const w = mount.clientWidth
-      const h = mount.clientHeight
-      camera.aspect = w / h
-      camera.updateProjectionMatrix()
-      renderer.setSize(w, h)
-    }
-    window.addEventListener('resize', onResize)
-
-    return () => {
-      cancelAnimationFrame(frameId)
-      window.removeEventListener('resize', onResize)
-      if (mount.contains(renderer.domElement)) mount.removeChild(renderer.domElement)
-      renderer.dispose()
-    }
-  }, [accentColor])
-
-  return <div ref={mountRef} className="absolute inset-0 w-full h-full pointer-events-none" />
-}
-
-// ══════════════════════════════════
-// FEATURE SECTION — big photo background + Lottie on top + 3D barbell
+// FEATURE SECTION — photo card + Lottie peeking from outside corner
 // ══════════════════════════════════
 function FeatureSection({ id, number, kicker, kickerColor, title, description, pills, photo, lottie, imageLeft }: {
   id: string; number: string; kicker: string; kickerColor: string
@@ -630,27 +478,20 @@ function FeatureSection({ id, number, kicker, kickerColor, title, description, p
     ? 'bg-[#D4A853]/15 text-[#D4A853] border border-[#D4A853]/30'
     : 'bg-[#7c3aed]/20 text-[#a78bfa] border border-[#7c3aed]/30'
 
+  // Lottie peeks from a different corner based on layout side
   const visual = (
-    <div className="relative w-full aspect-[4/5] rounded-3xl overflow-hidden border border-white/[0.1]"
-      style={{ boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
-      {/* Big photo as the entire visual */}
-      <img src={photo} alt="" className="w-full h-full object-cover" />
-      <div className="absolute inset-0"
-        style={{ background: `linear-gradient(180deg, transparent 30%, rgba(15,10,31,0.6) 100%)` }} />
-
-      {/* 3D rotating barbell overlay */}
-      <div className="absolute inset-0">
-        <BarbellCanvas accentColor={kickerColor} />
-      </div>
-
-      {/* Lottie big, on top of photo */}
-      <div className="absolute bottom-6 right-6 w-48 h-48 pointer-events-none">
-        <div className="absolute inset-0 rounded-full blur-2xl opacity-50"
-          style={{ background: `radial-gradient(circle, ${kickerColor}, transparent 70%)` }} />
-        <div className="relative w-full h-full">
+    <div className="relative">
+      <ImageCard photo={photo} className="aspect-[4/5] w-full" />
+      {/* Lottie outside the card, peeking */}
+      {imageLeft ? (
+        <div className="absolute -top-12 -left-12 w-40 h-40 z-20 pointer-events-none">
           <LottiePlayer src={lottie} className="w-full h-full" />
         </div>
-      </div>
+      ) : (
+        <div className="absolute -top-12 -right-12 w-40 h-40 z-20 pointer-events-none">
+          <LottiePlayer src={lottie} className="w-full h-full" />
+        </div>
+      )}
     </div>
   )
 
@@ -689,7 +530,7 @@ function FeatureSection({ id, number, kicker, kickerColor, title, description, p
 }
 
 // ══════════════════════════════════
-// HOW IT WORKS — tilt cards, Lottie inside each
+// HOW IT WORKS — tilt cards with Lotties inside
 // ══════════════════════════════════
 function HowItWorksSection() {
   const [visible, setVisible] = useState(false)
@@ -768,7 +609,7 @@ function TiltStepCard({ step, index, visible }: {
 }
 
 // ══════════════════════════════════
-// LOGIN CARD
+// LOGIN CARD — bigger, more prominent
 // ══════════════════════════════════
 function LoginCard({ onLogin }: Props) {
   const [email, setEmail] = useState('')
@@ -790,26 +631,40 @@ function LoginCard({ onLogin }: Props) {
   }
 
   return (
-    <div className="bg-white/[0.05] backdrop-blur-xl border border-white/[0.12] rounded-2xl p-10"
-      style={{ boxShadow: '0 0 100px rgba(124,58,237,0.2), 0 25px 70px rgba(0,0,0,0.5)' }}>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.15] rounded-3xl p-12"
+      style={{ boxShadow: '0 0 120px rgba(124,58,237,0.25), 0 30px 80px rgba(0,0,0,0.6)' }}>
+      <div className="mb-8">
+        <h3 className="text-white text-3xl font-black tracking-tight mb-2">Welcome back.</h3>
+        <p className="text-white/60 text-sm">Sign in or create an account to get started.</p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-5">
         {error && (
-          <div className="bg-red-500/15 border border-red-500/40 rounded-xl px-3 py-2.5 text-xs text-red-200 text-left">{error}</div>
+          <div className="bg-red-500/15 border border-red-500/40 rounded-xl px-4 py-3 text-sm text-red-200 text-left">{error}</div>
         )}
         <InputField label="EMAIL" type="email" value={email} onChange={setEmail} placeholder="you@email.com"
           focused={focused === 'email'} onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
         <InputField label="PASSWORD" type="password" value={password} onChange={setPassword} placeholder="••••••••"
           focused={focused === 'password'} onFocus={() => setFocused('password')} onBlur={() => setFocused(null)} />
         <button type="submit" disabled={loading}
-          className="mt-3 py-4 rounded-xl text-white font-black text-sm tracking-[0.2em] transition-all active:scale-[0.98] disabled:opacity-60"
-          style={{ background: 'linear-gradient(135deg, #7c3aed, #5b21b6)', boxShadow: '0 10px 40px rgba(124,58,237,0.5)' }}>
-          {loading ? 'SIGNING IN...' : 'SIGN IN'}
+          className="mt-4 py-5 rounded-xl text-white font-black text-base tracking-[0.2em] transition-all active:scale-[0.98] disabled:opacity-60"
+          style={{ background: '#7c3aed', boxShadow: '0 12px 50px rgba(124,58,237,0.55)' }}>
+          {loading ? 'SIGNING IN...' : 'SIGN IN →'}
         </button>
       </form>
-      <p className="text-sm text-white/60 text-center mt-6">
-        New to FORGED?{' '}
-        <Link to="/register" className="text-[#D4A853] font-black hover:brightness-125 transition-all">Create account</Link>
-      </p>
+
+      <div className="flex items-center gap-4 my-6">
+        <div className="h-px flex-1 bg-white/10" />
+        <span className="text-white/40 text-xs font-black tracking-[0.2em]">OR</span>
+        <div className="h-px flex-1 bg-white/10" />
+      </div>
+
+      <Link to="/register"
+        className="block w-full py-5 rounded-xl text-center text-white font-black text-base tracking-[0.2em]
+          bg-white/[0.05] border border-white/[0.15] hover:bg-white/[0.1] hover:border-[#D4A853]/50
+          transition-all active:scale-[0.98]">
+        CREATE ACCOUNT
+      </Link>
     </div>
   )
 }
@@ -826,7 +681,7 @@ function InputField({ label, type, value, onChange, placeholder, focused, onFocu
       <label className="block text-xs font-black text-white/70 tracking-[0.18em] mb-2">{label}</label>
       <input type={type} value={value} onChange={e => onChange(e.target.value)} onFocus={onFocus} onBlur={onBlur}
         placeholder={placeholder} required
-        className={`w-full px-4 py-3.5 bg-white/[0.06] text-white text-base placeholder:text-white/30 border rounded-xl outline-none transition-all
+        className={`w-full px-4 py-4 bg-white/[0.06] text-white text-base placeholder:text-white/30 border rounded-xl outline-none transition-all
           ${focused ? 'border-[#7c3aed]/70 shadow-[0_0_0_3px_rgba(124,58,237,0.15)]' : 'border-white/[0.15] hover:border-white/[0.25]'}`}
       />
     </div>
