@@ -69,6 +69,9 @@ export const api = {
     logExercise: (workoutId: string, data: any) =>
       request<any>(`/workout/${workoutId}/exercises`, { method: 'POST', body: JSON.stringify(data) }),
 
+    delete: (id: string) =>
+      request<void>(`/workout/${id}`, { method: 'DELETE' }),
+
     logHome: (data: { date: string; exercisesCompleted: number; totalExercises: number }) =>
       request<any>('/workout/home', { method: 'POST', body: JSON.stringify(data) }),
 
