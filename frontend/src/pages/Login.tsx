@@ -50,7 +50,7 @@ export default function Login({ onLogin }: Props) {
 }
 
 // ══════════════════════════════════════════════════════════════════════
-// MOBILE
+// MOBILE — dumbbells bg, smaller logo box with Lottie peek
 // ══════════════════════════════════════════════════════════════════════
 function MobileLogin({ onLogin }: Props) {
   const [email, setEmail] = useState('')
@@ -73,6 +73,11 @@ function MobileLogin({ onLogin }: Props) {
 
   return (
     <div className="fixed inset-0 bg-[#0f0a1f] flex flex-col items-center justify-center px-6 overflow-hidden">
+      {/* Dumbbells background on mobile too */}
+      <div className="absolute inset-0 pointer-events-none z-0 opacity-35">
+        <DumbbellsCanvas />
+      </div>
+
       <div className="absolute inset-0 pointer-events-none"
         style={{
           background: 'radial-gradient(ellipse at 50% 30%, rgba(159,122,234,0.25) 0%, transparent 55%), radial-gradient(ellipse at 50% 80%, rgba(212,168,83,0.12) 0%, transparent 60%)'
@@ -83,9 +88,13 @@ function MobileLogin({ onLogin }: Props) {
           <div className="relative mb-6">
             <div className="absolute inset-0 rounded-full blur-3xl"
               style={{ background: 'radial-gradient(circle, rgba(159,122,234,0.5), transparent 70%)' }} />
-            {/* BIGGER logo box with scale trick — crops baked-in whitespace */}
-            <div className="relative w-44 h-44 rounded-3xl bg-white flex items-center justify-center shadow-2xl overflow-hidden">
-              <img src="/forgedlogo.png" alt="FORGED" className="w-full h-full object-contain scale-125" />
+            {/* Smaller box, logo scales larger inside */}
+            <div className="relative w-28 h-28 rounded-2xl bg-white flex items-center justify-center shadow-2xl overflow-hidden">
+              <img src="/forgedlogo.png" alt="FORGED" className="w-full h-full object-contain scale-150" />
+            </div>
+            {/* Lottie peeking from top-right of logo */}
+            <div className="absolute -top-8 -right-10 w-20 h-20 z-20 pointer-events-none">
+              <LottiePlayer src={LOTTIE.fitness} className="w-full h-full" />
             </div>
           </div>
           <p className="text-white text-4xl font-black tracking-[0.3em] mt-2">FORGED</p>
@@ -144,7 +153,7 @@ function WebLanding({ onLogin }: Props) {
   return (
     <div className="bg-[#0f0a1f] min-h-screen text-white relative">
 
-      {/* 3D DUMBBELLS — background only, behind all content */}
+      {/* 3D DUMBBELLS — background only */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-50">
         <DumbbellsCanvas />
       </div>
@@ -154,8 +163,8 @@ function WebLanding({ onLogin }: Props) {
         style={{ background: 'rgba(15,10,31,0.85)' }}>
         <div className="max-w-7xl mx-auto px-10 py-6 flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center shadow-lg overflow-hidden">
-              <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain scale-125" />
+            <div className="w-14 h-14 rounded-lg bg-white flex items-center justify-center shadow-lg overflow-hidden">
+              <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain scale-150" />
             </div>
             <span className="text-white text-2xl font-black tracking-[0.25em]">FORGED</span>
           </div>
@@ -186,7 +195,7 @@ function WebLanding({ onLogin }: Props) {
         </div>
       </nav>
 
-      {/* HERO — "Forged your body here" + image card + Lottie peeking corner */}
+      {/* HERO */}
       <section className="relative min-h-[92vh] flex items-center overflow-hidden z-10">
         <div className="relative max-w-7xl mx-auto px-10 py-24 grid grid-cols-2 gap-16 items-center w-full">
           <div>
@@ -199,8 +208,7 @@ function WebLanding({ onLogin }: Props) {
 
             <p className="text-white/85 text-lg leading-relaxed mb-10 max-w-xl"
               style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
-              Training, nutrition, and transformation in one app. No fluff. No guesswork.
-              Just the data and discipline to get stronger, week after week.
+              Training, nutrition, and transformation in one place. The tools and data you need to build strength and measure your progress.
             </p>
 
             <div className="flex gap-4" style={{ animation: 'fadeInUp 0.8s 0.6s ease-out both' }}>
@@ -224,12 +232,11 @@ function WebLanding({ onLogin }: Props) {
             </div>
           </div>
 
-          {/* Right: Image card with Lottie peeking from top-right corner (Discord-style) */}
+          {/* Hero image + Lottie peek */}
           <div className="relative hidden lg:block"
             style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
             <div className="relative">
               <ImageCard photo={PHOTO.hero} className="aspect-[4/5] w-full" />
-              {/* Lottie peeks over top-right, outside the card */}
               <div className="absolute -top-16 -right-8 w-48 h-48 z-20 pointer-events-none">
                 <LottiePlayer src={LOTTIE.fitness} className="w-full h-full" />
               </div>
@@ -244,7 +251,7 @@ function WebLanding({ onLogin }: Props) {
         id="feat-training"
         number="01" kicker="TRAINING" kickerColor="#a78bfa"
         title="Every rep. Every set. Every PR."
-        description="Live volume tracking, automatic PR detection, rest timers that actually work, and a library of every exercise you have ever done."
+        description="Live volume tracking, automatic PR detection, customizable rest timers, and a complete exercise library."
         pills={['Live volume', 'PR detection', 'Rest timer', 'Cardio + strength']}
         photo={PHOTO.training}
         lottie={LOTTIE.weightlifting}
@@ -255,31 +262,32 @@ function WebLanding({ onLogin }: Props) {
         id="feat-nutrition"
         number="02" kicker="NUTRITION" kickerColor="#D4A853"
         title="Know what you eat. Hit your numbers."
-        description="Barcode scan, photo capture, custom recipes, and daily macro goals that adjust to your training."
+        description="Barcode scanning, photo capture, custom recipes, and daily macro targets that adapt to your training load."
         pills={['Barcode scan', 'Macro goals', 'Custom recipes', 'Fasting tracker']}
         photo={PHOTO.nutrition}
         lottie={LOTTIE.fasting}
         imageLeft={true}
+        tint={false}
       />
 
       <FeatureSection
         id="feat-transformation"
         number="03" kicker="TRANSFORMATION" kickerColor="#a78bfa"
         title="See the change. Own the progress."
-        description="Weekly recaps, progress photos with privacy lock, streak tracking, and transformations you can actually share."
+        description="Weekly progress recaps, private progress photos, streak tracking, and shareable transformation summaries."
         pills={['Weekly recap', 'Streaks', 'Achievements', 'Measurements']}
         photo={PHOTO.transformation}
         lottie={LOTTIE.running}
         imageLeft={false}
+        tint={false}
       />
 
-      {/* BIG FINAL CTA — "Get forged." */}
+      {/* FINAL CTA */}
       <section ref={loginRef} className="relative py-40 px-10 overflow-hidden z-10">
         <div className="absolute inset-0"
           style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.35) 0%, transparent 65%)' }} />
 
         <div className="relative max-w-6xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
-          {/* Left: Big CTA message */}
           <div>
             <p className="text-[#D4A853] text-sm font-black tracking-[0.3em] mb-6">
               START YOUR TRANSFORMATION
@@ -288,20 +296,19 @@ function WebLanding({ onLogin }: Props) {
               Get<br />forged.
             </h2>
             <p className="text-white/75 text-xl leading-relaxed mb-8 max-w-md">
-              Create your account. First workout in 90 seconds. No credit card, no noise.
+              Create your account and log your first workout in under two minutes.
             </p>
             <div className="flex items-center gap-3">
               <div className="w-14 h-14 flex-shrink-0">
                 <LottiePlayer src={LOTTIE.loading} className="w-full h-full" />
               </div>
               <div className="text-white/60 text-sm">
-                <p className="font-black tracking-wide">Free forever plan</p>
-                <p className="text-white/40 text-xs">No hidden fees. No upsells.</p>
+                <p className="font-black tracking-wide">Free plan available</p>
+                <p className="text-white/40 text-xs">All features. No credit card required.</p>
               </div>
             </div>
           </div>
 
-          {/* Right: Login form */}
           <div>
             <LoginCard onLogin={onLogin} />
           </div>
@@ -311,8 +318,8 @@ function WebLanding({ onLogin }: Props) {
       <footer className="py-16 px-10 relative z-10">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-xl bg-white flex items-center justify-center shadow-lg overflow-hidden">
-              <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain scale-125" />
+            <div className="w-14 h-14 rounded-lg bg-white flex items-center justify-center shadow-lg overflow-hidden">
+              <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain scale-150" />
             </div>
             <div>
               <p className="text-white text-lg font-black tracking-[0.25em]">FORGED</p>
@@ -335,26 +342,23 @@ function WebLanding({ onLogin }: Props) {
 }
 
 // ══════════════════════════════════
-// ImageCard — photo with luminosity blend + purple tint so it merges with theme
+// ImageCard — tint optional
 // ══════════════════════════════════
-function ImageCard({ photo, className = '' }: { photo: string, className?: string }) {
+function ImageCard({ photo, className = '', tint = true }: { photo: string, className?: string, tint?: boolean }) {
   return (
     <div className={`relative rounded-3xl overflow-hidden border border-white/[0.1] ${className}`}
       style={{ boxShadow: '0 40px 80px rgba(0,0,0,0.6)' }}>
       <img src={photo} alt=""
         className="w-full h-full object-cover"
-        style={{ filter: 'saturate(0.8) contrast(1.05)', mixBlendMode: 'luminosity' }} />
-      {/* Purple tint layer so it merges with theme */}
-      <div className="absolute inset-0"
-        style={{ background: 'rgba(124,58,237,0.25)' }} />
-      {/* Fallback solid color behind in case blend fails */}
-      <div className="absolute inset-0 -z-10 bg-[#2a1b4a]" />
+        style={tint ? { filter: 'saturate(0.8) contrast(1.05)', mixBlendMode: 'luminosity' } : undefined} />
+      {tint && <div className="absolute inset-0" style={{ background: 'rgba(124,58,237,0.25)' }} />}
+      {tint && <div className="absolute inset-0 -z-10 bg-[#2a1b4a]" />}
     </div>
   )
 }
 
 // ══════════════════════════════════
-// Three.js DUMBBELLS — background only, drifts slowly
+// Three.js DUMBBELLS — background
 // ══════════════════════════════════
 function DumbbellsCanvas() {
   const mountRef = useRef<HTMLDivElement>(null)
@@ -457,12 +461,12 @@ function DumbbellsCanvas() {
 }
 
 // ══════════════════════════════════
-// FEATURE SECTION — photo card + Lottie peeking from outside corner
+// FEATURE SECTION — supports tint toggle
 // ══════════════════════════════════
-function FeatureSection({ id, number, kicker, kickerColor, title, description, pills, photo, lottie, imageLeft }: {
+function FeatureSection({ id, number, kicker, kickerColor, title, description, pills, photo, lottie, imageLeft, tint = true }: {
   id: string; number: string; kicker: string; kickerColor: string
   title: string; description: string; pills: string[]
-  photo: string; lottie: string; imageLeft: boolean
+  photo: string; lottie: string; imageLeft: boolean; tint?: boolean
 }) {
   const [visible, setVisible] = useState(false)
   const ref = useRef<HTMLElement>(null)
@@ -478,11 +482,9 @@ function FeatureSection({ id, number, kicker, kickerColor, title, description, p
     ? 'bg-[#D4A853]/15 text-[#D4A853] border border-[#D4A853]/30'
     : 'bg-[#7c3aed]/20 text-[#a78bfa] border border-[#7c3aed]/30'
 
-  // Lottie peeks from a different corner based on layout side
   const visual = (
     <div className="relative">
-      <ImageCard photo={photo} className="aspect-[4/5] w-full" />
-      {/* Lottie outside the card, peeking */}
+      <ImageCard photo={photo} className="aspect-[4/5] w-full" tint={tint} />
       {imageLeft ? (
         <div className="absolute -top-12 -left-12 w-40 h-40 z-20 pointer-events-none">
           <LottiePlayer src={lottie} className="w-full h-full" />
@@ -530,7 +532,7 @@ function FeatureSection({ id, number, kicker, kickerColor, title, description, p
 }
 
 // ══════════════════════════════════
-// HOW IT WORKS — tilt cards with Lotties inside
+// HOW IT WORKS — professional copy
 // ══════════════════════════════════
 function HowItWorksSection() {
   const [visible, setVisible] = useState(false)
@@ -543,9 +545,9 @@ function HowItWorksSection() {
   }, [])
 
   const steps = [
-    { n: '01', title: 'Track', desc: 'Log your workouts, meals, and measurements. Fast entry, no friction.', color: '#a78bfa', lottie: LOTTIE.splitjump },
-    { n: '02', title: 'Train', desc: 'Follow your routine. See last session, hit PRs, beat yesterday.', color: '#D4A853', lottie: LOTTIE.deadbug },
-    { n: '03', title: 'Transform', desc: 'Weekly recaps show your progress. Photos, streaks, numbers that add up.', color: '#a78bfa', lottie: LOTTIE.running },
+    { n: '01', title: 'Track', desc: 'Log workouts, meals, and measurements with quick entry tools.', color: '#a78bfa', lottie: LOTTIE.splitjump },
+    { n: '02', title: 'Train', desc: 'Follow your routine with session history, PR tracking, and progress comparisons.', color: '#D4A853', lottie: LOTTIE.deadbug },
+    { n: '03', title: 'Transform', desc: 'Review weekly recaps with progress photos, streaks, and trend analysis.', color: '#a78bfa', lottie: LOTTIE.running },
   ]
 
   return (
@@ -609,7 +611,7 @@ function TiltStepCard({ step, index, visible }: {
 }
 
 // ══════════════════════════════════
-// LOGIN CARD — bigger, more prominent
+// LOGIN CARD — branded header with logo
 // ══════════════════════════════════
 function LoginCard({ onLogin }: Props) {
   const [email, setEmail] = useState('')
@@ -633,9 +635,14 @@ function LoginCard({ onLogin }: Props) {
   return (
     <div className="bg-white/[0.04] backdrop-blur-xl border border-white/[0.15] rounded-3xl p-12"
       style={{ boxShadow: '0 0 120px rgba(124,58,237,0.25), 0 30px 80px rgba(0,0,0,0.6)' }}>
-      <div className="mb-8">
-        <h3 className="text-white text-3xl font-black tracking-tight mb-2">Welcome back.</h3>
-        <p className="text-white/60 text-sm">Sign in or create an account to get started.</p>
+      <div className="flex items-center gap-3 mb-8">
+        <div className="w-12 h-12 rounded-lg bg-white flex items-center justify-center shadow-lg overflow-hidden flex-shrink-0">
+          <img src="/forgedlogo.png" alt="" className="w-full h-full object-contain scale-150" />
+        </div>
+        <div>
+          <h3 className="text-white text-2xl font-black tracking-tight">Welcome back.</h3>
+          <p className="text-white/60 text-xs">Sign in to continue your progress.</p>
+        </div>
       </div>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-5">
