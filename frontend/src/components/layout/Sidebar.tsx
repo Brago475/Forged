@@ -2,8 +2,7 @@ import { useTheme } from '../../hooks/useTheme'
 import { Icon, I } from '../ui/Icon'
 import { NAV, type TabId } from './nav'
 import { SettingsDropdown } from './SettingsDropdown'
-import logo from '../../public/logo.png'
-
+import logo from '/logo-removebg-preview.png'
 interface SidebarProps {
   active: TabId
   onChange: (tab: TabId) => void
