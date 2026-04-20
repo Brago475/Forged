@@ -62,7 +62,7 @@ function MobileLogin({ onLogin }: Props) {
             <div className="absolute inset-0 rounded-full blur-3xl"
               style={{ background: 'radial-gradient(circle, rgba(159,122,234,0.4), transparent 70%)' }} />
             <div className="relative w-32 h-32 rounded-full bg-white flex items-center justify-center shadow-2xl">
-              <img src="/forgedlogo.png" alt="FORGED" className="w-24 h-24 object-contain" />
+              <img src="/forgedlogo.png" alt="FORGED" className="w-32 h-32 object-cover scale-110" />
             </div>
           </div>
           <p className="text-white text-3xl font-black tracking-[0.3em]">FORGED</p>
@@ -127,7 +127,7 @@ function WebLanding({ onLogin }: Props) {
         <div className="max-w-7xl mx-auto px-10 py-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-lg">
-              <img src="/forgedlogo.png" alt="" className="w-9 h-9 object-contain" />
+              <img src="/forgedlogo.png" alt="" className="w-11 h-11 object-cover scale-125" />
             </div>
             <span className="text-white text-xl font-black tracking-[0.25em]">FORGED</span>
           </div>
@@ -273,7 +273,7 @@ function WebLanding({ onLogin }: Props) {
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-white flex items-center justify-center shadow-lg">
-              <img src="/forgedlogo.png" alt="" className="w-9 h-9 object-contain" />
+              <img src="/forgedlogo.png" alt="" className="w-11 h-11 object-cover scale-125" />
             </div>
             <div>
               <p className="text-white text-base font-black tracking-[0.25em]">FORGED</p>
