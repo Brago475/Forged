@@ -16,29 +16,42 @@ A full-stack fitness tracking platform built for people who want real data on th
 
 ## Tech Stack
 
-<div align="center">
-
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" alt="React" width="64" height="64" />
-&nbsp;&nbsp;
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" alt="TypeScript" width="64" height="64" />
-&nbsp;&nbsp;
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" alt="Tailwind CSS" width="64" height="64" />
-&nbsp;&nbsp;
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" alt="Vite" width="64" height="64" />
-&nbsp;&nbsp;
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg" alt=".NET" width="64" height="64" />
-&nbsp;&nbsp;
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg" alt="C#" width="64" height="64" />
-&nbsp;&nbsp;
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="PostgreSQL" width="64" height="64" />
-&nbsp;&nbsp;
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker" width="64" height="64" />
-&nbsp;&nbsp;
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nginx/nginx-original.svg" alt="Nginx" width="64" height="64" />
-&nbsp;&nbsp;
-<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cloudflare/cloudflare-original.svg" alt="Cloudflare" width="64" height="64" />
-
-</div>
+<table align="center">
+  <tr>
+    <td align="center" width="120">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" width="72" height="72" alt="React" /><br /><sub><b>React</b></sub>
+    </td>
+    <td align="center" width="120">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" width="72" height="72" alt="TypeScript" /><br /><sub><b>TypeScript</b></sub>
+    </td>
+    <td align="center" width="120">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" width="72" height="72" alt="Tailwind CSS" /><br /><sub><b>Tailwind</b></sub>
+    </td>
+    <td align="center" width="120">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" width="72" height="72" alt="Vite" /><br /><sub><b>Vite</b></sub>
+    </td>
+    <td align="center" width="120">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/threejs/threejs-original.svg" width="72" height="72" alt="Three.js" /><br /><sub><b>Three.js</b></sub>
+    </td>
+  </tr>
+  <tr>
+    <td align="center" width="120">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg" width="72" height="72" alt=".NET" /><br /><sub><b>.NET 8</b></sub>
+    </td>
+    <td align="center" width="120">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg" width="72" height="72" alt="C#" /><br /><sub><b>C#</b></sub>
+    </td>
+    <td align="center" width="120">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" width="72" height="72" alt="PostgreSQL" /><br /><sub><b>PostgreSQL</b></sub>
+    </td>
+    <td align="center" width="120">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" width="72" height="72" alt="Docker" /><br /><sub><b>Docker</b></sub>
+    </td>
+    <td align="center" width="120">
+      <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cloudflare/cloudflare-original.svg" width="72" height="72" alt="Cloudflare" /><br /><sub><b>Cloudflare</b></sub>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -181,131 +194,27 @@ forged/
 
 ---
 
-## Getting Started
-
-### Prerequisites
-
-You need these installed before you start:
-
-- **Docker** and **Docker Compose** v2+
-- **Node.js** 20+ and **npm** (for frontend dev outside Docker)
-- **.NET 8 SDK** (for backend dev outside Docker)
-- **PostgreSQL client** (optional, for direct DB access with `psql`)
-- **Git**
-
-### Clone and setup
-
-```bash
-git clone https://github.com/Brago475/Forged.git
-cd Forged
-```
-
-### Environment variables
-
-Create a `.env` file at the repo root. See `.env.example` for the template.
-
-```bash
-# Database
-POSTGRES_DB=forged
-POSTGRES_USER=forged_user
-POSTGRES_PASSWORD=your_secure_password_here
-
-# Backend
-ASPNETCORE_ENVIRONMENT=Development
-JWT_SECRET=your_long_random_secret_here
-JWT_ISSUER=forgedgyms.com
-
-# Frontend
-VITE_API_URL=http://localhost:5000
-```
-
-### Run with Docker Compose
-
-The fastest way to get everything running:
-
-```bash
-docker compose up --build -d
-```
-
-This spins up three containers:
-- `forged-postgres` on port 5432
-- `forged-api` (.NET backend) on port 5000
-- `forged-frontend` (nginx serving the Vite build) on port 3001
-
-On first boot, Postgres will run `scripts/init.sql` automatically to create the schema.
-
-Visit **http://localhost:3001** to see the app.
-
-### Run frontend in dev mode (hot reload)
-
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-Dev server runs on `http://localhost:5173` with hot module replacement.
-
-### Run backend in dev mode
-
-```bash
-cd backend
-dotnet restore
-dotnet run
-```
-
-Backend runs on `http://localhost:5000`. Swagger docs at `http://localhost:5000/swagger`.
-
----
-
-## Database
-
-### Schema overview
+## Database Schema
 
 The initial schema is defined in `scripts/init.sql`. Key tables:
 
-- `users` - account info, physical stats, goals
-- `weight_entries` - daily weight logs with UNIQUE constraint per user per date
-- `workout_logs` - gym sessions with duration, notes, plan type
-- `exercise_logs` - individual exercises within a workout
-- `meal_entries` - food consumption records
-- `measurements` - body measurements over time
-- `progress_photos` - linked to timestamps with privacy flags
+- `users` — account info, physical stats, goals
+- `weight_entries` — daily weight logs with UNIQUE constraint per user per date
+- `workout_logs` — gym sessions with duration, notes, plan type
+- `exercise_logs` — individual exercises within a workout
+- `meal_entries` — food consumption records
+- `measurements` — body measurements over time
+- `progress_photos` — linked to timestamps with privacy flags
 
 All tables use UUID primary keys (`gen_random_uuid()`) and foreign key cascades on user deletion.
 
-### Connecting directly
-
-```bash
-docker exec -it forged-postgres psql -U forged_user -d forged
-```
-
-### Resetting the database
-
-```bash
-docker compose down -v     # removes volumes too
-docker compose up -d       # runs init.sql fresh
-```
-
 ---
 
-## Deployment
+## Deployment Architecture
 
-FORGED is deployed on a Proxmox VM with public access via Cloudflare Tunnel. No ports are exposed directly to the internet.
+FORGED is deployed on a **Proxmox VM** with public access routed through **Cloudflare Tunnel**. No ports are exposed directly to the internet.
 
-### Deploy command (Proxmox server)
-
-```bash
-cd ~/forged \
-  && git pull \
-  && docker compose up --build -d \
-  && docker compose restart forged-nginx \
-  && sudo systemctl restart cloudflared
-```
-
-### Cloudflare configuration
-
-Public traffic flow:
+### Traffic flow
 
 ```
 User → forgedgyms.com → Cloudflare Edge → Cloudflare Tunnel → Server:3001 (nginx)
@@ -313,15 +222,7 @@ User → forgedgyms.com → Cloudflare Edge → Cloudflare Tunnel → Server:300
                                                                    └─ backend container (via nginx proxy_pass)
 ```
 
-The tunnel config lives at `/etc/cloudflared/config.yml` on the server and routes `forgedgyms.com` to `http://localhost:3001`.
-
-### Cache invalidation
-
-Cloudflare aggressively caches built assets. After every deploy:
-
-1. Go to Cloudflare dashboard → Caching → Configuration
-2. Click **Purge Everything**
-3. Hard refresh the browser (`Cmd+Shift+R` on Mac, `Ctrl+Shift+R` on Windows)
+The tunnel config lives at `/etc/cloudflared/config.yml` on the server and routes `forgedgyms.com` to `http://localhost:3001`. All traffic is encrypted end-to-end, the origin server has no inbound ports open to the public internet, and Cloudflare handles DDoS protection and caching at the edge.
 
 ---
 
