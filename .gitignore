@@ -15,7 +15,7 @@ obj/
 **/obj/
 
 # Scripts folder (local dev only)
-scripts/
+# scripts/ - tracked; contains init.sql (DB schema, no secrets)
 
 # Env files (never commit secrets)
 .env
