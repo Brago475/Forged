@@ -1,242 +1,44 @@
 import { useState, useEffect, useRef } from 'react'
 import { Link } from 'react-router-dom'
-import * as THREE from 'three'
 import { api } from '../hooks/api'
 
 interface Props {
   onLogin: (token: string) => void
 }
 
+// ══════════════════════════════════
+// Unsplash fitness images
+// (Free, no attribution required for URL usage)
+// ══════════════════════════════════
+const IMG = {
+  hero: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1400&q=85&auto=format&fit=crop',
+  training: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=1200&q=85&auto=format&fit=crop',
+  nutrition: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=1200&q=85&auto=format&fit=crop',
+  transformation: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=1200&q=85&auto=format&fit=crop',
+}
+
 export default function Login({ onLogin }: Props) {
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 1024)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  return isMobile ? <MobileLogin onLogin={onLogin} /> : <WebLanding onLogin={onLogin} />
+}
+
+// ══════════════════════════════════════════════════════════════════════
+// MOBILE / APP VERSION — clean, focused, logo-first
+// ══════════════════════════════════════════════════════════════════════
+function MobileLogin({ onLogin }: Props) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [focused, setFocused] = useState<string | null>(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const mouseRef = useRef({ x: 0, y: 0 })
 
-  // ── Three.js scene ──
-  useEffect(() => {
-    if (!canvasRef.current) return
-
-    const canvas = canvasRef.current
-    const scene = new THREE.Scene()
-
-    // Camera
-    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000)
-    camera.position.z = 6
-
-    // Renderer
-    const renderer = new THREE.WebGLRenderer({
-      canvas,
-      alpha: true,
-      antialias: true,
-      powerPreference: 'high-performance',
-    })
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
-    renderer.setClearColor(0x000000, 0)
-
-    // ── Logo plane ──
-    const textureLoader = new THREE.TextureLoader()
-    const logoTexture = textureLoader.load('/logo-removebg-preview.png')
-    logoTexture.colorSpace = THREE.SRGBColorSpace
-    logoTexture.anisotropy = 16
-    logoTexture.minFilter = THREE.LinearMipmapLinearFilter
-    logoTexture.magFilter = THREE.LinearFilter
-
-    const logoGeometry = new THREE.PlaneGeometry(3, 3)
-    const logoMaterial = new THREE.MeshStandardMaterial({
-      map: logoTexture,
-      transparent: true,
-      metalness: 0.9,
-      roughness: 0.15,
-      emissive: new THREE.Color(0x6d28d9),
-      emissiveIntensity: 0.15,
-      side: THREE.DoubleSide,
-    })
-    const logoMesh = new THREE.Mesh(logoGeometry, logoMaterial)
-    scene.add(logoMesh)
-
-    // ── Glow plane behind logo ──
-    const glowGeometry = new THREE.PlaneGeometry(8, 8)
-    const glowCanvas = document.createElement('canvas')
-    glowCanvas.width = glowCanvas.height = 512
-    const ctx = glowCanvas.getContext('2d')!
-    const gradient = ctx.createRadialGradient(256, 256, 50, 256, 256, 256)
-    gradient.addColorStop(0, 'rgba(109, 40, 217, 0.9)')
-    gradient.addColorStop(0.35, 'rgba(109, 40, 217, 0.3)')
-    gradient.addColorStop(0.7, 'rgba(212, 168, 83, 0.08)')
-    gradient.addColorStop(1, 'rgba(0, 0, 0, 0)')
-    ctx.fillStyle = gradient
-    ctx.fillRect(0, 0, 512, 512)
-    const glowTexture = new THREE.CanvasTexture(glowCanvas)
-    const glowMaterial = new THREE.MeshBasicMaterial({
-      map: glowTexture,
-      transparent: true,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-    })
-    const glowMesh = new THREE.Mesh(glowGeometry, glowMaterial)
-    glowMesh.position.z = -1
-    scene.add(glowMesh)
-
-    // ── Orbital particles ──
-    const PARTICLE_COUNT = 300
-    const positions = new Float32Array(PARTICLE_COUNT * 3)
-    const colors = new Float32Array(PARTICLE_COUNT * 3)
-    const sizes = new Float32Array(PARTICLE_COUNT)
-    const speeds = new Float32Array(PARTICLE_COUNT)
-    const radii = new Float32Array(PARTICLE_COUNT)
-    const phases = new Float32Array(PARTICLE_COUNT)
-
-    const purpleColor = new THREE.Color(0x9f7aea)
-    const goldColor = new THREE.Color(0xd4a853)
-
-    for (let i = 0; i < PARTICLE_COUNT; i++) {
-      const radius = 2 + Math.random() * 3
-      const angle = Math.random() * Math.PI * 2
-      const height = (Math.random() - 0.5) * 4
-
-      positions[i * 3] = Math.cos(angle) * radius
-      positions[i * 3 + 1] = height
-      positions[i * 3 + 2] = Math.sin(angle) * radius * 0.5
-
-      const useGold = Math.random() > 0.5
-      const c = useGold ? goldColor : purpleColor
-      colors[i * 3] = c.r
-      colors[i * 3 + 1] = c.g
-      colors[i * 3 + 2] = c.b
-
-      sizes[i] = Math.random() * 0.04 + 0.01
-      speeds[i] = (Math.random() * 0.5 + 0.5) * (Math.random() > 0.5 ? 1 : -1) * 0.002
-      radii[i] = radius
-      phases[i] = angle
-    }
-
-    const particleGeometry = new THREE.BufferGeometry()
-    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3))
-    particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-    particleGeometry.setAttribute('size', new THREE.BufferAttribute(sizes, 1))
-
-    // Soft circular particle shape
-    const particleCanvas = document.createElement('canvas')
-    particleCanvas.width = particleCanvas.height = 64
-    const pctx = particleCanvas.getContext('2d')!
-    const pGradient = pctx.createRadialGradient(32, 32, 0, 32, 32, 32)
-    pGradient.addColorStop(0, 'rgba(255,255,255,1)')
-    pGradient.addColorStop(0.4, 'rgba(255,255,255,0.5)')
-    pGradient.addColorStop(1, 'rgba(255,255,255,0)')
-    pctx.fillStyle = pGradient
-    pctx.fillRect(0, 0, 64, 64)
-    const particleTexture = new THREE.CanvasTexture(particleCanvas)
-
-    const particleMaterial = new THREE.PointsMaterial({
-      size: 0.08,
-      map: particleTexture,
-      vertexColors: true,
-      transparent: true,
-      opacity: 0.85,
-      blending: THREE.AdditiveBlending,
-      depthWrite: false,
-      sizeAttenuation: true,
-    })
-    const particles = new THREE.Points(particleGeometry, particleMaterial)
-    scene.add(particles)
-
-    // ── Lights ──
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.4)
-    scene.add(ambientLight)
-    const purpleLight = new THREE.PointLight(0x6d28d9, 3, 15)
-    purpleLight.position.set(-3, 2, 3)
-    scene.add(purpleLight)
-    const goldLight = new THREE.PointLight(0xd4a853, 2.5, 12)
-    goldLight.position.set(3, -2, 3)
-    scene.add(goldLight)
-    const rimLight = new THREE.DirectionalLight(0xffffff, 0.5)
-    rimLight.position.set(0, 0, 5)
-    scene.add(rimLight)
-
-    // ── Resize ──
-    const resize = () => {
-      const parent = canvas.parentElement
-      if (!parent) return
-      const w = parent.clientWidth
-      const h = parent.clientHeight
-      renderer.setSize(w, h, false)
-      camera.aspect = w / h
-      camera.updateProjectionMatrix()
-    }
-    resize()
-    window.addEventListener('resize', resize)
-
-    // ── Mouse parallax ──
-    const onMouseMove = (e: MouseEvent) => {
-      mouseRef.current.x = (e.clientX / window.innerWidth - 0.5) * 2
-      mouseRef.current.y = (e.clientY / window.innerHeight - 0.5) * 2
-    }
-    window.addEventListener('mousemove', onMouseMove)
-
-    // ── Animation loop ──
-    const clock = new THREE.Clock()
-    let frameId: number
-
-    const animate = () => {
-      const t = clock.getElapsedTime()
-
-      // Logo: slow rotation + float
-      logoMesh.rotation.y = Math.sin(t * 0.3) * 0.25
-      logoMesh.rotation.x = Math.sin(t * 0.2) * 0.08
-      logoMesh.position.y = Math.sin(t * 0.6) * 0.12
-
-      // Glow: subtle breathing
-      const breathe = 1 + Math.sin(t * 0.8) * 0.05
-      glowMesh.scale.set(breathe, breathe, 1)
-      glowMesh.rotation.z = t * 0.05
-
-      // Particles orbit
-      const posAttr = particles.geometry.attributes.position as THREE.BufferAttribute
-      const posArr = posAttr.array as Float32Array
-      for (let i = 0; i < PARTICLE_COUNT; i++) {
-        const idx = i * 3
-        const angle = phases[i] + t * speeds[i] * 60
-        posArr[idx] = Math.cos(angle) * radii[i]
-        posArr[idx + 2] = Math.sin(angle) * radii[i] * 0.5
-        posArr[idx + 1] += Math.sin(t * 0.5 + i) * 0.002
-      }
-      posAttr.needsUpdate = true
-
-      // Parallax
-      const targetX = mouseRef.current.x * 0.3
-      const targetY = -mouseRef.current.y * 0.2
-      camera.position.x += (targetX - camera.position.x) * 0.03
-      camera.position.y += (targetY - camera.position.y) * 0.03
-      camera.lookAt(0, 0, 0)
-
-      renderer.render(scene, camera)
-      frameId = requestAnimationFrame(animate)
-    }
-    animate()
-
-    // ── Cleanup ──
-    return () => {
-      cancelAnimationFrame(frameId)
-      window.removeEventListener('resize', resize)
-      window.removeEventListener('mousemove', onMouseMove)
-      logoGeometry.dispose()
-      logoMaterial.dispose()
-      logoTexture.dispose()
-      glowGeometry.dispose()
-      glowMaterial.dispose()
-      glowTexture.dispose()
-      particleGeometry.dispose()
-      particleMaterial.dispose()
-      particleTexture.dispose()
-      renderer.dispose()
-    }
-  }, [])
-
-  // ── Form submit ──
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError('')
@@ -253,176 +55,83 @@ export default function Login({ onLogin }: Props) {
   }
 
   return (
-    <div className="fixed inset-0 bg-[#050507] overflow-hidden">
-      {/* ─── Left side: 3D scene + marketing content ─── */}
-      <div className="absolute inset-0 lg:right-[480px]">
-        <canvas ref={canvasRef} className="absolute inset-0 w-full h-full" />
+    <div className="fixed inset-0 bg-[#050507] flex flex-col items-center justify-center px-6 overflow-hidden">
 
-        {/* Radial gradient vignette overlay */}
-        <div className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse at 30% 50%, transparent 0%, transparent 40%, rgba(5,5,7,0.6) 100%)'
-          }} />
+      {/* Ambient glow backdrop */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{
+          background: 'radial-gradient(ellipse at 50% 40%, rgba(109,40,217,0.15) 0%, transparent 60%)'
+        }} />
 
-        {/* Marketing content - only shown on desktop */}
-        <div className="absolute inset-0 hidden lg:flex flex-col justify-end p-16 pointer-events-none">
-          <div className="max-w-lg">
-            <p className="text-[10px] font-black text-[#D4A853] uppercase tracking-[0.25em] mb-4"
-              style={{ animation: 'fadeInUp 0.8s 0.2s ease-out both' }}>
-              TCW Studio
-            </p>
-            <h1 className="text-5xl xl:text-6xl font-black text-white leading-[1.05] mb-5"
-              style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
-              Track. Build.
-              <br />
-              <span className="bg-gradient-to-r from-[#9F7AEA] via-[#D4A853] to-[#9F7AEA] bg-clip-text text-transparent">
-                Transform.
-              </span>
-            </h1>
-            <p className="text-base text-white/60 leading-relaxed mb-8 max-w-md"
-              style={{ animation: 'fadeInUp 0.8s 0.6s ease-out both' }}>
-              Your complete fitness companion. From heavy compound lifts to precise macros,
-              forge the body you're working toward.
-            </p>
+      <div className="relative w-full max-w-sm flex flex-col items-center">
 
-            <div className="flex flex-wrap gap-2"
-              style={{ animation: 'fadeInUp 0.8s 0.8s ease-out both' }}>
-              <FeaturePill label="Training" />
-              <FeaturePill label="Nutrition" />
-              <FeaturePill label="Transformation" />
+        {/* Logo hero */}
+        <div className="flex flex-col items-center mb-12"
+          style={{ animation: 'fadeInUp 0.8s ease-out both' }}>
+          <div className="relative mb-6">
+            <div className="absolute inset-0 rounded-full blur-2xl"
+              style={{ background: 'radial-gradient(circle, rgba(109,40,217,0.4), transparent 70%)' }} />
+            <div className="relative w-28 h-28 rounded-full bg-white/[0.03] border border-white/[0.08]
+              flex items-center justify-center">
+              <img src="/logo-removebg-preview.png" alt="FORGED"
+                className="w-20 h-20 object-contain"
+                style={{ filter: 'drop-shadow(0 4px 20px rgba(109,40,217,0.5)) brightness(1.2)' }}
+              />
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* ─── Right side: login card ─── */}
-      <div className="absolute inset-0 lg:inset-auto lg:top-0 lg:right-0 lg:bottom-0 lg:w-[480px] flex items-center justify-center px-4 lg:px-0 pointer-events-none">
-
-        {/* Mobile marketing (over 3D scene) */}
-        <div className="absolute inset-0 lg:hidden flex flex-col justify-start items-center pt-16 pointer-events-none">
-          <p className="text-[10px] font-black text-[#D4A853] uppercase tracking-[0.25em] mb-3"
-            style={{ animation: 'fadeInUp 0.8s 0.2s ease-out both' }}>
-            TCW Studio
+          <p className="text-white text-2xl font-black tracking-[0.25em]">FORGED</p>
+          <p className="text-white/40 text-[11px] tracking-[0.15em] font-bold mt-1">
+            Track. Build. Transform.
           </p>
-          <h1 className="text-3xl font-black text-white leading-[1.1] text-center px-8"
-            style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
-            Track. Build.{' '}
-            <span className="bg-gradient-to-r from-[#9F7AEA] via-[#D4A853] to-[#9F7AEA] bg-clip-text text-transparent">
-              Transform.
-            </span>
-          </h1>
         </div>
 
-        {/* Card backdrop for desktop - separator from 3D */}
-        <div className="hidden lg:block absolute inset-0"
-          style={{
-            background: 'linear-gradient(to right, transparent, rgba(5,5,7,0.8) 20%, rgba(5,5,7,0.95))',
-            backdropFilter: 'blur(4px)',
-          }} />
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="w-full flex flex-col gap-3"
+          style={{ animation: 'fadeInUp 0.8s 0.2s ease-out both' }}>
 
-        {/* Login card */}
-        <div className="relative w-full max-w-sm px-8 py-10 lg:px-10 lg:py-12
-          lg:bg-white/[0.03] lg:border lg:border-white/[0.08]
-          rounded-3xl pointer-events-auto"
-          style={{
-            animation: 'fadeInUp 0.8s 0.3s ease-out both',
-            backdropFilter: 'blur(40px)',
-            boxShadow: '0 0 80px rgba(109,40,217,0.12), 0 20px 60px rgba(0,0,0,0.4)',
-          }}>
-
-          {/* Logo + wordmark */}
-          <div className="flex items-center justify-center gap-3 mb-1">
-            <div className="w-10 h-10 rounded-xl flex items-center justify-center"
-              style={{
-                background: 'linear-gradient(135deg, #6D28D9, #D4A853)',
-                boxShadow: '0 6px 20px rgba(109,40,217,0.4)',
-              }}>
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white"
-                strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6.5 6.5L17.5 17.5"/>
-                <path d="M2 12l2-2 2 2"/>
-                <path d="M18 12l2-2 2 2"/>
-              </svg>
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2.5 text-xs text-red-300"
+              style={{ animation: 'shake 0.4s ease-out' }}>
+              {error}
             </div>
-            <p className="text-2xl font-black text-white tracking-[0.2em]">FORGED</p>
-          </div>
-          <p className="text-center text-[11px] text-white/40 tracking-[0.15em] font-bold mb-10">
-            Welcome back
-          </p>
+          )}
 
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2.5 text-xs text-red-300"
-                style={{ animation: 'shake 0.4s ease-out' }}>
-                {error}
-              </div>
-            )}
+          <InputField
+            label="Email" type="email" value={email} onChange={setEmail}
+            placeholder="you@email.com"
+            focused={focused === 'email'}
+            onFocus={() => setFocused('email')} onBlur={() => setFocused(null)}
+          />
 
-            <InputField
-              label="Email"
-              type="email"
-              value={email}
-              onChange={setEmail}
-              placeholder="you@email.com"
-              focused={focused === 'email'}
-              onFocus={() => setFocused('email')}
-              onBlur={() => setFocused(null)}
-              icon={
-                <><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/></>
-              }
-            />
+          <InputField
+            label="Password" type="password" value={password} onChange={setPassword}
+            placeholder="••••••••"
+            focused={focused === 'password'}
+            onFocus={() => setFocused('password')} onBlur={() => setFocused(null)}
+          />
 
-            <InputField
-              label="Password"
-              type="password"
-              value={password}
-              onChange={setPassword}
-              placeholder="••••••••"
-              focused={focused === 'password'}
-              onFocus={() => setFocused('password')}
-              onBlur={() => setFocused(null)}
-              icon={
-                <><rect x="3" y="11" width="18" height="11" rx="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4"/></>
-              }
-            />
+          <button
+            type="submit"
+            disabled={loading}
+            className="mt-3 py-3.5 rounded-xl text-white font-black text-sm tracking-[0.15em] uppercase
+              transition-all active:scale-[0.98] disabled:opacity-60"
+            style={{
+              background: 'linear-gradient(135deg, #6D28D9, #4c1d95)',
+              boxShadow: '0 10px 30px rgba(109,40,217,0.4)',
+            }}>
+            {loading ? 'Signing in...' : 'Sign in'}
+          </button>
+        </form>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="relative mt-2 py-3.5 rounded-xl text-white font-black text-sm
-                tracking-[0.15em] uppercase overflow-hidden
-                transition-all active:scale-[0.98] disabled:opacity-60 disabled:cursor-wait"
-              style={{
-                background: 'linear-gradient(135deg, #6D28D9, #4c1d95)',
-                boxShadow: '0 10px 30px rgba(109,40,217,0.45), inset 0 1px 0 rgba(255,255,255,0.1)',
-              }}>
-              <span className="relative z-10">
-                {loading ? 'Signing in...' : 'Sign in'}
-              </span>
-              {/* Shine sweep on hover */}
-              <div className="absolute inset-0 -translate-x-full hover:translate-x-full transition-transform duration-1000"
-                style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)' }} />
-            </button>
-          </form>
-
-          <div className="flex items-center gap-3 my-6">
-            <div className="flex-1 h-[0.5px] bg-white/10" />
-            <span className="text-[10px] text-white/30 font-black tracking-[0.2em]">OR</span>
-            <div className="flex-1 h-[0.5px] bg-white/10" />
-          </div>
-
-          <p className="text-center text-xs text-white/50">
-            New to FORGED?{' '}
-            <Link to="/register" className="text-[#D4A853] font-black hover:brightness-125 transition-all">
-              Create account
-            </Link>
-          </p>
-        </div>
+        <p className="text-xs text-white/50 mt-8"
+          style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
+          New to FORGED?{' '}
+          <Link to="/register" className="text-[#D4A853] font-black hover:brightness-125 transition-all">
+            Create account
+          </Link>
+        </p>
       </div>
 
-      {/* Keyframes */}
       <style>{`
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(20px); }
@@ -438,64 +147,453 @@ export default function Login({ onLogin }: Props) {
   )
 }
 
-// ══════════════════════════════════
-// INPUT FIELD
-// ══════════════════════════════════
-function InputField({
-  label, type, value, onChange, placeholder, icon, focused, onFocus, onBlur,
-}: {
-  label: string
-  type: string
-  value: string
-  onChange: (v: string) => void
-  placeholder: string
-  icon: React.ReactNode
-  focused: boolean
-  onFocus: () => void
-  onBlur: () => void
-}) {
+// ══════════════════════════════════════════════════════════════════════
+// WEB / DESKTOP VERSION — full landing page with scrolling sections
+// ══════════════════════════════════════════════════════════════════════
+function WebLanding({ onLogin }: Props) {
+  const loginRef = useRef<HTMLDivElement>(null)
+
+  const scrollToLogin = () => {
+    loginRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+
   return (
-    <div>
-      <label className="block text-[10px] font-black text-white/40 uppercase tracking-[0.15em] mb-2">
-        {label}
-      </label>
-      <div className={`flex items-center gap-3 px-4 py-3 rounded-xl bg-white/[0.04]
-        border transition-all
-        ${focused
-          ? 'border-[#6D28D9]/60 shadow-[0_0_0_3px_rgba(109,40,217,0.1)]'
-          : 'border-white/[0.08] hover:border-white/[0.15]'}`}>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none"
-          stroke={focused ? '#D4A853' : 'rgba(255,255,255,0.4)'}
-          strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"
-          className="transition-colors flex-shrink-0">
-          {icon}
-        </svg>
-        <input
-          type={type}
-          value={value}
-          onChange={e => onChange(e.target.value)}
-          onFocus={onFocus}
-          onBlur={onBlur}
-          placeholder={placeholder}
-          required
-          className="flex-1 bg-transparent text-white text-sm placeholder:text-white/20 outline-none"
-        />
+    <div className="bg-[#050507] min-h-screen">
+
+      {/* NAV */}
+      <nav className="sticky top-0 z-50 backdrop-blur-xl bg-[#050507]/80 border-b border-white/[0.06]">
+        <div className="max-w-7xl mx-auto px-8 py-3.5 flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, #6D28D9, #D4A853)' }}>
+              <img src="/logo-removebg-preview.png" alt=""
+                className="w-6 h-6 object-contain"
+                style={{ filter: 'brightness(0) invert(1)' }}
+              />
+            </div>
+            <span className="text-white text-sm font-black tracking-[0.2em]">FORGED</span>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <button onClick={() => document.getElementById('feat-training')?.scrollIntoView({ behavior: 'smooth' })}
+              className="text-white/60 text-xs font-bold hover:text-white transition-colors hidden md:block">
+              Features
+            </button>
+            <button onClick={scrollToLogin}
+              className="text-white/60 text-xs font-bold hover:text-white transition-colors hidden md:block">
+              Sign in
+            </button>
+            <button onClick={scrollToLogin}
+              className="px-4 py-1.5 rounded-lg text-white text-xs font-black
+                hover:brightness-110 active:scale-95 transition-all"
+              style={{ background: 'linear-gradient(135deg, #6D28D9, #4c1d95)' }}>
+              Start free
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* ─── HERO ─── */}
+      <section className="relative min-h-[88vh] flex items-center overflow-hidden">
+        {/* Background image */}
+        <div className="absolute inset-0">
+          <img src={IMG.hero} alt="" className="w-full h-full object-cover opacity-40" />
+          <div className="absolute inset-0"
+            style={{
+              background: 'linear-gradient(135deg, rgba(5,5,7,0.95) 0%, rgba(5,5,7,0.75) 50%, rgba(42,24,16,0.85) 100%)'
+            }} />
+        </div>
+
+        {/* Purple radial glow */}
+        <div className="absolute inset-0 pointer-events-none"
+          style={{
+            background: 'radial-gradient(ellipse at 70% 30%, rgba(109,40,217,0.25) 0%, transparent 60%)'
+          }} />
+
+        <div className="relative max-w-7xl mx-auto px-8 py-20 grid grid-cols-2 gap-12 items-center w-full">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full mb-6
+              bg-[#D4A853]/10 border border-[#D4A853]/30"
+              style={{ animation: 'fadeInUp 0.8s ease-out both' }}>
+              <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853]" />
+              <span className="text-[#D4A853] text-[10px] font-black tracking-[0.2em] uppercase">
+                TCW Studio · v1.0
+              </span>
+            </div>
+
+            <h1 className="text-white text-6xl xl:text-7xl font-black leading-[1.05] tracking-tight mb-6"
+              style={{ animation: 'fadeInUp 0.8s 0.2s ease-out both' }}>
+              Forge the body
+              <br />
+              you're{' '}
+              <span className="bg-gradient-to-r from-[#9F7AEA] via-[#D4A853] to-[#9F7AEA] bg-clip-text text-transparent">
+                working toward
+              </span>
+              .
+            </h1>
+
+            <p className="text-white/60 text-base leading-relaxed mb-8 max-w-lg"
+              style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
+              Training, nutrition, and transformation in one app. No BS, no fluff, just the data
+              and discipline to get stronger.
+            </p>
+
+            <div className="flex gap-3"
+              style={{ animation: 'fadeInUp 0.8s 0.6s ease-out both' }}>
+              <button onClick={scrollToLogin}
+                className="group px-6 py-3 rounded-xl text-white text-xs font-black
+                  tracking-[0.12em] uppercase transition-all active:scale-95
+                  hover:brightness-110 flex items-center gap-2"
+                style={{
+                  background: 'linear-gradient(135deg, #6D28D9, #4c1d95)',
+                  boxShadow: '0 10px 30px rgba(109,40,217,0.4)',
+                }}>
+                Start training
+                <span className="transition-transform group-hover:translate-x-0.5">→</span>
+              </button>
+              <button onClick={scrollToLogin}
+                className="px-6 py-3 rounded-xl text-white text-xs font-black
+                  tracking-[0.12em] uppercase bg-white/[0.06] border border-white/[0.1]
+                  hover:bg-white/[0.1] active:scale-95 transition-all">
+                Sign in
+              </button>
+            </div>
+          </div>
+
+          {/* Hero image card */}
+          <div className="relative hidden lg:block"
+            style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
+            <div className="absolute -inset-4 rounded-3xl opacity-40 blur-2xl"
+              style={{ background: 'linear-gradient(135deg, #6D28D9, #D4A853)' }} />
+            <div className="relative aspect-[4/5] rounded-2xl overflow-hidden border border-white/[0.1]"
+              style={{ boxShadow: '0 30px 80px rgba(0,0,0,0.5)' }}>
+              <img src={IMG.hero} alt="" className="w-full h-full object-cover" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+              <div className="absolute bottom-6 left-6 right-6">
+                <p className="text-[10px] text-[#D4A853] font-black tracking-[0.2em] uppercase mb-1">
+                  Today's session
+                </p>
+                <p className="text-white text-sm font-black">Push Day · 4 exercises</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── FEATURE 1: TRAINING ─── */}
+      <FeatureSection
+        id="feat-training"
+        number="01"
+        kicker="Training"
+        kickerColor="#6D28D9"
+        title="Every rep. Every set. Every PR."
+        description="Live volume tracking, automatic PR detection, rest timers that actually work, and a library of every exercise you've ever done. Cardio, strength, duration - we handle it all."
+        pills={['Live volume', 'PR detection', 'Rest timer', 'Cardio + strength', 'Exercise library']}
+        image={IMG.training}
+        imageLeft={false}
+      />
+
+      {/* ─── FEATURE 2: NUTRITION ─── */}
+      <FeatureSection
+        id="feat-nutrition"
+        number="02"
+        kicker="Nutrition"
+        kickerColor="#D4A853"
+        title="Know what you eat. Hit your numbers."
+        description="Barcode scan, photo capture, custom recipes, and daily macro goals that adjust to your training. Intermittent fasting built in, no separate app needed."
+        pills={['Barcode scan', 'Macro goals', 'Custom recipes', 'Fasting tracker', 'Photo capture']}
+        image={IMG.nutrition}
+        imageLeft={true}
+      />
+
+      {/* ─── FEATURE 3: TRANSFORMATION ─── */}
+      <FeatureSection
+        id="feat-transformation"
+        number="03"
+        kicker="Transformation"
+        kickerColor="#6D28D9"
+        title="See the change. Own the progress."
+        description="Weekly recaps, progress photos with privacy lock, streak tracking, and transformations you can actually share. Your story, told in data."
+        pills={['Progress photos', 'Weekly recap', 'Streaks', 'Achievements', 'Measurements']}
+        image={IMG.transformation}
+        imageLeft={false}
+      />
+
+      {/* ─── FINAL CTA WITH LOGIN ─── */}
+      <section ref={loginRef} className="relative py-24 overflow-hidden">
+        <div className="absolute inset-0"
+          style={{
+            background: 'linear-gradient(180deg, #050507 0%, #1a0a2e 50%, #050507 100%)'
+          }} />
+        <div className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse at 50% 50%, rgba(109,40,217,0.2) 0%, transparent 70%)'
+          }} />
+
+        <div className="relative max-w-md mx-auto px-6 text-center">
+          <h2 className="text-white text-4xl font-black mb-3 tracking-tight">
+            Ready to{' '}
+            <span className="bg-gradient-to-r from-[#9F7AEA] to-[#D4A853] bg-clip-text text-transparent">
+              forge
+            </span>
+            ?
+          </h2>
+          <p className="text-white/50 text-sm mb-8">
+            Create your account. First workout in 90 seconds.
+          </p>
+
+          <LoginCard onLogin={onLogin} />
+        </div>
+      </section>
+
+      {/* ─── FOOTER ─── */}
+      <footer className="border-t border-white/[0.06] py-8">
+        <div className="max-w-7xl mx-auto px-8 flex flex-col sm:flex-row justify-between items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md flex items-center justify-center overflow-hidden"
+              style={{ background: 'linear-gradient(135deg, #6D28D9, #D4A853)' }}>
+              <img src="/logo-removebg-preview.png" alt="" className="w-4 h-4 object-contain"
+                style={{ filter: 'brightness(0) invert(1)' }}
+              />
+            </div>
+            <p className="text-white/40 text-[11px] font-bold">
+              © 2026 TCW Studio · FORGED
+            </p>
+          </div>
+          <div className="flex gap-5">
+            <span className="text-white/40 text-[11px] font-bold hover:text-white/70 transition-colors cursor-pointer">Privacy</span>
+            <span className="text-white/40 text-[11px] font-bold hover:text-white/70 transition-colors cursor-pointer">Terms</span>
+            <span className="text-white/40 text-[11px] font-bold hover:text-white/70 transition-colors cursor-pointer">Contact</span>
+          </div>
+        </div>
+      </footer>
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-4px); }
+          75% { transform: translateX(4px); }
+        }
+      `}</style>
+    </div>
+  )
+}
+
+// ══════════════════════════════════
+// FEATURE SECTION (reused)
+// ══════════════════════════════════
+function FeatureSection({
+  id, number, kicker, kickerColor, title, description, pills, image, imageLeft,
+}: {
+  id: string
+  number: string
+  kicker: string
+  kickerColor: string
+  title: string
+  description: string
+  pills: string[]
+  image: string
+  imageLeft: boolean
+}) {
+  const [visible, setVisible] = useState(false)
+  const ref = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      ([entry]) => entry.isIntersecting && setVisible(true),
+      { threshold: 0.2 }
+    )
+    if (ref.current) obs.observe(ref.current)
+    return () => obs.disconnect()
+  }, [])
+
+  const pillColor = kickerColor === '#D4A853' ? 'text-[#D4A853] bg-[#D4A853]/10' : 'text-[#9F7AEA] bg-[#6D28D9]/15'
+
+  return (
+    <section id={id} ref={ref} className="py-24 px-8 relative">
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+
+        {imageLeft && (
+          <div className={`order-2 lg:order-1 transition-all duration-700
+            ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
+            <ImageCard image={image} />
+          </div>
+        )}
+
+        <div className={`order-1 ${imageLeft ? 'lg:order-2' : ''} transition-all duration-700
+          ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="flex items-center gap-3 mb-4">
+            <span className="text-[10px] font-black tracking-[0.3em] uppercase"
+              style={{ color: kickerColor }}>
+              {number}
+            </span>
+            <span className="h-[0.5px] w-8" style={{ backgroundColor: kickerColor, opacity: 0.4 }} />
+            <span className="text-[10px] font-black tracking-[0.2em] uppercase"
+              style={{ color: kickerColor }}>
+              {kicker}
+            </span>
+          </div>
+
+          <h2 className="text-white text-4xl xl:text-5xl font-black leading-[1.1] tracking-tight mb-5">
+            {title}
+          </h2>
+
+          <p className="text-white/55 text-base leading-relaxed mb-6 max-w-lg">
+            {description}
+          </p>
+
+          <div className="flex flex-wrap gap-1.5">
+            {pills.map(p => (
+              <span key={p} className={`px-3 py-1.5 rounded-lg text-[10px] font-black tracking-[0.1em] ${pillColor}`}>
+                {p}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {!imageLeft && (
+          <div className={`order-2 transition-all duration-700 delay-200
+            ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
+            <ImageCard image={image} />
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// ══════════════════════════════════
+// IMAGE CARD with glow
+// ══════════════════════════════════
+function ImageCard({ image }: { image: string }) {
+  return (
+    <div className="relative">
+      <div className="absolute -inset-4 rounded-3xl opacity-30 blur-3xl"
+        style={{ background: 'linear-gradient(135deg, #6D28D9, #D4A853)' }} />
+      <div className="relative aspect-[4/3] rounded-2xl overflow-hidden border border-white/[0.08]"
+        style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+        <img src={image} alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
       </div>
     </div>
   )
 }
 
 // ══════════════════════════════════
-// FEATURE PILL
+// LOGIN CARD (reused in web final CTA)
 // ══════════════════════════════════
-function FeaturePill({ label }: { label: string }) {
+function LoginCard({ onLogin }: Props) {
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [focused, setFocused] = useState<string | null>(null)
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+    try {
+      const result = await api.auth.login({ email, password })
+      localStorage.setItem('forged_user', JSON.stringify(result.user))
+      onLogin(result.token)
+    } catch (err: any) {
+      setError(err.message || 'Login failed')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
-    <div className="flex items-center gap-2 px-4 py-2 rounded-full
-      bg-white/[0.04] border border-white/[0.08] backdrop-blur-sm">
-      <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853]" />
-      <span className="text-xs font-black text-white/80 tracking-[0.1em] uppercase">
+    <div className="bg-[#0d0d13]/60 backdrop-blur-xl border border-white/[0.08] rounded-2xl p-8"
+      style={{ boxShadow: '0 0 80px rgba(109,40,217,0.15), 0 20px 60px rgba(0,0,0,0.4)' }}>
+
+      <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+        {error && (
+          <div className="bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2.5 text-xs text-red-300 text-left"
+            style={{ animation: 'shake 0.4s ease-out' }}>
+            {error}
+          </div>
+        )}
+
+        <InputField
+          label="Email" type="email" value={email} onChange={setEmail}
+          placeholder="you@email.com"
+          focused={focused === 'email'}
+          onFocus={() => setFocused('email')} onBlur={() => setFocused(null)}
+        />
+
+        <InputField
+          label="Password" type="password" value={password} onChange={setPassword}
+          placeholder="••••••••"
+          focused={focused === 'password'}
+          onFocus={() => setFocused('password')} onBlur={() => setFocused(null)}
+        />
+
+        <button
+          type="submit" disabled={loading}
+          className="mt-2 py-3.5 rounded-xl text-white font-black text-sm tracking-[0.15em] uppercase
+            transition-all active:scale-[0.98] disabled:opacity-60"
+          style={{
+            background: 'linear-gradient(135deg, #6D28D9, #4c1d95)',
+            boxShadow: '0 10px 30px rgba(109,40,217,0.4)',
+          }}>
+          {loading ? 'Signing in...' : 'Sign in'}
+        </button>
+      </form>
+
+      <p className="text-xs text-white/50 text-center mt-5">
+        New to FORGED?{' '}
+        <Link to="/register" className="text-[#D4A853] font-black hover:brightness-125 transition-all">
+          Create account
+        </Link>
+      </p>
+    </div>
+  )
+}
+
+// ══════════════════════════════════
+// INPUT FIELD (reused in mobile + web card)
+// ══════════════════════════════════
+function InputField({
+  label, type, value, onChange, placeholder, focused, onFocus, onBlur,
+}: {
+  label: string
+  type: string
+  value: string
+  onChange: (v: string) => void
+  placeholder: string
+  focused: boolean
+  onFocus: () => void
+  onBlur: () => void
+}) {
+  return (
+    <div className="text-left">
+      <label className="block text-[10px] font-black text-white/40 uppercase tracking-[0.15em] mb-2">
         {label}
-      </span>
+      </label>
+      <input
+        type={type}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        placeholder={placeholder}
+        required
+        className={`w-full px-4 py-3 bg-white/[0.04] text-white text-sm placeholder:text-white/20
+          border rounded-xl outline-none transition-all
+          ${focused
+            ? 'border-[#6D28D9]/60 shadow-[0_0_0_3px_rgba(109,40,217,0.1)]'
+            : 'border-white/[0.08] hover:border-white/[0.15]'}`}
+      />
     </div>
   )
 }
