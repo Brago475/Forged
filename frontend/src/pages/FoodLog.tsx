@@ -8,9 +8,9 @@ import { GoalEditorModal } from '../components/food/GoalEditorModal'
 import { NutritionDetailModal } from '../components/food/NutritionDetailModal'
 import { loadGoals, saveGoals, getWarnLevel, type FoodGoals } from '../components/food/goalStorage'
 import { describeMacros } from '../components/food/macroDescription'
-import { BarcodeScanModal } from '../components/foods/BarcodeScanModal'
-import { PhotoFoodModal } from '../components/foods/PhotoFoodModal'
-import type { CustomFood } from '../components/foods/customFoodsStorage'
+import { BarcodeScanModal } from '../components/food/BarcodeScanModal'
+import { PhotoFoodModal } from '../components/food/PhotoFoodModal'
+import type { CustomFood } from '../components/food/customFoodsStorage'
 // ══════════════════════════════════
 // ICONS
 // ══════════════════════════════════

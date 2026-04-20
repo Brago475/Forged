@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
 import {
   loadRecipes, addRecipe, updateRecipe, deleteRecipe as removeRecipe, toggleFavorite,
   applyFilter, searchRecipes, computeRecipeMacros,
@@ -200,14 +200,23 @@ export default function RecipesPage({ onBack }: { onBack: () => void }) {
         </button>
       )}
 
-      {/* Modals */}
+{/* Modals */}
       {creating && (
-        <RecipeEditor onSave={handleCreate as (r: Omit<Recipe, 'id' | 'createdAt' | 'updatedAt'>) => void}
-          onClose={() => setCreating(false)} />
+        <RecipeEditor
+          onSave={(r) => {
+            if (!('id' in r)) handleCreate(r)
+          }}
+          onClose={() => setCreating(false)}
+        />
       )}
       {editing && (
-        <RecipeEditor initial={editing} onSave={handleUpdate as (r: Recipe) => void}
-          onClose={() => setEditing(null)} />
+        <RecipeEditor
+          initial={editing}
+          onSave={(r) => {
+            if ('id' in r) handleUpdate(r)
+          }}
+          onClose={() => setEditing(null)}
+        />
       )}
       {selected && !editing && (
         <RecipeDetailModal

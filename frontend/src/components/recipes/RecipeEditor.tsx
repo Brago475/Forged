@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { api } from '../../hooks/api'
 import type { Food } from '../../types'
-import { searchCustomFoods } from '../foods/customFoodsStorage'
+import { searchCustomFoods } from '../food/customFoodsStorage'
 import {
   foodToIngredient,
   type Recipe, type RecipeIngredient, type RecipeStep, type RecipeDifficulty,
