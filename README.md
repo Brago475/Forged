@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="frontend/public/forgedlogo.png" alt="FORGED" width="140" />
+<img src="frontend/public/forgedlogo.png" alt="FORGED" width="160" />
 
 # FORGED
 
@@ -8,14 +8,35 @@
 
 A full-stack fitness tracking platform built for people who want real data on their training and real progress in their body. Log workouts, track macros, measure progress, and build the body you are working toward.
 
-[![React](https://img.shields.io/badge/React-18-61DAFB?logo=react&logoColor=white)](https://react.dev)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org)
-[![.NET](https://img.shields.io/badge/.NET-8-512BD4?logo=dotnet&logoColor=white)](https://dotnet.microsoft.com)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org)
-[![Docker](https://img.shields.io/badge/Docker-ready-2496ED?logo=docker&logoColor=white)](https://www.docker.com)
-[![Live](https://img.shields.io/badge/Live-forgedgyms.com-7c3aed)](https://forgedgyms.com)
+### **[ ENTER THE GYM → ](https://forgedgyms.com)**
 
-[Visit FORGED](https://forgedgyms.com) · [Report a bug](https://github.com/Brago475/Forged/issues) · [Request a feature](https://github.com/Brago475/Forged/issues)
+</div>
+
+---
+
+## Tech Stack
+
+<div align="center">
+
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/react/react-original.svg" alt="React" width="64" height="64" />
+&nbsp;&nbsp;
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/typescript/typescript-original.svg" alt="TypeScript" width="64" height="64" />
+&nbsp;&nbsp;
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/tailwindcss/tailwindcss-original.svg" alt="Tailwind CSS" width="64" height="64" />
+&nbsp;&nbsp;
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/vitejs/vitejs-original.svg" alt="Vite" width="64" height="64" />
+&nbsp;&nbsp;
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/dot-net/dot-net-original.svg" alt=".NET" width="64" height="64" />
+&nbsp;&nbsp;
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/csharp/csharp-original.svg" alt="C#" width="64" height="64" />
+&nbsp;&nbsp;
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/postgresql/postgresql-original.svg" alt="PostgreSQL" width="64" height="64" />
+&nbsp;&nbsp;
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/docker/docker-original.svg" alt="Docker" width="64" height="64" />
+&nbsp;&nbsp;
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/nginx/nginx-original.svg" alt="Nginx" width="64" height="64" />
+&nbsp;&nbsp;
+<img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/cloudflare/cloudflare-original.svg" alt="Cloudflare" width="64" height="64" />
 
 </div>
 
@@ -87,7 +108,6 @@ Your transformation in data. Progress photos, streak tracking, weight trends, an
 - **Measurements** tracking for waist, chest, arms, thighs, and more
 - **Weight history** with trend analysis and goal tracking
 - **Streak tracking** for consistency motivation
-- **Shareable summaries** for social accountability
 
 ### Platform
 - **Responsive design** that works on mobile, tablet, and desktop
@@ -97,43 +117,22 @@ Your transformation in data. Progress photos, streak tracking, weight trends, an
 
 ---
 
-## Tech Stack
+## Architecture Overview
 
 ### Frontend
-- **React 18** with functional components and hooks
-- **TypeScript 5** for type safety across the entire codebase
-- **Vite** as the build tool and dev server
-- **Tailwind CSS** for utility-first styling
-- **React Router** for client-side routing
-- **Lottie** for lightweight motion graphics
-- **Three.js** for the 3D animated backgrounds on the landing page
-- **Native Fetch API** for all HTTP requests (no Axios, by design)
+Built with **React 18** and **TypeScript 5**, using **Vite** as the build tool and dev server. **Tailwind CSS** handles all styling with utility classes. **React Router** manages client-side routing. Motion graphics use **Lottie**, and the landing page features **Three.js** animated backgrounds. All HTTP communication uses the native **Fetch API** (no Axios, by design).
 
 ### Backend
-- **.NET 8** with ASP.NET Core Web API
-- **Entity Framework Core** for database access (migrations planned)
-- **Npgsql** for PostgreSQL connectivity
-- **JWT authentication** for stateless auth
-- **BCrypt** for password hashing
+Powered by **.NET 8** with ASP.NET Core Web API. Database access flows through **Entity Framework Core** with **Npgsql** for PostgreSQL connectivity. Authentication is stateless using **JWT**, with **BCrypt** handling password hashing at a work factor of 12.
 
 ### Database
-- **PostgreSQL 16** with UUID primary keys throughout
-- **Schema-organized** with a `public` schema for user data and a planned `reference` schema for static data (USDA foods, exercise catalog)
+**PostgreSQL 16** runs as the single source of truth, with UUID primary keys throughout. The schema is organized around a `public` schema for user-generated data and a planned `reference` schema for static reference data like the USDA food database and exercise catalog.
 
 ### Infrastructure
-- **Docker Compose** for local and production orchestration
-- **Nginx** as the reverse proxy and static file server
-- **Cloudflare Tunnel** for secure public access without exposing server ports
-- **Proxmox** as the virtualization layer running the production server
-- **Ubuntu 24.04** LTS as the host OS inside the VM
+**Docker Compose** orchestrates the three main containers: frontend (Nginx serving a built Vite bundle), backend (.NET API), and Postgres database. **Nginx** acts as the reverse proxy in front of the backend. **Cloudflare Tunnel** handles secure public access without exposing server ports, pointing `forgedgyms.com` traffic at the Proxmox VM that hosts everything.
 
 ### Design System
-- **FORGE UI** - a custom borderless premium minimal design system
-  - **Indigo Gold palette**: primary `#7c3aed`, accent `#D4A853`, danger `#991B1B`
-  - **Triple font system**: Archivo (display), Space Grotesk (UI), Nunito Sans (body)
-  - **Warm off-white light mode** (`#FAFAF8`) and near-black dark mode (`#09090B`)
-  - **No cards, no borders**, spacing-only visual hierarchy
-  - **Sliding tab indicators**, **skeleton loading states**, and **stagger reveal animations**
+**FORGE UI** is the custom design system used throughout FORGED. Its principles are *Borderless. Premium. Minimal.* The palette is built on Indigo Gold (`#7c3aed` primary, `#D4A853` accent), with a triple font system of Archivo for display, Space Grotesk for UI, and Nunito Sans for body copy. The system intentionally avoids cards and borders, relying on spacing alone for visual hierarchy.
 
 ---
 
@@ -307,9 +306,11 @@ cd ~/forged \
 ### Cloudflare configuration
 
 Public traffic flow:
+
 ```
-User -> forgedgyms.com -> Cloudflare Edge -> Cloudflare Tunnel -> Server:3001 (nginx) -> frontend container
-                                                                                     \-> backend container (via nginx proxy_pass)
+User → forgedgyms.com → Cloudflare Edge → Cloudflare Tunnel → Server:3001 (nginx)
+                                                                   ├─ frontend container
+                                                                   └─ backend container (via nginx proxy_pass)
 ```
 
 The tunnel config lives at `/etc/cloudflared/config.yml` on the server and routes `forgedgyms.com` to `http://localhost:3001`.
@@ -318,7 +319,7 @@ The tunnel config lives at `/etc/cloudflared/config.yml` on the server and route
 
 Cloudflare aggressively caches built assets. After every deploy:
 
-1. Go to Cloudflare dashboard -> Caching -> Configuration
+1. Go to Cloudflare dashboard → Caching → Configuration
 2. Click **Purge Everything**
 3. Hard refresh the browser (`Cmd+Shift+R` on Mac, `Ctrl+Shift+R` on Windows)
 
@@ -357,30 +358,6 @@ FORGED uses a custom design system called **FORGE UI**, built on three principle
 
 ---
 
-## Roadmap
-
-### Near term
-- [ ] Multiple theme support (15 alternate palettes already designed)
-- [ ] Footer redesign with social links and sitemap
-- [ ] EF Core migrations replacing raw SQL init files
-- [ ] Google Search Console + sitemap submission
-
-### Mid term
-- [ ] Import USDA food database (~8,000 foods) into `reference.foods`
-- [ ] Import exercise catalog (~1,500 exercises) into `reference.exercises`
-- [ ] OpenFoodFacts barcode integration
-- [ ] Offline-first PWA support
-- [ ] Export data as CSV/JSON
-
-### Long term
-- [ ] Wearable integration (Apple Health, Google Fit)
-- [ ] Social feed (optional, privacy-first)
-- [ ] AI-powered form check via computer vision
-- [ ] Coaching marketplace
-- [ ] Native mobile apps (React Native)
-
----
-
 ## Security
 
 - Passwords are hashed with **BCrypt** (work factor 12)
@@ -391,13 +368,11 @@ FORGED uses a custom design system called **FORGE UI**, built on three principle
 - `node_modules/`, build outputs, and `.env` are all gitignored
 - Dependencies are audited regularly; axios was notably avoided after the March 2026 supply-chain compromise
 
-Found a security issue? Please open a private security advisory on GitHub rather than a public issue.
-
 ---
 
 ## License
 
-Copyright (c) 2026 TCW Studio (The Creative Works Studio)
+Copyright © 2026 TCW Studio (The Creative Works Studio)
 
 All rights reserved. This repository is public for portfolio and reference purposes. Code is not licensed for reuse or redistribution without explicit permission.
 
@@ -407,17 +382,15 @@ All rights reserved. This repository is public for portfolio and reference purpo
 
 **James W. Mardi** (Evan Brago)
 
-- Computer Science MS Candidate, Kean University (expected May 2027)
-- Building under [TCW Studio](https://tcw.studio) (the Creative Works Studio)
-- GitHub: [@Brago475](https://github.com/Brago475)
+Computer Science MS Candidate at Kean University (expected May 2027). Building under **TCW Studio** (The Creative Works Studio).
 
-Part of a broader portfolio that includes [Timely Real Estate](https://timelyre.com), **AIEducator**, **ARGUS**, and **MyMisu OS**.
+GitHub: [@Brago475](https://github.com/Brago475)
 
 ---
 
 <div align="center">
 
-**[forgedgyms.com](https://forgedgyms.com)**
+### **[ forgedgyms.com ](https://forgedgyms.com)**
 
 Built with discipline. Deployed with care.
 
