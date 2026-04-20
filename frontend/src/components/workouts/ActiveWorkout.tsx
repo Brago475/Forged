@@ -9,7 +9,7 @@ import { RestTimer } from './RestTimer'
 import {
   type LiveExercise, type LiveSet, type Intensity, type ExerciseKind, type MuscleGroup,
   type RoutineDay, type ActiveWorkoutState,
-  loadActiveWorkout, saveActiveWorkout, clearActiveWorkout, loadWorkoutPrefs,
+  saveActiveWorkout, clearActiveWorkout, loadWorkoutPrefs,
   MUSCLE_GROUPS,
 } from './workoutTypes'
 
