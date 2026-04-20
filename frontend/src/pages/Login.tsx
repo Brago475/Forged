@@ -16,7 +16,6 @@ const IMG = {
 
 export default function Login({ onLogin }: Props) {
   const [isMobile, setIsMobile] = useState(window.innerWidth < 1024)
-
   useEffect(() => {
     const onResize = () => setIsMobile(window.innerWidth < 1024)
     window.addEventListener('resize', onResize)
@@ -38,17 +37,14 @@ function MobileLogin({ onLogin }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
-    setLoading(true)
+    setError(''); setLoading(true)
     try {
       const result = await api.auth.login({ email, password })
       localStorage.setItem('forged_user', JSON.stringify(result.user))
       onLogin(result.token)
     } catch (err: any) {
       setError(err.message || 'Login failed')
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }
 
   return (
@@ -59,17 +55,15 @@ function MobileLogin({ onLogin }: Props) {
         }} />
 
       <div className="relative w-full max-w-sm flex flex-col items-center">
-        <div className="flex flex-col items-center mb-12"
-          style={{ animation: 'fadeInUp 0.8s ease-out both' }}>
+        <div className="flex flex-col items-center mb-12" style={{ animation: 'fadeInUp 0.8s ease-out both' }}>
           <div className="relative mb-6">
             <div className="absolute inset-0 rounded-full blur-3xl"
               style={{ background: 'radial-gradient(circle, rgba(159,122,234,0.6), transparent 70%)' }} />
             <div className="relative w-32 h-32 rounded-full bg-white/[0.06] border border-white/[0.15]
               flex items-center justify-center backdrop-blur-sm">
-              <img src="/logo-removebg-preview.png" alt="FORGED"
+              <img src="/forgedlogo.png" alt="FORGED"
                 className="w-24 h-24 object-contain"
-                style={{ filter: 'drop-shadow(0 4px 20px rgba(159,122,234,0.6)) brightness(1.3)' }}
-              />
+                style={{ filter: 'drop-shadow(0 4px 20px rgba(159,122,234,0.6)) brightness(1.3)' }} />
             </div>
           </div>
           <p className="text-white text-3xl font-black tracking-[0.3em]">FORGED</p>
@@ -87,13 +81,11 @@ function MobileLogin({ onLogin }: Props) {
           )}
 
           <InputField label="EMAIL" type="email" value={email} onChange={setEmail}
-            placeholder="you@email.com"
-            focused={focused === 'email'}
+            placeholder="you@email.com" focused={focused === 'email'}
             onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
 
           <InputField label="PASSWORD" type="password" value={password} onChange={setPassword}
-            placeholder="••••••••"
-            focused={focused === 'password'}
+            placeholder="••••••••" focused={focused === 'password'}
             onFocus={() => setFocused('password')} onBlur={() => setFocused(null)} />
 
           <button type="submit" disabled={loading}
@@ -107,8 +99,7 @@ function MobileLogin({ onLogin }: Props) {
           </button>
         </form>
 
-        <p className="text-sm text-white/60 mt-8"
-          style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
+        <p className="text-sm text-white/60 mt-8" style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
           New to FORGED?{' '}
           <Link to="/register" className="text-[#D4A853] font-black hover:brightness-125 transition-all">
             Create account
@@ -117,10 +108,7 @@ function MobileLogin({ onLogin }: Props) {
       </div>
 
       <style>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
     </div>
   )
@@ -132,17 +120,18 @@ function MobileLogin({ onLogin }: Props) {
 function WebLanding({ onLogin }: Props) {
   const loginRef = useRef<HTMLDivElement>(null)
   const scrollToLogin = () => loginRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  const scrollToId = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' })
 
   return (
     <div className="bg-[#0f0a1f] min-h-screen text-white">
 
-      {/* NAV — bigger, no bg */}
+      {/* NAV */}
       <nav className="sticky top-0 z-50 backdrop-blur-xl"
         style={{ background: 'linear-gradient(180deg, rgba(15,10,31,0.8) 0%, rgba(15,10,31,0) 100%)' }}>
         <div className="max-w-7xl mx-auto px-10 py-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/[0.06] border border-white/[0.1]">
-              <img src="/logo-removebg-preview.png" alt=""
+              <img src="/forgedlogo.png" alt=""
                 className="w-9 h-9 object-contain"
                 style={{ filter: 'brightness(1.3) drop-shadow(0 2px 8px rgba(159,122,234,0.6))' }} />
             </div>
@@ -150,9 +139,17 @@ function WebLanding({ onLogin }: Props) {
           </div>
 
           <div className="flex items-center gap-8">
-            <button onClick={() => document.getElementById('feat-training')?.scrollIntoView({ behavior: 'smooth' })}
+            <button onClick={() => scrollToId('how-it-works')}
+              className="text-white/80 text-sm font-black hover:text-white transition-colors hidden md:block tracking-wider">
+              HOW IT WORKS
+            </button>
+            <button onClick={() => scrollToId('feat-training')}
               className="text-white/80 text-sm font-black hover:text-white transition-colors hidden md:block tracking-wider">
               FEATURES
+            </button>
+            <button onClick={() => scrollToId('pricing')}
+              className="text-white/80 text-sm font-black hover:text-white transition-colors hidden md:block tracking-wider">
+              PRICING
             </button>
             <button onClick={scrollToLogin}
               className="text-white/80 text-sm font-black hover:text-white transition-colors hidden md:block tracking-wider">
@@ -171,35 +168,21 @@ function WebLanding({ onLogin }: Props) {
         </div>
       </nav>
 
-      {/* HERO with 3D dumbbells */}
+      {/* HERO */}
       <section className="relative min-h-[92vh] flex items-center overflow-hidden">
         <div className="absolute inset-0">
           <img src={IMG.hero} alt="" className="w-full h-full object-cover opacity-30" />
           <div className="absolute inset-0"
-            style={{
-              background: 'linear-gradient(135deg, rgba(15,10,31,0.85) 0%, rgba(42,27,74,0.75) 50%, rgba(92,44,24,0.7) 100%)'
-            }} />
+            style={{ background: 'linear-gradient(135deg, rgba(15,10,31,0.85) 0%, rgba(42,27,74,0.75) 50%, rgba(92,44,24,0.7) 100%)' }} />
         </div>
 
-        {/* 3D dumbbell canvas */}
         <DumbbellsCanvas />
 
         <div className="absolute inset-0 pointer-events-none"
-          style={{
-            background: 'radial-gradient(ellipse at 70% 30%, rgba(159,122,234,0.35) 0%, transparent 55%), radial-gradient(ellipse at 20% 70%, rgba(212,168,83,0.2) 0%, transparent 55%)'
-          }} />
+          style={{ background: 'radial-gradient(ellipse at 70% 30%, rgba(159,122,234,0.35) 0%, transparent 55%), radial-gradient(ellipse at 20% 70%, rgba(212,168,83,0.2) 0%, transparent 55%)' }} />
 
         <div className="relative max-w-7xl mx-auto px-10 py-24 grid grid-cols-2 gap-16 items-center w-full z-10">
           <div>
-            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full mb-8
-              bg-[#D4A853]/15 border border-[#D4A853]/40 backdrop-blur-sm"
-              style={{ animation: 'fadeInUp 0.8s ease-out both' }}>
-              <span className="w-1.5 h-1.5 rounded-full bg-[#D4A853]" />
-              <span className="text-[#D4A853] text-xs font-black tracking-[0.25em]">
-                TCW STUDIO · V1.0
-              </span>
-            </div>
-
             <h1 className="text-white text-7xl xl:text-8xl font-black leading-[1.02] tracking-tight mb-8"
               style={{ animation: 'fadeInUp 0.8s 0.2s ease-out both' }}>
               Forge the body
@@ -213,8 +196,7 @@ function WebLanding({ onLogin }: Props) {
               Just the data and discipline to get stronger, week after week.
             </p>
 
-            <div className="flex gap-4"
-              style={{ animation: 'fadeInUp 0.8s 0.6s ease-out both' }}>
+            <div className="flex gap-4" style={{ animation: 'fadeInUp 0.8s 0.6s ease-out both' }}>
               <button onClick={scrollToLogin}
                 className="group px-8 py-4 rounded-xl text-white text-sm font-black
                   tracking-[0.18em] transition-all active:scale-95
@@ -235,8 +217,7 @@ function WebLanding({ onLogin }: Props) {
             </div>
           </div>
 
-          <div className="relative hidden lg:block"
-            style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
+          <div className="relative hidden lg:block" style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
             <div className="absolute -inset-8 rounded-3xl opacity-50 blur-3xl"
               style={{ background: 'linear-gradient(135deg, #7c3aed, #D4A853)' }} />
             <div className="relative aspect-[4/5] rounded-3xl overflow-hidden border border-white/[0.15]"
@@ -244,9 +225,7 @@ function WebLanding({ onLogin }: Props) {
               <img src={IMG.hero} alt="" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent" />
               <div className="absolute bottom-8 left-8 right-8">
-                <p className="text-xs text-[#D4A853] font-black tracking-[0.25em] mb-2">
-                  TODAY'S SESSION
-                </p>
+                <p className="text-xs text-[#D4A853] font-black tracking-[0.25em] mb-2">TODAY'S SESSION</p>
                 <p className="text-white text-xl font-black">Push Day · 4 exercises</p>
               </div>
             </div>
@@ -254,54 +233,52 @@ function WebLanding({ onLogin }: Props) {
         </div>
       </section>
 
-      {/* FEATURES */}
+      {/* HOW IT WORKS */}
+      <HowItWorksSection />
+
+      {/* FEATURES with mascots */}
       <FeatureSection
         id="feat-training"
-        number="01"
-        kicker="TRAINING"
-        kickerColor="#a78bfa"
+        number="01" kicker="TRAINING" kickerColor="#a78bfa"
         title="Every rep. Every set. Every PR."
         description="Live volume tracking, automatic PR detection, rest timers that actually work, and a library of every exercise you have ever done. Cardio, strength, and duration all in one place."
         pills={['Live volume', 'PR detection', 'Rest timer', 'Cardio + strength', 'Exercise library']}
         image={IMG.training}
         imageLeft={false}
+        mascotPose="curl"
       />
 
       <FeatureSection
         id="feat-nutrition"
-        number="02"
-        kicker="NUTRITION"
-        kickerColor="#D4A853"
+        number="02" kicker="NUTRITION" kickerColor="#D4A853"
         title="Know what you eat. Hit your numbers."
         description="Barcode scan, photo capture, custom recipes, and daily macro goals that adjust to your training. Intermittent fasting built in, no separate app needed."
         pills={['Barcode scan', 'Macro goals', 'Custom recipes', 'Fasting tracker', 'Photo capture']}
         image={IMG.nutrition}
         imageLeft={true}
+        mascotPose="point"
       />
 
       <FeatureSection
         id="feat-transformation"
-        number="03"
-        kicker="TRANSFORMATION"
-        kickerColor="#a78bfa"
+        number="03" kicker="TRANSFORMATION" kickerColor="#a78bfa"
         title="See the change. Own the progress."
         description="Weekly recaps, progress photos with privacy lock, streak tracking, and transformations you can actually share. Your story, told in data."
         pills={['Progress photos', 'Weekly recap', 'Streaks', 'Achievements', 'Measurements']}
         image={IMG.transformation}
         imageLeft={false}
+        mascotPose="flex"
       />
+
+      {/* PRICING */}
+      <PricingSection scrollToLogin={scrollToLogin} />
 
       {/* FINAL CTA */}
       <section ref={loginRef} className="relative py-32 overflow-hidden">
         <div className="absolute inset-0"
-          style={{
-            background: 'radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.3) 0%, transparent 65%)'
-          }} />
-
+          style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.3) 0%, transparent 65%)' }} />
         <div className="relative max-w-md mx-auto px-6 text-center">
-          <h2 className="text-white text-5xl font-black mb-4 tracking-tight">
-            Ready to forge?
-          </h2>
+          <h2 className="text-white text-5xl font-black mb-4 tracking-tight">Ready to forge?</h2>
           <p className="text-white/70 text-base mb-10">
             Create your account. First workout in 90 seconds.
           </p>
@@ -309,12 +286,12 @@ function WebLanding({ onLogin }: Props) {
         </div>
       </section>
 
-      {/* FOOTER no bg, bigger */}
+      {/* FOOTER */}
       <footer className="py-16 px-10">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-8">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl flex items-center justify-center bg-white/[0.05] border border-white/[0.1]">
-              <img src="/logo-removebg-preview.png" alt=""
+              <img src="/forgedlogo.png" alt=""
                 className="w-9 h-9 object-contain"
                 style={{ filter: 'brightness(1.3)' }} />
             </div>
@@ -332,24 +309,542 @@ function WebLanding({ onLogin }: Props) {
       </footer>
 
       <style>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
     </div>
   )
 }
 
 // ══════════════════════════════════
-// 3D DUMBBELLS
+// HOW IT WORKS
+// ══════════════════════════════════
+function HowItWorksSection() {
+  const [visible, setVisible] = useState(false)
+  const ref = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      ([entry]) => entry.isIntersecting && setVisible(true),
+      { threshold: 0.2 }
+    )
+    if (ref.current) obs.observe(ref.current)
+    return () => obs.disconnect()
+  }, [])
+
+  const steps = [
+    {
+      n: '01', title: 'Track',
+      desc: 'Log your workouts, meals, and measurements. Fast entry, no friction.',
+      color: '#a78bfa',
+      glyph: '📊',
+    },
+    {
+      n: '02', title: 'Train',
+      desc: 'Follow your routine. See last session, hit PRs, beat yesterday.',
+      color: '#D4A853',
+      glyph: '🔥',
+    },
+    {
+      n: '03', title: 'Transform',
+      desc: 'Weekly recaps show your progress. Photos, streaks, numbers that add up.',
+      color: '#a78bfa',
+      glyph: '⚡',
+    },
+  ]
+
+  return (
+    <section id="how-it-works" ref={ref} className="py-32 px-10 relative">
+      <div className="max-w-7xl mx-auto">
+        <div className={`text-center mb-20 transition-all duration-700
+          ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <p className="text-[#D4A853] text-sm font-black tracking-[0.3em] mb-4">
+            HOW IT WORKS
+          </p>
+          <h2 className="text-white text-5xl xl:text-6xl font-black tracking-tight">
+            Three steps.<br />No shortcuts.
+          </h2>
+        </div>
+
+        <div className="grid md:grid-cols-3 gap-8">
+          {steps.map((s, i) => (
+            <div key={s.n}
+              className={`relative bg-white/[0.03] border border-white/[0.08] rounded-2xl p-8
+                hover:bg-white/[0.05] hover:border-white/[0.15] transition-all
+                ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+              style={{
+                transitionDuration: '700ms',
+                transitionDelay: `${i * 150}ms`,
+              }}>
+              <div className="absolute -top-4 left-8 px-3 py-1 rounded-lg bg-[#0f0a1f] border border-white/[0.1]">
+                <span className="text-xs font-black tracking-[0.2em]" style={{ color: s.color }}>
+                  STEP {s.n}
+                </span>
+              </div>
+              <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-4xl mb-6 mt-4"
+                style={{
+                  background: `linear-gradient(135deg, ${s.color}30, ${s.color}10)`,
+                  border: `1px solid ${s.color}40`,
+                }}>
+                {s.glyph}
+              </div>
+              <h3 className="text-white text-3xl font-black mb-3 tracking-tight">{s.title}</h3>
+              <p className="text-white/60 text-base leading-relaxed">{s.desc}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ══════════════════════════════════
+// PRICING
+// ══════════════════════════════════
+function PricingSection({ scrollToLogin }: { scrollToLogin: () => void }) {
+  const [visible, setVisible] = useState(false)
+  const ref = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      ([entry]) => entry.isIntersecting && setVisible(true),
+      { threshold: 0.2 }
+    )
+    if (ref.current) obs.observe(ref.current)
+    return () => obs.disconnect()
+  }, [])
+
+  return (
+    <section id="pricing" ref={ref} className="py-32 px-10 relative overflow-hidden">
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at 50% 50%, rgba(124,58,237,0.15) 0%, transparent 60%)' }} />
+
+      <div className="relative max-w-5xl mx-auto">
+        <div className={`text-center mb-16 transition-all duration-700
+          ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <p className="text-[#D4A853] text-sm font-black tracking-[0.3em] mb-4">PRICING</p>
+          <h2 className="text-white text-5xl xl:text-6xl font-black tracking-tight mb-4">
+            Free. For now.
+          </h2>
+          <p className="text-white/60 text-lg max-w-xl mx-auto">
+            Everything is free while FORGED is growing.
+            Pro features will launch later in 2026.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {/* Free tier */}
+          <div className={`relative bg-white/[0.04] border-2 border-[#7c3aed]/50 rounded-3xl p-10
+            transition-all duration-700 delay-100
+            ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}
+            style={{ boxShadow: '0 0 60px rgba(124,58,237,0.2)' }}>
+            <div className="absolute -top-4 left-10 px-4 py-1.5 rounded-xl"
+              style={{
+                background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+                boxShadow: '0 6px 20px rgba(124,58,237,0.4)',
+              }}>
+              <span className="text-white text-xs font-black tracking-[0.2em]">AVAILABLE NOW</span>
+            </div>
+            <h3 className="text-white text-3xl font-black mb-2">FORGED Free</h3>
+            <div className="flex items-baseline gap-2 mb-6">
+              <span className="text-white text-6xl font-black">$0</span>
+              <span className="text-white/50 text-sm">/ forever</span>
+            </div>
+            <p className="text-white/70 text-base mb-8">
+              Full access to everything. Unlimited workouts, meals, progress tracking.
+            </p>
+            <ul className="flex flex-col gap-3 mb-8">
+              {[
+                'Unlimited workouts and routines',
+                'Full nutrition + macro tracking',
+                'Progress photos + measurements',
+                'Weekly recaps and streaks',
+                'Intermittent fasting tracker',
+                'Exercise library + PR detection',
+                'All features, no limits',
+              ].map(f => (
+                <li key={f} className="flex items-start gap-3 text-white/85">
+                  <span className="text-[#D4A853] mt-0.5">✓</span>
+                  <span className="text-sm">{f}</span>
+                </li>
+              ))}
+            </ul>
+            <button onClick={scrollToLogin}
+              className="w-full py-4 rounded-xl text-white font-black text-sm tracking-[0.18em]
+                transition-all active:scale-95 hover:brightness-110"
+              style={{
+                background: 'linear-gradient(135deg, #7c3aed, #5b21b6)',
+                boxShadow: '0 10px 30px rgba(124,58,237,0.4)',
+              }}>
+              GET STARTED FREE
+            </button>
+          </div>
+
+          {/* Pro tier teaser */}
+          <div className={`relative bg-white/[0.02] border border-white/[0.1] rounded-3xl p-10
+            transition-all duration-700 delay-200
+            ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+            <div className="absolute -top-4 left-10 px-4 py-1.5 rounded-xl bg-[#D4A853]/15 border border-[#D4A853]/40">
+              <span className="text-[#D4A853] text-xs font-black tracking-[0.2em]">COMING 2026</span>
+            </div>
+            <h3 className="text-white/80 text-3xl font-black mb-2">FORGED Pro</h3>
+            <div className="flex items-baseline gap-2 mb-6">
+              <span className="text-white/60 text-6xl font-black">TBA</span>
+            </div>
+            <p className="text-white/50 text-base mb-8">
+              Advanced features for serious lifters and coaches, launching later in 2026.
+            </p>
+            <ul className="flex flex-col gap-3 mb-8">
+              {[
+                'AI-powered routine suggestions',
+                'Coach mode for training clients',
+                'Advanced analytics dashboard',
+                'Priority support',
+                'Export data to CSV',
+                'Apple Health / Google Fit sync',
+                'More features to be announced',
+              ].map(f => (
+                <li key={f} className="flex items-start gap-3 text-white/50">
+                  <span className="text-white/30 mt-0.5">○</span>
+                  <span className="text-sm">{f}</span>
+                </li>
+              ))}
+            </ul>
+            <button disabled
+              className="w-full py-4 rounded-xl text-white/50 font-black text-sm tracking-[0.18em]
+                bg-white/[0.04] border border-white/[0.1] cursor-not-allowed">
+              COMING SOON
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+// ══════════════════════════════════
+// FEATURE SECTION (with mascot)
+// ══════════════════════════════════
+function FeatureSection({
+  id, number, kicker, kickerColor, title, description, pills, image, imageLeft, mascotPose,
+}: {
+  id: string
+  number: string
+  kicker: string
+  kickerColor: string
+  title: string
+  description: string
+  pills: string[]
+  image: string
+  imageLeft: boolean
+  mascotPose: 'curl' | 'point' | 'flex'
+}) {
+  const [visible, setVisible] = useState(false)
+  const ref = useRef<HTMLElement>(null)
+
+  useEffect(() => {
+    const obs = new IntersectionObserver(
+      ([entry]) => entry.isIntersecting && setVisible(true),
+      { threshold: 0.15 }
+    )
+    if (ref.current) obs.observe(ref.current)
+    return () => obs.disconnect()
+  }, [])
+
+  const isGold = kickerColor === '#D4A853'
+  const pillClass = isGold
+    ? 'bg-[#D4A853]/15 text-[#D4A853] border border-[#D4A853]/30'
+    : 'bg-[#7c3aed]/20 text-[#a78bfa] border border-[#7c3aed]/30'
+
+  return (
+    <section id={id} ref={ref} className="py-32 px-10 relative">
+      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
+        {imageLeft && (
+          <div className={`order-2 lg:order-1 transition-all duration-700
+            ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
+            <ImageCardWithMascot image={image} pose={mascotPose} accentColor={kickerColor} />
+          </div>
+        )}
+
+        <div className={`order-1 ${imageLeft ? 'lg:order-2' : ''} transition-all duration-700
+          ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
+          <div className="flex items-center gap-4 mb-6">
+            <span className="text-sm font-black tracking-[0.35em]" style={{ color: kickerColor }}>
+              {number}
+            </span>
+            <span className="h-[1px] w-12" style={{ backgroundColor: kickerColor, opacity: 0.5 }} />
+            <span className="text-sm font-black tracking-[0.25em]" style={{ color: kickerColor }}>
+              {kicker}
+            </span>
+          </div>
+
+          <h2 className="text-white text-5xl xl:text-6xl font-black leading-[1.1] tracking-tight mb-6">
+            {title}
+          </h2>
+
+          <p className="text-white/75 text-lg leading-relaxed mb-8 max-w-xl">
+            {description}
+          </p>
+
+          <div className="flex flex-wrap gap-2">
+            {pills.map(p => (
+              <span key={p} className={`px-4 py-2 rounded-lg text-xs font-black tracking-[0.1em] ${pillClass}`}>
+                {p}
+              </span>
+            ))}
+          </div>
+        </div>
+
+        {!imageLeft && (
+          <div className={`order-2 transition-all duration-700 delay-200
+            ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
+            <ImageCardWithMascot image={image} pose={mascotPose} accentColor={kickerColor} />
+          </div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+// ══════════════════════════════════
+// IMAGE CARD WITH MASCOT overlay
+// ══════════════════════════════════
+function ImageCardWithMascot({ image, pose, accentColor }: {
+  image: string
+  pose: 'curl' | 'point' | 'flex'
+  accentColor: string
+}) {
+  return (
+    <div className="relative">
+      <div className="absolute -inset-6 rounded-3xl opacity-40 blur-3xl"
+        style={{ background: 'linear-gradient(135deg, #7c3aed, #D4A853)' }} />
+      <div className="relative aspect-[4/3] rounded-3xl overflow-hidden border border-white/[0.15]"
+        style={{ boxShadow: '0 30px 80px rgba(0,0,0,0.5)' }}>
+        <img src={image} alt="" className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+
+        {/* Mascot floats in bottom-right corner of image */}
+        <div className="absolute bottom-4 right-4 w-32 h-32 pointer-events-none">
+          <MascotCanvas pose={pose} accentColor={accentColor} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ══════════════════════════════════
+// MASCOT — procedural stylized figure
+// ══════════════════════════════════
+function MascotCanvas({ pose, accentColor }: {
+  pose: 'curl' | 'point' | 'flex'
+  accentColor: string
+}) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+
+  useEffect(() => {
+    if (!canvasRef.current) return
+    const canvas = canvasRef.current
+    const scene = new THREE.Scene()
+    const camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100)
+    camera.position.set(0, 0.8, 4.5)
+    camera.lookAt(0, 0.5, 0)
+
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true })
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+    renderer.setClearColor(0x000000, 0)
+
+    const figure = new THREE.Group()
+
+    const col = new THREE.Color(accentColor)
+    const metalMat = new THREE.MeshStandardMaterial({
+      color: col, metalness: 0.85, roughness: 0.25,
+      emissive: col, emissiveIntensity: 0.2,
+    })
+    const darkMat = new THREE.MeshStandardMaterial({
+      color: 0x2a1f3a, metalness: 0.7, roughness: 0.4,
+    })
+
+    // Head (sphere)
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.28, 16, 12), metalMat)
+    head.position.y = 1.3
+    figure.add(head)
+
+    // Torso (tapered cylinder)
+    const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.45, 0.9, 8), metalMat)
+    torso.position.y = 0.5
+    figure.add(torso)
+
+    // Hips (small cylinder)
+    const hips = new THREE.Mesh(new THREE.CylinderGeometry(0.35, 0.3, 0.2, 8), darkMat)
+    hips.position.y = 0
+    figure.add(hips)
+
+    // Legs
+    const leftLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.8, 8), darkMat)
+    leftLeg.position.set(-0.15, -0.5, 0)
+    figure.add(leftLeg)
+    const rightLeg = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.8, 8), darkMat)
+    rightLeg.position.set(0.15, -0.5, 0)
+    figure.add(rightLeg)
+
+    // Arms - shoulders
+    const armMat = metalMat
+
+    // LEFT ARM (user's left, our right)
+    const leftShoulder = new THREE.Group()
+    leftShoulder.position.set(0.42, 0.85, 0)
+    const leftUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.45, 8), armMat)
+    leftUpperArm.position.y = -0.22
+    leftShoulder.add(leftUpperArm)
+
+    const leftForearmPivot = new THREE.Group()
+    leftForearmPivot.position.y = -0.45
+    const leftForearm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.4, 8), armMat)
+    leftForearm.position.y = -0.2
+    leftForearmPivot.add(leftForearm)
+    // Fist
+    const leftFist = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), armMat)
+    leftFist.position.y = -0.45
+    leftForearmPivot.add(leftFist)
+    leftShoulder.add(leftForearmPivot)
+
+    // RIGHT ARM (mirror)
+    const rightShoulder = new THREE.Group()
+    rightShoulder.position.set(-0.42, 0.85, 0)
+    const rightUpperArm = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.1, 0.45, 8), armMat)
+    rightUpperArm.position.y = -0.22
+    rightShoulder.add(rightUpperArm)
+
+    const rightForearmPivot = new THREE.Group()
+    rightForearmPivot.position.y = -0.45
+    const rightForearm = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.08, 0.4, 8), armMat)
+    rightForearm.position.y = -0.2
+    rightForearmPivot.add(rightForearm)
+    const rightFist = new THREE.Mesh(new THREE.SphereGeometry(0.13, 12, 10), armMat)
+    rightFist.position.y = -0.45
+    rightForearmPivot.add(rightFist)
+    rightShoulder.add(rightForearmPivot)
+
+    figure.add(leftShoulder)
+    figure.add(rightShoulder)
+
+    // Apply pose
+    if (pose === 'curl') {
+      // Right arm doing bicep curl (forearm up)
+      rightShoulder.rotation.z = 0.1
+      rightForearmPivot.rotation.x = -2.2  // forearm curled up
+      // Left arm relaxed
+      leftShoulder.rotation.z = -0.1
+    } else if (pose === 'point') {
+      // Right arm pointing forward/down (at food)
+      rightShoulder.rotation.x = -1.2
+      rightShoulder.rotation.z = 0.2
+      rightForearmPivot.rotation.x = -0.3
+      leftShoulder.rotation.z = -0.1
+    } else if (pose === 'flex') {
+      // Both arms up, bicep pose
+      rightShoulder.rotation.z = -1.3
+      rightForearmPivot.rotation.x = -2.2
+      leftShoulder.rotation.z = 1.3
+      leftForearmPivot.rotation.x = -2.2
+    }
+
+    scene.add(figure)
+
+    // Lights
+    scene.add(new THREE.AmbientLight(0xffffff, 0.4))
+    const keyLight = new THREE.PointLight(col.getHex(), 3, 10)
+    keyLight.position.set(2, 2, 3)
+    scene.add(keyLight)
+    const fillLight = new THREE.PointLight(0xffffff, 1, 10)
+    fillLight.position.set(-2, 1, 2)
+    scene.add(fillLight)
+
+    const resize = () => {
+      const parent = canvas.parentElement
+      if (!parent) return
+      const s = Math.min(parent.clientWidth, parent.clientHeight)
+      renderer.setSize(s, s, false)
+      camera.aspect = 1
+      camera.updateProjectionMatrix()
+    }
+    resize()
+    window.addEventListener('resize', resize)
+
+    // Scroll tracking
+    let scrollY = window.scrollY
+    let lastScroll = scrollY
+    let scrollDelta = 0
+    const onScroll = () => {
+      const now = window.scrollY
+      scrollDelta = now - lastScroll
+      lastScroll = now
+      scrollY = now
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+
+    const clock = new THREE.Clock()
+    let frameId: number
+    const animate = () => {
+      const t = clock.getElapsedTime()
+
+      // Head looks up/down based on scroll direction
+      const targetLookY = Math.max(-0.5, Math.min(0.5, -scrollDelta * 0.01))
+      head.rotation.x += (targetLookY - head.rotation.x) * 0.1
+      scrollDelta *= 0.9  // decay
+
+      // Whole body gentle sway
+      figure.rotation.y = Math.sin(t * 0.6) * 0.15
+      figure.position.y = Math.sin(t * 0.8) * 0.05
+
+      // Breathing scale on torso
+      const breath = 1 + Math.sin(t * 1.5) * 0.02
+      torso.scale.set(breath, 1, breath)
+
+      // Pose-specific idle motion
+      if (pose === 'curl') {
+        // Curl rep - oscillate forearm
+        rightForearmPivot.rotation.x = -1.6 + Math.sin(t * 1.2) * 0.7
+      } else if (pose === 'flex') {
+        // Pulse flex - slight squeeze on both
+        const sq = Math.sin(t * 1.0) * 0.08
+        leftForearmPivot.rotation.x = -2.2 + sq
+        rightForearmPivot.rotation.x = -2.2 + sq
+      } else if (pose === 'point') {
+        // Slight pointing wave
+        rightShoulder.rotation.x = -1.2 + Math.sin(t * 0.8) * 0.1
+      }
+
+      renderer.render(scene, camera)
+      frameId = requestAnimationFrame(animate)
+    }
+    animate()
+
+    return () => {
+      cancelAnimationFrame(frameId)
+      window.removeEventListener('resize', resize)
+      window.removeEventListener('scroll', onScroll)
+      figure.traverse(obj => {
+        if (obj instanceof THREE.Mesh) {
+          obj.geometry.dispose()
+          if (Array.isArray(obj.material)) obj.material.forEach(m => m.dispose())
+          else obj.material.dispose()
+        }
+      })
+      renderer.dispose()
+    }
+  }, [pose, accentColor])
+
+  return <canvas ref={canvasRef} className="w-full h-full" />
+}
+
+// ══════════════════════════════════
+// 3D DUMBBELLS (hero)
 // ══════════════════════════════════
 function DumbbellsCanvas() {
   const canvasRef = useRef<HTMLCanvasElement>(null)
 
   useEffect(() => {
     if (!canvasRef.current) return
-
     const canvas = canvasRef.current
     const scene = new THREE.Scene()
     const camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100)
@@ -362,7 +857,6 @@ function DumbbellsCanvas() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
     renderer.setClearColor(0x000000, 0)
 
-    // Build a dumbbell mesh — two spheres + handle
     const makeDumbbell = (): THREE.Group => {
       const group = new THREE.Group()
       const metalMat = new THREE.MeshStandardMaterial({
@@ -376,68 +870,40 @@ function DumbbellsCanvas() {
         color: 0x7c3aed, metalness: 0.9, roughness: 0.25,
         emissive: 0x7c3aed, emissiveIntensity: 0.15,
       })
-
-      // Random: either purple or gold plates
       const plateMat = Math.random() > 0.5 ? goldMat : purpleMat
 
-      // Left plate
-      const left = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.8, 0.8, 0.35, 24),
-        plateMat
-      )
+      const left = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.35, 24), plateMat)
       left.rotation.z = Math.PI / 2
       left.position.x = -0.9
       group.add(left)
 
-      // Right plate
-      const right = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.8, 0.8, 0.35, 24),
-        plateMat
-      )
+      const right = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, 0.35, 24), plateMat)
       right.rotation.z = Math.PI / 2
       right.position.x = 0.9
       group.add(right)
 
-      // Inner left plate (smaller)
-      const innerLeft = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.55, 0.55, 0.2, 24),
-        metalMat
-      )
+      const innerLeft = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.2, 24), metalMat)
       innerLeft.rotation.z = Math.PI / 2
       innerLeft.position.x = -0.65
       group.add(innerLeft)
 
-      // Inner right plate
-      const innerRight = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.55, 0.55, 0.2, 24),
-        metalMat
-      )
+      const innerRight = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.2, 24), metalMat)
       innerRight.rotation.z = Math.PI / 2
       innerRight.position.x = 0.65
       group.add(innerRight)
 
-      // Handle
-      const handle = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.18, 0.18, 1.3, 16),
-        metalMat
-      )
+      const handle = new THREE.Mesh(new THREE.CylinderGeometry(0.18, 0.18, 1.3, 16), metalMat)
       handle.rotation.z = Math.PI / 2
       group.add(handle)
 
-      // Handle ends (caps)
       for (const sign of [-1, 1]) {
-        const cap = new THREE.Mesh(
-          new THREE.SphereGeometry(0.2, 16, 12),
-          metalMat
-        )
+        const cap = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), metalMat)
         cap.position.x = sign * 1.1
         group.add(cap)
       }
-
       return group
     }
 
-    // Create 6 dumbbells scattered in 3D space
     const dumbbells: Array<{
       mesh: THREE.Group
       rotSpeed: THREE.Vector3
@@ -455,7 +921,7 @@ function DumbbellsCanvas() {
       { x: 8, y: 1.5, z: -4 },
     ]
 
-    positions.forEach((pos) => {
+    positions.forEach(pos => {
       const dumb = makeDumbbell()
       dumb.position.set(pos.x, pos.y, pos.z)
       const scale = 0.7 + Math.random() * 0.4
@@ -479,7 +945,6 @@ function DumbbellsCanvas() {
       })
     })
 
-    // Lighting
     scene.add(new THREE.AmbientLight(0xffffff, 0.5))
     const purpleLight = new THREE.PointLight(0x9f7aea, 3, 25)
     purpleLight.position.set(-5, 4, 5)
@@ -542,104 +1007,6 @@ function DumbbellsCanvas() {
 }
 
 // ══════════════════════════════════
-// FEATURE SECTION
-// ══════════════════════════════════
-function FeatureSection({
-  id, number, kicker, kickerColor, title, description, pills, image, imageLeft,
-}: {
-  id: string
-  number: string
-  kicker: string
-  kickerColor: string
-  title: string
-  description: string
-  pills: string[]
-  image: string
-  imageLeft: boolean
-}) {
-  const [visible, setVisible] = useState(false)
-  const ref = useRef<HTMLElement>(null)
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      ([entry]) => entry.isIntersecting && setVisible(true),
-      { threshold: 0.15 }
-    )
-    if (ref.current) obs.observe(ref.current)
-    return () => obs.disconnect()
-  }, [])
-
-  const isGold = kickerColor === '#D4A853'
-  const pillClass = isGold
-    ? 'bg-[#D4A853]/15 text-[#D4A853] border border-[#D4A853]/30'
-    : 'bg-[#7c3aed]/20 text-[#a78bfa] border border-[#7c3aed]/30'
-
-  return (
-    <section id={id} ref={ref} className="py-32 px-10 relative">
-      <div className="max-w-7xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
-        {imageLeft && (
-          <div className={`order-2 lg:order-1 transition-all duration-700
-            ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-8'}`}>
-            <ImageCard image={image} />
-          </div>
-        )}
-
-        <div className={`order-1 ${imageLeft ? 'lg:order-2' : ''} transition-all duration-700
-          ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-          <div className="flex items-center gap-4 mb-6">
-            <span className="text-sm font-black tracking-[0.35em]" style={{ color: kickerColor }}>
-              {number}
-            </span>
-            <span className="h-[1px] w-12" style={{ backgroundColor: kickerColor, opacity: 0.5 }} />
-            <span className="text-sm font-black tracking-[0.25em]" style={{ color: kickerColor }}>
-              {kicker}
-            </span>
-          </div>
-
-          <h2 className="text-white text-5xl xl:text-6xl font-black leading-[1.1] tracking-tight mb-6">
-            {title}
-          </h2>
-
-          <p className="text-white/75 text-lg leading-relaxed mb-8 max-w-xl">
-            {description}
-          </p>
-
-          <div className="flex flex-wrap gap-2">
-            {pills.map(p => (
-              <span key={p}
-                className={`px-4 py-2 rounded-lg text-xs font-black tracking-[0.1em] ${pillClass}`}>
-                {p}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {!imageLeft && (
-          <div className={`order-2 transition-all duration-700 delay-200
-            ${visible ? 'opacity-100 translate-x-0' : 'opacity-0 translate-x-8'}`}>
-            <ImageCard image={image} />
-          </div>
-        )}
-      </div>
-    </section>
-  )
-}
-
-function ImageCard({ image }: { image: string }) {
-  return (
-    <div className="relative">
-      <div className="absolute -inset-6 rounded-3xl opacity-40 blur-3xl"
-        style={{ background: 'linear-gradient(135deg, #7c3aed, #D4A853)' }} />
-      <div className="relative aspect-[4/3] rounded-3xl overflow-hidden border border-white/[0.15]"
-        style={{ boxShadow: '0 30px 80px rgba(0,0,0,0.5)' }}>
-        <img src={image} alt="" className="w-full h-full object-cover" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent" />
-      </div>
-    </div>
-  )
-}
-
-// ══════════════════════════════════
 // LOGIN CARD
 // ══════════════════════════════════
 function LoginCard({ onLogin }: Props) {
@@ -651,17 +1018,14 @@ function LoginCard({ onLogin }: Props) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError('')
-    setLoading(true)
+    setError(''); setLoading(true)
     try {
       const result = await api.auth.login({ email, password })
       localStorage.setItem('forged_user', JSON.stringify(result.user))
       onLogin(result.token)
     } catch (err: any) {
       setError(err.message || 'Login failed')
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
   }
 
   return (
@@ -675,13 +1039,11 @@ function LoginCard({ onLogin }: Props) {
         )}
 
         <InputField label="EMAIL" type="email" value={email} onChange={setEmail}
-          placeholder="you@email.com"
-          focused={focused === 'email'}
+          placeholder="you@email.com" focused={focused === 'email'}
           onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
 
         <InputField label="PASSWORD" type="password" value={password} onChange={setPassword}
-          placeholder="••••••••"
-          focused={focused === 'password'}
+          placeholder="••••••••" focused={focused === 'password'}
           onFocus={() => setFocused('password')} onBlur={() => setFocused(null)} />
 
         <button type="submit" disabled={loading}
@@ -705,20 +1067,11 @@ function LoginCard({ onLogin }: Props) {
   )
 }
 
-// ══════════════════════════════════
-// INPUT FIELD
-// ══════════════════════════════════
 function InputField({
   label, type, value, onChange, placeholder, focused, onFocus, onBlur,
 }: {
-  label: string
-  type: string
-  value: string
-  onChange: (v: string) => void
-  placeholder: string
-  focused: boolean
-  onFocus: () => void
-  onBlur: () => void
+  label: string; type: string; value: string; onChange: (v: string) => void
+  placeholder: string; focused: boolean; onFocus: () => void; onBlur: () => void
 }) {
   return (
     <div className="text-left">
@@ -729,8 +1082,7 @@ function InputField({
         type={type} value={value}
         onChange={e => onChange(e.target.value)}
         onFocus={onFocus} onBlur={onBlur}
-        placeholder={placeholder}
-        required
+        placeholder={placeholder} required
         className={`w-full px-4 py-3.5 bg-white/[0.06] text-white text-base placeholder:text-white/30
           border rounded-xl outline-none transition-all
           ${focused

@@ -2,7 +2,6 @@ import { useTheme } from '../../hooks/useTheme'
 import { Icon, I } from '../ui/Icon'
 import { NAV, type TabId } from './nav'
 import { SettingsDropdown } from './SettingsDropdown'
-import logo from '/logo-removebg-preview.png'
 interface SidebarProps {
   active: TabId
   onChange: (tab: TabId) => void
@@ -38,7 +37,7 @@ export function Sidebar({ active, onChange, collapsed, onToggle, onLogout }: Sid
             flex items-center justify-center flex-shrink-0 overflow-hidden
             ${theme === 'dark' ? 'bg-white' : 'bg-forged-surface'}`}
         >
-          <img src={logo} alt="FORGED" className="w-7 h-7 object-contain" />
+          <img src="/forgedlogo.png" alt="FORGED" className="w-7 h-7 object-contain" />
         </div>
         {!collapsed && (
           <div>
