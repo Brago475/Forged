@@ -13,6 +13,7 @@ import {
   generateInsights,
   type Insight,
 } from '../components/progress/progressInsights'
+import { PageHeaderSkeleton, CardSkeleton } from '../components/loading/PageSkeletons'
 
 // ══════════════════════════════════
 // ICONS
@@ -207,12 +208,12 @@ export default function ProgressPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-4">
-        <div className="h-7 w-32 bg-forged-surface2 rounded-xl animate-pulse" />
-        <div className="h-28 bg-forged-surface2 rounded-2xl animate-pulse" />
-        <div className="h-36 bg-forged-surface2 rounded-2xl animate-pulse" />
-        <div className="h-52 bg-forged-surface2 rounded-2xl animate-pulse" />
-        <div className="h-28 bg-forged-surface2 rounded-2xl animate-pulse" />
+      <div className="flex flex-col gap-4 content-fade-in">
+        <PageHeaderSkeleton />
+        <CardSkeleton height={28} />
+        <CardSkeleton height={36} />
+        <CardSkeleton height={52} />
+        <CardSkeleton height={28} />
       </div>
     )
   }

@@ -32,6 +32,7 @@ import {
   clearCustomTargetHours,
   FASTING_LEGEND,
 } from '../components/fasting/fastingConstants'
+import { ListSkeleton } from '../components/loading/PageSkeletons'
 
 type View = 'home' | 'confirm' | 'custom' | 'active'
 
@@ -199,11 +200,9 @@ export default function FastingPage({ onBack }: FastingPageProps) {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 content-fade-in">
         <PageHeader onBack={onBack} title="Fasting" subtitle="Intermittent fasting tracker" />
-        {[1, 2, 3].map(i => (
-          <div key={i} className="h-32 bg-forged-surface2 rounded-2xl animate-pulse" />
-        ))}
+        <ListSkeleton rows={3} rowHeight={32} />
       </div>
     )
   }

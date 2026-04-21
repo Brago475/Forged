@@ -10,6 +10,7 @@ import {
   type Routine, type RoutineDay, type RoutineExercise, type ActiveWorkoutState,
   type ExerciseKind, type Intensity, type MuscleGroup, MUSCLE_GROUPS,
 } from '../components/workouts/workoutTypes'
+import { PageHeaderSkeleton, CardSkeleton } from '../components/loading/PageSkeletons'
 
 // ══════════════════════════════════
 // ICONS
@@ -214,10 +215,10 @@ function WorkoutHome({
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-4">
-        <div className="h-7 w-32 bg-forged-surface2 rounded-xl animate-pulse" />
-        <div className="h-44 bg-forged-surface2 rounded-2xl animate-pulse" />
-        <div className="h-32 bg-forged-surface2 rounded-2xl animate-pulse" />
+      <div className="flex flex-col gap-4 content-fade-in">
+        <PageHeaderSkeleton />
+        <CardSkeleton height={44} />
+        <CardSkeleton height={32} />
       </div>
     )
   }

@@ -1,26 +1,18 @@
-interface SkeletonProps {
-  /** Extra Tailwind classes. Use `h-*`, `w-*`, and `!rounded-*` here. */
-  className?: string
-}
+import type { CSSProperties } from 'react'
 
 /**
- * Shimmer skeleton block. Animates a gradient from left to right
- * to indicate a loading placeholder. Sized and shaped via className.
+ * Theme-safe shimmer block. Uses opacity-based shimmer so it
+ * adapts to any theme without hardcoded surface colors.
  *
- * @example
- *   <Skeleton className="h-5 w-48" />
- *   <Skeleton className="h-64 !rounded-2xl" />
+ * Pass className for layout (width, height, shape overrides).
+ * Use !rounded-full or !rounded-lg to override the default radius.
  */
-export function Skeleton({ className = '' }: SkeletonProps) {
-  return (
-    <div
-      className={`rounded-xl ${className}`}
-      style={{
-        background:
-          'linear-gradient(90deg, var(--surface2) 25%, var(--surface2-highlight, rgba(255,255,255,0.04)) 50%, var(--surface2) 75%)',
-        backgroundSize: '200% 100%',
-        animation: 'forgedSkelShimmer 1.5s ease infinite',
-      }}
-    />
-  )
+export function Skeleton({
+  className = '',
+  style,
+}: {
+  className?: string
+  style?: CSSProperties
+}) {
+  return <div className={`skel-shimmer ${className}`} style={style} />
 }
