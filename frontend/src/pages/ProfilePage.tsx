@@ -1,6 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { api } from '../hooks/api'
 import type { User } from '../types'
+import { useLoadingEffect } from '../hooks/useLoading'
 import {
   loadProfileExtras,
   saveProfileExtras,
@@ -75,18 +76,14 @@ export default function ProfilePage({ user: initialUser, onLogout: _onLogout }: 
   const [dashStats, setDashStats] = useState<any>(null)
 
   // Modal state
-  const [modal, setModal] = useState <
+  const [modal, setModal] = useState 
     'bio' | 'vitals' | 'lifestyle' | 'health' | 'foodGoals' | 'bodyGoals' | null
   >(null)
 
-  const loadStats = useCallback(async () => {
-    try {
-      const d = await api.workout.dashboard()
-      setDashStats(d)
-    } catch (e) { console.error(e) }
+  useLoadingEffect(async () => {
+    const d = await api.workout.dashboard()
+    setDashStats(d)
   }, [])
-
-  useEffect(() => { loadStats() }, [loadStats])
 
   // ── Handlers ──
 
