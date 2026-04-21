@@ -31,7 +31,7 @@ export function SettingsDropdown({
   useClickOutside(ref, () => setOpen(false))
 
   const itemClass =
-    'w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2 ' +
+    'w-full flex items-center gap-3 px-4 py-3 text-sm text-forged-text2 whitespace-nowrap ' +
     'hover:bg-forged-surface2 transition-colors text-left border-t border-forged-border'
 
   return (
@@ -48,10 +48,14 @@ export function SettingsDropdown({
 
       {open && (
         <div
-          className={`absolute w-52 bg-forged-surface border border-forged-border
+          className={`absolute bg-forged-surface border border-forged-border
             rounded-xl shadow-xl z-[70] max-h-[70vh] overflow-y-auto
             ${dropUp ? 'bottom-full mb-2 right-0' : 'top-full mt-2 right-0'}`}
-          style={{ animation: 'fadeSlide 0.15s ease-out' }}
+          style={{
+            animation: 'fadeSlide 0.15s ease-out',
+            width: '220px',
+            minWidth: '220px',
+          }}
         >
           {onProfile && (
             <button
