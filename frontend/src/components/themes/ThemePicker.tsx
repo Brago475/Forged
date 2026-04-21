@@ -10,10 +10,11 @@ import {
 } from './palettes'
 
 /**
- * Theme palette picker as a dropdown. Trigger shows the current
- * palette (half-moon swatch + name); tapping expands a list of
- * all 15 palettes. Tapping a row applies instantly, persists via
- * localStorage, and closes the dropdown.
+ * Theme palette picker as an inline accordion. Trigger shows
+ * the current palette (half-moon swatch + name); tapping expands
+ * the list of all 15 palettes, pushing the surrounding content
+ * down. Tapping a row applies instantly, persists via
+ * localStorage, and collapses the accordion.
  *
  * Layout: no card wrapper, spacing-only hierarchy per FORGE UI.
  */
@@ -42,7 +43,7 @@ export function ThemePicker() {
         Pick a palette. Applies instantly.
       </p>
 
-      <div className="relative" ref={ref}>
+      <div ref={ref}>
         {/* Trigger: shows current palette */}
         <button
           onClick={() => setOpen(!open)}
@@ -76,12 +77,11 @@ export function ThemePicker() {
           </svg>
         </button>
 
-        {/* Dropdown: 15 palette rows */}
+        {/* Inline accordion: expands below trigger when open */}
         {open && (
           <div
-            className="absolute left-0 right-0 top-full mt-2 z-[60]
-              bg-forged-surface border border-forged-border rounded-xl
-              shadow-xl max-h-[320px] overflow-y-auto p-1"
+            className="mt-2 bg-forged-surface border border-forged-border rounded-xl
+              max-h-[400px] overflow-y-auto p-1"
             style={{ animation: 'fadeSlide 0.15s ease-out' }}
           >
             {PALETTES.map(p => {
