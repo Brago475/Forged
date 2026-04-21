@@ -3,7 +3,8 @@
  * a tagline curved on the bottom, two parallel purple rings at
  * the outer edge, and a center hole with a pulsing gold dot.
  *
- * Pulses scale up/down instead of rotating (keeps text readable).
+ * Full-screen overlay covers everything, dead-center via fixed
+ * positioning. Pulses scale up/down on the GPU for smoothness.
  * Uses theme tokens so colors adapt when themes change.
  */
 export function PageLoader() {
@@ -15,11 +16,13 @@ export function PageLoader() {
         left: 0,
         right: 0,
         bottom: 0,
+        width: '100vw',
+        height: '100vh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        pointerEvents: 'none',
-        zIndex: 40,
+        backgroundColor: 'var(--bg)',
+        zIndex: 100,
       }}
     >
       <svg
@@ -29,6 +32,8 @@ export function PageLoader() {
         style={{
           animation: 'platePulse 1.6s ease-in-out infinite',
           transformOrigin: 'center',
+          willChange: 'transform',
+          display: 'block',
         }}
       >
         <defs>
@@ -104,6 +109,7 @@ export function PageLoader() {
           style={{
             animation: 'plateDot 1.6s ease-in-out infinite',
             transformOrigin: 'center',
+            willChange: 'transform, opacity',
           }}
         />
       </svg>
