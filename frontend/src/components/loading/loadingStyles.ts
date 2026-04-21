@@ -12,13 +12,8 @@ export const LOADING_STYLES = `
   100% { background-position: -200% 0; }
 }
 @keyframes forgedLogoPulse {
-  0%, 100% { opacity: 0.3; transform: scale(0.95); }
-  50% { opacity: 1; transform: scale(1); }
-}
-@keyframes forgedBarPulse {
-  0% { width: 20%; }
-  50% { width: 80%; }
-  100% { width: 20%; }
+  0%, 100% { opacity: 0.75; transform: scale(0.96); }
+  50% { opacity: 1; transform: scale(1.04); }
 }
 @keyframes forgedStaggerIn {
   0% { opacity: 0; transform: translateY(16px); }

@@ -37,7 +37,7 @@ export function Sidebar({ active, onChange, collapsed, onToggle, onLogout }: Sid
             flex items-center justify-center flex-shrink-0 overflow-hidden
             ${theme === 'dark' ? 'bg-white' : 'bg-forged-surface'}`}
         >
-          <img src="/forgedlogo.png" alt="FORGED" className="w-7 h-7 object-contain" />
+          <img src="/logo.png" alt="FORGED" className="w-7 h-7 object-contain" />
         </div>
         {!collapsed && (
           <div>

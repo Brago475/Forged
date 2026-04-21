@@ -11,6 +11,7 @@ import { describeMacros } from '../components/food/macroDescription'
 import { BarcodeScanModal } from '../components/food/BarcodeScanModal'
 import { PhotoFoodModal } from '../components/food/PhotoFoodModal'
 import type { CustomFood } from '../components/food/customFoodsStorage'
+import { InlineSpinner } from '../components/loading/InlineSpinner'
 // ══════════════════════════════════
 // ICONS
 // ══════════════════════════════════
@@ -160,7 +161,7 @@ function CalendarModal({ selected, onSelect, onClose }: {
           <div className="text-center">
             <span className="text-base font-black text-forged-text">{monthLabel}</span>
             {loadingSummary && (
-              <div className="w-3 h-3 border-2 border-forged-purple border-t-transparent rounded-full animate-spin mx-auto mt-1" />
+              <div className="mx-auto mt-1 flex justify-center"><InlineSpinner size="sm" /></div>
             )}
           </div>
           <button onClick={() => shiftMonth(1)}
@@ -782,7 +783,7 @@ function FoodSearch({ mealType, date, onAdded, onBarcode, onPhoto, onRecipes }: 
 
       {searching && (
         <div className="flex items-center gap-2 py-3 px-1">
-          <div className="w-4 h-4 border-2 border-forged-purple border-t-transparent rounded-full animate-spin" />
+          <InlineSpinner size="md" />
           <span className="text-xs text-forged-text2">Searching...</span>
         </div>
       )}
@@ -814,7 +815,7 @@ function FoodSearch({ mealType, date, onAdded, onBarcode, onPhoto, onRecipes }: 
                 <div className="w-7 h-7 rounded-lg bg-forged-purple/10 flex items-center justify-center
                   hover:bg-forged-purple/20 transition-colors">
                   {adding === food.id
-                    ? <div className="w-3.5 h-3.5 border-2 border-forged-purple border-t-transparent rounded-full animate-spin" />
+                    ? <InlineSpinner size="md" />
                     : <Icon d={I.plus} size={14} sw={2.5} className="text-forged-purple" />
                   }
                 </div>
@@ -950,7 +951,7 @@ function FoodLogRow({ log, onDelete }: { log: FoodLogType; onDelete: () => void 
               opacity-0 group-hover:opacity-100 transition-all
               text-forged-text2 hover:text-forged-red hover:bg-forged-red/10 active:scale-95">
             {deleting
-              ? <div className="w-3 h-3 border-2 border-forged-red border-t-transparent rounded-full animate-spin" />
+              ? <InlineSpinner size="sm" color="red" />
               : <Icon d={I.x} size={14} sw={2} />
             }
           </button>

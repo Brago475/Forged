@@ -3,6 +3,7 @@ import { Icon, I } from '../ui/Icon'
 import { api } from '../../hooks/api'
 import type { FoodLog } from '../../types'
 import { getPreset, type FastRecord } from './fastingConstants'
+import { InlineSpinner } from '../loading/InlineSpinner'
 
 interface FastDetailModalProps {
   fast: FastRecord
@@ -193,7 +194,7 @@ export function FastDetailModal({ fast, onClose, onDelete }: FastDetailModalProp
             Foods Logged
           </p>
           {loadingFoods ? (
-            <div className="py-4 text-center text-xs text-forged-text2">Loading...</div>
+            <div className="py-4 flex justify-center"><InlineSpinner size="md" /></div>
           ) : foods.length === 0 ? (
             <div className="py-6 text-center bg-forged-bg border border-forged-border rounded-xl">
               <Icon d={I.food} size={20} className="text-forged-text2 mx-auto mb-1.5" />
