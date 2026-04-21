@@ -50,7 +50,7 @@ export function SettingsDropdown({
         <div
           className={`absolute w-52 bg-forged-surface border border-forged-border
             rounded-xl shadow-xl z-[70] max-h-[70vh] overflow-y-auto
-            ${dropUp ? 'bottom-full mb-2 left-0' : 'top-full mt-2 right-0'}`}
+            ${dropUp ? 'bottom-full mb-2 right-0' : 'top-full mt-2 right-0'}`}
           style={{ animation: 'fadeSlide 0.15s ease-out' }}
         >
           {onProfile && (
