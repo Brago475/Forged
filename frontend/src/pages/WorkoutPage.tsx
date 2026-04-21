@@ -10,7 +10,7 @@ import {
   type Routine, type RoutineDay, type RoutineExercise, type ActiveWorkoutState,
   type ExerciseKind, type Intensity, type MuscleGroup, MUSCLE_GROUPS,
 } from '../components/workouts/workoutTypes'
-import { PageLoader } from '../components/loading/PageLoader'
+import { useLoadingEffect } from '../hooks/useLoading'
 
 // ══════════════════════════════════
 // ICONS
@@ -171,14 +171,14 @@ function WorkoutHome({
   onDeleteRoutine: (id: string) => void
 }) {
   const [logs, setLogs] = useState<WorkoutLog[]>([])
-  const [loading, setLoading] = useState(true)
   const [expandedRoutine, setExpandedRoutine] = useState<string | null>(null)
   const [showCalendar, setShowCalendar] = useState(false)
   const [resumeState, setResumeState] = useState<ActiveWorkoutState | null>(loadActiveWorkout())
   const [cleaningUp, setCleaningUp] = useState(false)
 
-  useEffect(() => {
-    api.workout.getLogs(30).then(setLogs).catch(console.error).finally(() => setLoading(false))
+  useLoadingEffect(async () => {
+    const data = await api.workout.getLogs(30)
+    setLogs(data)
   }, [])
 
   // Incomplete workouts older than 24 hours
@@ -212,8 +212,6 @@ function WorkoutHome({
 
   // History for PR detection on past logs
   const history = buildExerciseHistory(logs)
-
-  if (loading) return <PageLoader />
 
   return (
     <div className="flex flex-col gap-4">

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { api } from '../hooks/api'
 import type { WeightEntry, FoodLog } from '../types'
 import { loadBodyGoals, saveBodyGoals, type BodyGoals } from '../components/progress/bodyGoalsStorage'
@@ -13,7 +13,7 @@ import {
   generateInsights,
   type Insight,
 } from '../components/progress/progressInsights'
-import { PageLoader } from '../components/loading/PageLoader'
+import { useLoadingEffect } from '../hooks/useLoading'
 
 // ══════════════════════════════════
 // ICONS
@@ -72,7 +72,7 @@ export default function ProgressPage() {
   const [weekFood, setWeekFood] = useState<FoodLog[][]>([])
   const [prevWeekFood, setPrevWeekFood] = useState<FoodLog[][]>([])
   const [dashStats, setDashStats] = useState<any>(null)
-  const [loading, setLoading] = useState<boolean>(true)
+  const [reloadKey, setReloadKey] = useState<number>(0)
   const [range, setRange] = useState<WeightRange>('30d')
   const [bodyGoals, setBodyGoals] = useState<BodyGoals>(loadBodyGoals)
   const [showBodyGoals, setShowBodyGoals] = useState<boolean>(false)
@@ -82,40 +82,31 @@ export default function ProgressPage() {
   const [wNotes, setWNotes] = useState<string>('')
   const [saving, setSaving] = useState<boolean>(false)
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [w, d] = await Promise.all([
-        api.weight.getAll(365),
-        api.workout.dashboard(),
-      ])
-      setEntries(w)
-      setDashStats(d)
+  useLoadingEffect(async () => {
+    const [w, d] = await Promise.all([
+      api.weight.getAll(365),
+      api.workout.dashboard(),
+    ])
+    setEntries(w)
+    setDashStats(d)
 
-      const thisWeek: FoodLog[][] = []
-      const lastWeek: FoodLog[][] = []
-      for (let i = 0; i < 7; i++) {
-        const dt = new Date()
-        dt.setDate(dt.getDate() - i)
-        try { thisWeek.push(await api.food.getLogs(dt.toISOString().split('T')[0])) }
-        catch { thisWeek.push([]) }
-      }
-      for (let i = 7; i < 14; i++) {
-        const dt = new Date()
-        dt.setDate(dt.getDate() - i)
-        try { lastWeek.push(await api.food.getLogs(dt.toISOString().split('T')[0])) }
-        catch { lastWeek.push([]) }
-      }
-      setWeekFood(thisWeek)
-      setPrevWeekFood(lastWeek)
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
+    const thisWeek: FoodLog[][] = []
+    const lastWeek: FoodLog[][] = []
+    for (let i = 0; i < 7; i++) {
+      const dt = new Date()
+      dt.setDate(dt.getDate() - i)
+      try { thisWeek.push(await api.food.getLogs(dt.toISOString().split('T')[0])) }
+      catch { thisWeek.push([]) }
     }
-  }, [])
-
-  useEffect(() => { loadData() }, [loadData])
+    for (let i = 7; i < 14; i++) {
+      const dt = new Date()
+      dt.setDate(dt.getDate() - i)
+      try { lastWeek.push(await api.food.getLogs(dt.toISOString().split('T')[0])) }
+      catch { lastWeek.push([]) }
+    }
+    setWeekFood(thisWeek)
+    setPrevWeekFood(lastWeek)
+  }, [reloadKey])
 
   const handleLogWeight = async (): Promise<void> => {
     const w = parseFloat(weight)
@@ -129,7 +120,7 @@ export default function ProgressPage() {
       })
       setWeight('')
       setWNotes('')
-      await loadData()
+      setReloadKey(k => k + 1)
     } catch (e) {
       console.error(e)
     } finally {
@@ -205,8 +196,6 @@ export default function ProgressPage() {
     return { date: iso, intensity }
   })
   const heatmapActive = heatmapCells.filter(c => c.intensity > 0).length
-
-  if (loading) return <PageLoader />
 
   return (
     <div className="flex flex-col gap-4">

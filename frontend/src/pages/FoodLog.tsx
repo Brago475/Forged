@@ -12,7 +12,7 @@ import { BarcodeScanModal } from '../components/food/BarcodeScanModal'
 import { PhotoFoodModal } from '../components/food/PhotoFoodModal'
 import type { CustomFood } from '../components/food/customFoodsStorage'
 import { InlineSpinner } from '../components/loading/InlineSpinner'
-import { PageLoader } from '../components/loading/PageLoader'
+import { useLoadingEffect } from '../hooks/useLoading'
 // ══════════════════════════════════
 // ICONS
 // ══════════════════════════════════
@@ -352,7 +352,7 @@ interface FoodLogProps {
   export default function FoodLog({ onNavigate }: FoodLogProps = {}) {
   const [date, setDate] = useState(() => new Date().toISOString().split('T')[0])
   const [logs, setLogs] = useState<FoodLogType[]>([])
-  const [loading, setLoading] = useState(true)
+  const [reloadKey, setReloadKey] = useState<number>(0)
   const [addingTo, setAddingTo] = useState<MealKey | null>(null)
   const [scanOpen, setScanOpen] = useState<{ meal: string } | null>(null)
   const [photoOpen, setPhotoOpen] = useState<{ meal: string } | null>(null)
@@ -367,14 +367,14 @@ interface FoodLogProps {
     saveGoals(next)
   }
 
-  const loadLogs = useCallback(async () => {
-    setLoading(true)
-    try { setLogs(await api.food.getLogs(date)) }
-    catch (e) { console.error(e) }
-    finally { setLoading(false) }
-  }, [date])
+  useLoadingEffect(async () => {
+    const data = await api.food.getLogs(date)
+    setLogs(data)
+  }, [date, reloadKey])
 
-  useEffect(() => { loadLogs() }, [loadLogs])
+  const refreshLogs = useCallback(() => {
+    setReloadKey(k => k + 1)
+  }, [])
 
   // ── Totals ──
   const totals = {
@@ -407,7 +407,7 @@ interface FoodLogProps {
   const grouped = (key: string) => logs.filter(l => l.mealType === key)
   const mealCals = (key: string) => grouped(key).reduce((s, l) => s + (l.food?.calories ?? 0) * l.servings, 0)
 
-  const onFoodAdded = () => { setAddingTo(null); loadLogs() }
+  const onFoodAdded = () => { setAddingTo(null); refreshLogs() }
   const handleCustomFoodCapture = (food: CustomFood, mealType: string): void => {
     // Backend doesn't support custom foods yet — store locally
     const localKey = `forged:custom-logs:${date}`
@@ -420,7 +420,7 @@ interface FoodLogProps {
     localStorage.setItem(localKey, JSON.stringify(existing))
     setScanOpen(null)
     setPhotoOpen(null)
-    loadLogs()
+    refreshLogs()
   }
 
   // ── Copy from yesterday ──
@@ -436,12 +436,9 @@ interface FoodLogProps {
           await api.food.log({ foodId: log.food.id, date, mealType: mealKey, servings: log.servings })
         }
       }
-      loadLogs()
+      refreshLogs()
     } catch (e) { console.error(e) }
   }
-
-  // ── Skeleton ──
-if (loading && logs.length === 0) return <PageLoader />
 
   return (
     <div className="flex flex-col gap-4">
@@ -644,7 +641,7 @@ if (loading && logs.length === 0) return <PageLoader />
             ) : (
               <div className="flex flex-col">
                 {items.map(log => (
-                  <FoodLogRow key={log.id} log={log} onDelete={loadLogs} />
+                  <FoodLogRow key={log.id} log={log} onDelete={refreshLogs} />
                 ))}
               </div>
             )}

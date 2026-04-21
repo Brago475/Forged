@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { api } from '../hooks/api'
 import type { FoodLog, WorkoutLog } from '../types'
 import { loadGoals } from '../components/food/goalStorage'
@@ -8,7 +8,7 @@ import {
   getRecoveryMessage, hasFreezeBeenUsedThisMonth, useFreeze,
   type StreakData, type StreakType,
 } from '../components/streaks/streaksLogic'
-import { PageLoader } from '../components/loading/PageLoader'
+import { useLoadingEffect } from '../hooks/useLoading'
 
 const I = {
   chevL: <><path d="M15 18l-6-6 6-6"/></>,
@@ -54,43 +54,34 @@ function Card({ children, className = '', delay = 0 }: {
 export default function StreaksPage({ onBack }: { onBack: () => void }) {
   const [active, setActive] = useState<StreakType>('logging')
   const [streaks, setStreaks] = useState<Record<StreakType, StreakData> | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
+  const [reloadKey, setReloadKey] = useState<number>(0)
   const [freezePrompt, setFreezePrompt] = useState<boolean>(false)
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const [workouts] = await Promise.all([
-        api.workout.getLogs(120),
-      ])
+  useLoadingEffect(async () => {
+    const [workouts] = await Promise.all([
+      api.workout.getLogs(120),
+    ])
 
-      const foodByDay = new Map<string, FoodLog[]>()
-      for (let i = 0; i < 84; i++) {
-        const dt = new Date(); dt.setDate(dt.getDate() - i)
-        const iso = dt.toISOString().split('T')[0]
-        try {
-          const logs = await api.food.getLogs(iso)
-          foodByDay.set(iso, logs)
-        } catch {
-          foodByDay.set(iso, [])
-        }
+    const foodByDay = new Map<string, FoodLog[]>()
+    for (let i = 0; i < 84; i++) {
+      const dt = new Date(); dt.setDate(dt.getDate() - i)
+      const iso = dt.toISOString().split('T')[0]
+      try {
+        const logs = await api.food.getLogs(iso)
+        foodByDay.set(iso, logs)
+      } catch {
+        foodByDay.set(iso, [])
       }
-
-      const goals = loadGoals()
-      const logging = buildLoggingStreak(foodByDay)
-      const workout = buildWorkoutStreak(workouts as WorkoutLog[])
-      const protein = buildProteinStreak(foodByDay, goals.protein)
-      const calories = buildCaloriesStreak(foodByDay, goals.calories)
-
-      setStreaks({ logging, workout, protein, calories })
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
     }
-  }, [])
 
-  useEffect(() => { loadData() }, [loadData])
+    const goals = loadGoals()
+    const logging = buildLoggingStreak(foodByDay)
+    const workout = buildWorkoutStreak(workouts as WorkoutLog[])
+    const protein = buildProteinStreak(foodByDay, goals.protein)
+    const calories = buildCaloriesStreak(foodByDay, goals.calories)
+
+    setStreaks({ logging, workout, protein, calories })
+  }, [reloadKey])
 
   const streak = streaks?.[active]
 
@@ -112,10 +103,10 @@ forgedgyms.com`
     yesterday.setDate(yesterday.getDate() - 1)
     useFreeze(yesterday.toISOString().split('T')[0])
     setFreezePrompt(false)
-    loadData()
+    setReloadKey(k => k + 1)
   }
 
-if (loading || !streak || !streaks) return <PageLoader />
+  if (!streak || !streaks) return null
 
   const heatmap = buildHeatmap(streak.activeDays, 12)
   const nextMilestone = findNextMilestone(streak.currentStreak)

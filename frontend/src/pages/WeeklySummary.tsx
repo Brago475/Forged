@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { api } from '../hooks/api'
 import type { FoodLog } from '../types'
 import { loadGoals } from '../components/food/goalStorage'
@@ -9,7 +9,7 @@ import {
   type WeeklyRecap,
   type WeekData,
 } from '../components/weekly/weeklyRecapLogic'
-import { PageLoader } from '../components/loading/PageLoader'
+import { useLoadingEffect } from '../hooks/useLoading'
 // ══════════════════════════════════
 // ICONS
 // ══════════════════════════════════
@@ -54,41 +54,32 @@ export default function WeeklySummaryPage({ onBack }: { onBack: () => void }) {
   const [weeks] = useState<WeekRange[]>(() => generateWeekRanges(12))
   const [activeOffset, setActiveOffset] = useState<number>(0)
   const [recap, setRecap] = useState<WeeklyRecap | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
 
   const activeWeek = weeks.find(w => w.offset === activeOffset) ?? weeks[0]
 
-  const loadWeek = useCallback(async (week: WeekRange): Promise<void> => {
-    setLoading(true)
-    try {
-      const [weights, workouts] = await Promise.all([
-        api.weight.getAll(120),
-        api.workout.getLogs(60),
-      ])
+  useLoadingEffect(async () => {
+    const week = activeWeek
+    const [weights, workouts] = await Promise.all([
+      api.weight.getAll(120),
+      api.workout.getLogs(60),
+    ])
 
-      const foodByDay: FoodLog[][] = []
-      for (let i = 0; i < 7; i++) {
-        const dt = new Date(week.start)
-        dt.setDate(dt.getDate() + i)
-        const iso = dt.toISOString().split('T')[0]
-        try {
-          foodByDay.push(await api.food.getLogs(iso))
-        } catch {
-          foodByDay.push([])
-        }
+    const foodByDay: FoodLog[][] = []
+    for (let i = 0; i < 7; i++) {
+      const dt = new Date(week.start)
+      dt.setDate(dt.getDate() + i)
+      const iso = dt.toISOString().split('T')[0]
+      try {
+        foodByDay.push(await api.food.getLogs(iso))
+      } catch {
+        foodByDay.push([])
       }
-
-      const foodGoals = loadGoals()
-      const data: WeekData = { foodByDay, weights, workouts }
-      setRecap(computeWeeklyRecap(week, data, foodGoals.calories, foodGoals.protein))
-    } catch (e) {
-      console.error(e)
-    } finally {
-      setLoading(false)
     }
-  }, [])
 
-  useEffect(() => { loadWeek(activeWeek) }, [activeWeek, loadWeek])
+    const foodGoals = loadGoals()
+    const data: WeekData = { foodByDay, weights, workouts }
+    setRecap(computeWeeklyRecap(week, data, foodGoals.calories, foodGoals.protein))
+  }, [activeWeek])
 
   const goPrev = (): void => {
     if (activeOffset < weeks.length - 1) setActiveOffset(activeOffset + 1)
@@ -178,9 +169,7 @@ forgedgyms.com`
         </div>
       </Card>
 
-      {loading ? (
-        <PageLoader />
-      ) : !recap ? (
+      {!recap ? (
         <Card delay={120}>
           <p className="text-sm text-forged-text2 text-center py-4">No data for this week.</p>
         </Card>

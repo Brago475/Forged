@@ -32,7 +32,7 @@ import {
   clearCustomTargetHours,
   FASTING_LEGEND,
 } from '../components/fasting/fastingConstants'
-import { PageLoader } from '../components/loading/PageLoader'
+import { useLoadingEffect } from '../hooks/useLoading'
 
 type View = 'home' | 'confirm' | 'custom' | 'active'
 
@@ -49,10 +49,9 @@ export default function FastingPage({ onBack }: FastingPageProps) {
   const [customFasts, setCustomFasts] = useState<CustomFast[]>(loadCustomFasts)
   const [selectedPreset, setSelectedPreset] = useState<FastingPreset | null>(null)
   const [calMonth, setCalMonth] = useState<Date>(new Date())
-  const [loading, setLoading] = useState<boolean>(true)
   const [todayFood, setTodayFood] = useState<FoodLog[]>([])
 
-  const loadActive = useCallback(async () => {
+  useLoadingEffect(async () => {
     try {
       const fast = await api.fasting.getActive()
       if (fast) {
@@ -71,12 +70,8 @@ export default function FastingPage({ onBack }: FastingPageProps) {
       }
     } catch {
       // No active fast
-    } finally {
-      setLoading(false)
     }
   }, [])
-
-  useEffect(() => { loadActive() }, [loadActive])
 
   const refreshTodayFood = useCallback(() => {
     const today = new Date().toISOString().split('T')[0]
@@ -125,8 +120,25 @@ export default function FastingPage({ onBack }: FastingPageProps) {
           saveCustomEatHours(fast.id, customEatHours)
         }
       }
-      await loadActive()
-      setView('active')
+      // Re-fetch active state
+      try {
+        const refreshed = await api.fasting.getActive()
+        if (refreshed) {
+          const startMs = new Date(refreshed.startTime).getTime()
+          const elapsedHours = (Date.now() - startMs) / 3600000
+          if (elapsedHours > refreshed.targetHours * 2) {
+            setActiveFast(refreshed)
+            setIsStale(true)
+            setView('home')
+          } else {
+            setActiveFast(refreshed)
+            setIsStale(false)
+            setView('active')
+          }
+        }
+      } catch {
+        // ignore
+      }
       setSelectedPreset(null)
     } catch (err) {
       console.error('Failed to start fast:', err)
@@ -197,8 +209,6 @@ export default function FastingPage({ onBack }: FastingPageProps) {
       iconKey: preset.iconKey,
     }
   })
-
-  if (loading) return <PageLoader />
 
   return (
     <div className="flex flex-col gap-4">
@@ -369,7 +379,7 @@ export default function FastingPage({ onBack }: FastingPageProps) {
           </Card>
         </>
       )}
-{selectedHistoryFast && (
+      {selectedHistoryFast && (
         <FastDetailModal
           fast={selectedHistoryFast}
           onClose={() => setSelectedHistoryFast(null)}
