@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, useCallback, type ReactNode, createElement } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback, useRef, type ReactNode, createElement } from 'react'
 
 interface LoadingContextValue {
   isLoading: boolean
@@ -15,16 +15,21 @@ const LoadingContext = createContext<LoadingContextValue | null>(null)
  *
  * Uses a counter so concurrent async operations all get tracked; the
  * overlay hides only when every loading task has completed.
+ *
+ * A minimum display time prevents the loader from flashing when a
+ * fetch resolves very quickly (e.g. from cache).
  */
 export function LoadingProvider({ children }: { children: ReactNode }) {
   const [count, setCount] = useState<number>(0)
   const [stableIsLoading, setStableIsLoading] = useState<boolean>(false)
-  const startedAt = typeof window !== 'undefined' ? useStartedAtRef() : { current: null as number | null }
+  const startedAt = useRef<number | null>(null)
 
   const rawIsLoading = count > 0
 
   useEffect(() => {
-    const MIN_MS = 500
+    const MIN_MS = 2000
+
+    console.log('[LoadingContext]', { count, rawIsLoading, stableIsLoading, startedAt: startedAt.current })
 
     if (rawIsLoading) {
       if (startedAt.current == null) startedAt.current = Date.now()
@@ -49,11 +54,6 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
     { value: { isLoading: stableIsLoading, pushLoading, popLoading } },
     children
   )
-}
-
-function useStartedAtRef() {
-  const [ref] = useState<{ current: number | null }>({ current: null })
-  return ref
 }
 
 /**

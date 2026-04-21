@@ -76,7 +76,7 @@ export default function ProfilePage({ user: initialUser, onLogout: _onLogout }: 
   const [dashStats, setDashStats] = useState<any>(null)
 
   // Modal state
-  const [modal, setModal] = useState 
+  const [modal, setModal] = useState <
     'bio' | 'vitals' | 'lifestyle' | 'health' | 'foodGoals' | 'bodyGoals' | null
   >(null)
 
