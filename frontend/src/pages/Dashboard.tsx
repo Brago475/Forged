@@ -51,6 +51,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [activeFast, setActiveFast] = useState<FastingLog | null>(null)
   const [todayFood, setTodayFood] = useState<FoodLog[]>([])
   const [brandDone, setBrandDone] = useState<boolean>(false)
+  const [hasEverLoaded, setHasEverLoaded] = useState<boolean>(false)
   const isDesktop = useMediaQuery('(min-width: 768px)')
   const isLoading = useLoadingState()
 
@@ -87,7 +88,10 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
   // Brand loader: visible for at least 1.2s so the logo registers.
   useEffect(() => {
-    const timer = setTimeout(() => setBrandDone(true), 1200)
+    const timer = setTimeout(() => {
+      setBrandDone(true)
+      setHasEverLoaded(true)
+    }, 1200)
     return () => clearTimeout(timer)
   }, [])
 
@@ -109,8 +113,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* Phase 1: brand loader on first app launch only */}
       {!brandDone && <BrandLoader />}
 
-      {/* Phase 2: overlay loader - shows whenever any page is loading data */}
-      {brandDone && isLoading && <PageLoader />}
+      {/* Phase 2: overlay loader - shows whenever any page is loading data (skip first launch) */}
+      {brandDone && isLoading && hasEverLoaded && <PageLoader />}
 
       {/* Desktop sidebar */}
       {isDesktop && (
