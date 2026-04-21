@@ -87,6 +87,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   }, [tab])
 
   // Brand loader: visible for at least 1.2s so the logo registers.
+  // Once it clears, unlock the plate loader for subsequent tab switches.
   useEffect(() => {
     const timer = setTimeout(() => {
       setBrandDone(true)
@@ -113,8 +114,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* Phase 1: brand loader on first app launch only */}
       {!brandDone && <BrandLoader />}
 
-      {/* Phase 2: overlay loader - shows whenever any page is loading data (skip first launch) */}
-      {brandDone && isLoading && hasEverLoaded && <PageLoader />}
+      {/* Phase 2: overlay loader — only after BrandLoader has finished its initial job */}
+      {brandDone && hasEverLoaded && isLoading && <PageLoader />}
 
       {/* Desktop sidebar */}
       {isDesktop && (
