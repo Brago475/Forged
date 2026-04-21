@@ -8,7 +8,7 @@ import {
   type AppSettings,
 } from '../components/settings/settingsStorage'
 import { exportAllData, importAllData, clearAllForgedData, type ExportBundle } from '../components/profile/profileStorage'
-
+import { ThemePicker } from '../components/themes/ThemePicker'
 // ══════════════════════════════════
 // ICONS
 // ══════════════════════════════════
@@ -212,7 +212,7 @@ export default function SettingsPage({ onBack }: { onBack: () => void }) {
         </p>
       </Card>
 
-      {/* ── Appearance ── */}
+{/* ── Appearance ── */}
       <Card delay={120}>
         <SectionHeader icon={I.sun} label="Appearance" />
         <button onClick={toggleTheme}
@@ -228,6 +228,10 @@ export default function SettingsPage({ onBack }: { onBack: () => void }) {
           </div>
           <span className="text-xs text-forged-purple font-bold capitalize">{theme}</span>
         </button>
+
+        <div className="mt-4 pt-4 border-t border-forged-border">
+          <ThemePicker />
+        </div>
       </Card>
 
       {/* ── Units ── */}
