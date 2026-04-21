@@ -16,8 +16,8 @@ const LoadingContext = createContext<LoadingContextValue | null>(null)
  * Uses a counter so concurrent async operations all get tracked; the
  * overlay hides only when every loading task has completed.
  *
- * A minimum display time prevents the loader from flashing when a
- * fetch resolves very quickly (e.g. from cache).
+ * A minimum display time (500ms) prevents the loader from flashing
+ * when a fetch resolves very quickly (e.g. from cache).
  */
 export function LoadingProvider({ children }: { children: ReactNode }) {
   const [count, setCount] = useState<number>(0)
@@ -27,9 +27,7 @@ export function LoadingProvider({ children }: { children: ReactNode }) {
   const rawIsLoading = count > 0
 
   useEffect(() => {
-    const MIN_MS = 2000
-
-    console.log('[LoadingContext]', { count, rawIsLoading, stableIsLoading, startedAt: startedAt.current })
+    const MIN_MS = 500
 
     if (rawIsLoading) {
       if (startedAt.current == null) startedAt.current = Date.now()

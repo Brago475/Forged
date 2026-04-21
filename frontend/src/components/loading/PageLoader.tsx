@@ -2,6 +2,9 @@
  * Loader overlay. Renders fixed over the main content area, blurring
  * and dimming whatever's behind it. Shows the pulsing plate centered
  * in the viewport. Rendered by Dashboard when useLoadingState() is true.
+ *
+ * All colors use theme tokens so it looks correct in both dark and
+ * light mode.
  */
 export function PageLoader() {
   return (
@@ -15,9 +18,9 @@ export function PageLoader() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(10, 8, 20, 0.8)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        backgroundColor: 'rgba(0, 0, 0, 0.55)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
         zIndex: 90,
         animation: 'forgedContentFadeIn 0.2s ease-out both',
       }}
@@ -38,10 +41,16 @@ export function PageLoader() {
           <path id="plateBotCurve" d="M 40,100 A 60,60 0 0 0 160,100" fill="none" />
         </defs>
 
+        {/* Outer railroad ring */}
         <circle cx="100" cy="100" r="94" fill="none" stroke="var(--accent-purple)" strokeWidth="2" />
+
+        {/* Plate body — uses theme surface color */}
         <circle cx="100" cy="100" r="88" fill="var(--bg-surface)" />
+
+        {/* Inner railroad ring */}
         <circle cx="100" cy="100" r="88" fill="none" stroke="var(--accent-purple)" strokeWidth="2" />
 
+        {/* FORGED on top */}
         <text
           fontFamily="-apple-system, 'Segoe UI', sans-serif"
           fontWeight="900"
@@ -54,6 +63,7 @@ export function PageLoader() {
           </textPath>
         </text>
 
+        {/* Tagline on bottom */}
         <text
           fontFamily="-apple-system, 'Segoe UI', sans-serif"
           fontWeight="900"
@@ -66,7 +76,17 @@ export function PageLoader() {
           </textPath>
         </text>
 
-        <circle cx="100" cy="100" r="30" fill="var(--bg)" stroke="rgba(255,255,255,0.15)" strokeWidth="2" />
+        {/* Center hole — uses theme bg for light/dark correctness */}
+        <circle
+          cx="100"
+          cy="100"
+          r="30"
+          fill="var(--bg)"
+          stroke="var(--border)"
+          strokeWidth="2"
+        />
+
+        {/* Pulsing gold dot in center */}
         <circle
           cx="100"
           cy="100"
