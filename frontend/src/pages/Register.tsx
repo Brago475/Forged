@@ -102,13 +102,13 @@ function MobileRegister({ onLogin }: Props) {
             </div>
           )}
           <InputField label="DISPLAY NAME" type="text" value={displayName} onChange={setDisplayName}
-            placeholder="Evan" focused={focused === 'displayName'}
+            placeholder="Name" focused={focused === 'displayName'}
             onFocus={() => setFocused('displayName')} onBlur={() => setFocused(null)} required={false} />
           <InputField label="USERNAME" type="text" value={username} onChange={setUsername}
-            placeholder="evan" focused={focused === 'username'}
+            placeholder="Username" focused={focused === 'username'}
             onFocus={() => setFocused('username')} onBlur={() => setFocused(null)} />
           <InputField label="EMAIL" type="email" value={email} onChange={setEmail}
-            placeholder="you@email.com" focused={focused === 'email'}
+            placeholder="your@email.com" focused={focused === 'email'}
             onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
           <InputField label="PASSWORD" type="password" value={password} onChange={setPassword}
             placeholder="••••••••" focused={focused === 'password'}
@@ -184,7 +184,7 @@ function WebRegister({ onLogin }: Props) {
             </p>
             <h1 className="text-white text-7xl xl:text-8xl font-black tracking-tight mb-8 leading-[0.95]"
               style={{ animation: 'fadeInUp 0.8s 0.4s ease-out both' }}>
-              Get<br />forged.
+              FORGED<br />YOUR BODY HERE.
             </h1>
             <p className="text-white/75 text-xl leading-relaxed mb-8 max-w-md"
               style={{ animation: 'fadeInUp 0.8s 0.6s ease-out both' }}>

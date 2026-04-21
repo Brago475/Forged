@@ -111,7 +111,7 @@ function MobileLogin({ onLogin }: Props) {
             </div>
           )}
           <InputField label="EMAIL" type="email" value={email} onChange={setEmail}
-            placeholder="you@email.com" focused={focused === 'email'}
+            placeholder="your@email.com" focused={focused === 'email'}
             onFocus={() => setFocused('email')} onBlur={() => setFocused(null)} />
           <InputField label="PASSWORD" type="password" value={password} onChange={setPassword}
             placeholder="••••••••" focused={focused === 'password'}
