@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
+import { useClickOutside } from '../../hooks/useClickOutside'
 import {
   PALETTES,
   loadPaletteId,
@@ -9,19 +10,25 @@ import {
 } from './palettes'
 
 /**
- * Named-row theme picker. Each palette shows as a row with
- * two circles (primary + accent), the palette name, and a
- * checkmark if active. Tapping applies instantly and persists.
+ * Theme palette picker as a dropdown. Trigger shows the current
+ * palette (half-moon swatch + name); tapping expands a list of
+ * all 15 palettes. Tapping a row applies instantly, persists via
+ * localStorage, and closes the dropdown.
  *
  * Layout: no card wrapper, spacing-only hierarchy per FORGE UI.
  */
 export function ThemePicker() {
   const [activeId, setActiveId] = useState<string>(loadPaletteId())
+  const [open, setOpen] = useState<boolean>(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useClickOutside(ref, () => setOpen(false))
 
   const pick = (palette: ThemePalette) => {
     setActiveId(palette.id)
     savePaletteId(palette.id)
     applyPalette(palette)
+    setOpen(false)
   }
 
   const active = getPaletteById(activeId)
@@ -35,66 +42,85 @@ export function ThemePicker() {
         Pick a palette. Applies instantly.
       </p>
 
-      <div className="flex flex-col gap-0.5">
-        {PALETTES.map(p => {
-          const isActive = p.id === activeId
-          return (
-            <button
-              key={p.id}
-              onClick={() => pick(p)}
-              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl
-                transition-all text-left active:scale-[0.99]
-                ${isActive
-                  ? 'bg-forged-bg'
-                  : 'hover:bg-forged-bg/60'}`}
-            >
-              {/* Pair of circles: primary + accent */}
-              <div className="flex items-center flex-shrink-0">
-                <div
-                  className="w-5 h-5 rounded-full"
-                  style={{ backgroundColor: p.primary }}
-                />
-                <div
-                  className="w-4 h-4 rounded-full -ml-1"
-                  style={{ backgroundColor: p.accent }}
-                />
-              </div>
+      <div className="relative" ref={ref}>
+        {/* Trigger: shows current palette */}
+        <button
+          onClick={() => setOpen(!open)}
+          className="w-full flex items-center gap-3 px-3 py-3 rounded-xl
+            bg-forged-bg border border-forged-border
+            hover:border-forged-purple/30 transition-all
+            active:scale-[0.99]"
+        >
+          <div
+            className="w-5 h-5 rounded-full flex-shrink-0"
+            style={{
+              background: `linear-gradient(to right, ${active.primary} 50%, ${active.accent} 50%)`,
+            }}
+          />
+          <span className="flex-1 text-sm text-forged-text font-black text-left">
+            {active.name}
+          </span>
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={`text-forged-text2 flex-shrink-0 transition-transform duration-200
+              ${open ? 'rotate-180' : ''}`}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
 
-              {/* Name */}
-              <span className={`flex-1 text-sm
-                ${isActive
-                  ? 'text-forged-text font-black'
-                  : 'text-forged-text2 font-bold'}`}>
-                {p.name}
-              </span>
-
-              {/* Active indicator */}
-              {isActive && (
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
-                  stroke={p.accent} strokeWidth="3"
-                  strokeLinecap="round" strokeLinejoin="round"
-                  className="flex-shrink-0">
-                  <polyline points="20 6 9 17 4 12" />
-                </svg>
-              )}
-            </button>
-          )
-        })}
-      </div>
-
-      <div className="flex items-center justify-between mt-4 pt-4 border-t border-forged-border">
-        <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest">
-          Active
-        </p>
-        <div className="flex items-center gap-2">
-          <span className="text-xs font-black text-forged-text">{active.name}</span>
-          <div className="flex items-center">
-            <div className="w-3.5 h-3.5 rounded-full"
-              style={{ backgroundColor: active.primary }} />
-            <div className="w-3 h-3 rounded-full -ml-1"
-              style={{ backgroundColor: active.accent }} />
+        {/* Dropdown: 15 palette rows */}
+        {open && (
+          <div
+            className="absolute left-0 right-0 top-full mt-2 z-[60]
+              bg-forged-surface border border-forged-border rounded-xl
+              shadow-xl max-h-[320px] overflow-y-auto p-1"
+            style={{ animation: 'fadeSlide 0.15s ease-out' }}
+          >
+            {PALETTES.map(p => {
+              const isActive = p.id === activeId
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => pick(p)}
+                  className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg
+                    transition-all text-left active:scale-[0.99]
+                    ${isActive
+                      ? 'bg-forged-bg'
+                      : 'hover:bg-forged-bg/60'}`}
+                >
+                  <div
+                    className="w-5 h-5 rounded-full flex-shrink-0"
+                    style={{
+                      background: `linear-gradient(to right, ${p.primary} 50%, ${p.accent} 50%)`,
+                    }}
+                  />
+                  <span className={`flex-1 text-sm
+                    ${isActive
+                      ? 'text-forged-text font-black'
+                      : 'text-forged-text2 font-bold'}`}>
+                    {p.name}
+                  </span>
+                  {isActive && (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke={p.accent} strokeWidth="3"
+                      strokeLinecap="round" strokeLinejoin="round"
+                      className="flex-shrink-0">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </button>
+              )
+            })}
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
