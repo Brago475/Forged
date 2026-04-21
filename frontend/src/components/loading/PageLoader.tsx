@@ -2,27 +2,73 @@
  * In-app page loader. Stopwatch-shaped, ticks around the face
  * with ripples radiating outward and a progress ring filling.
  *
- * Used for any page-level loading state. Theme-safe (uses only
- * currentColor-free tokens).
- *
- * For first-app-launch, use BrandLoader (pulsing logo).
- * For button/form loading, use InlineSpinner.
+ * Uses CSS tokens (--forged-purple, --forged-gold) so it adapts
+ * to every theme automatically. Purple ring + gold hand/accents
+ * stay consistent with the app's current palette.
  */
 export function PageLoader() {
   return (
-    <div className="w-full flex items-center justify-center py-20 min-h-[400px]">
+    <div
+      className="w-full flex items-center justify-center"
+      style={{ minHeight: '60vh' }}
+    >
       <div style={{ position: 'relative', width: 160, height: 180 }}>
 
         {/* Crown button on top */}
-        <div style={{ position: 'absolute', top: 14, left: '50%', transform: 'translateX(-50%)', width: 24, height: 10, background: '#7c3aed', borderRadius: '3px 3px 0 0' }} />
-        <div style={{ position: 'absolute', top: 8, left: '50%', transform: 'translateX(-50%)', width: 12, height: 6, background: '#D4A853', borderRadius: 2 }} />
+        <div style={{
+          position: 'absolute',
+          top: 14,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 24,
+          height: 10,
+          background: 'var(--forged-purple)',
+          borderRadius: '3px 3px 0 0',
+        }} />
+        <div style={{
+          position: 'absolute',
+          top: 8,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: 12,
+          height: 6,
+          background: 'var(--forged-gold)',
+          borderRadius: 2,
+        }} />
 
         {/* Angled stems */}
-        <div style={{ position: 'absolute', top: 2, right: 18, width: 6, height: 14, background: '#7c3aed', borderRadius: 2, transform: 'rotate(35deg)' }} />
-        <div style={{ position: 'absolute', top: 2, left: 18, width: 6, height: 14, background: '#7c3aed', borderRadius: 2, transform: 'rotate(-35deg)' }} />
+        <div style={{
+          position: 'absolute',
+          top: 2,
+          right: 18,
+          width: 6,
+          height: 14,
+          background: 'var(--forged-purple)',
+          borderRadius: 2,
+          transform: 'rotate(35deg)',
+        }} />
+        <div style={{
+          position: 'absolute',
+          top: 2,
+          left: 18,
+          width: 6,
+          height: 14,
+          background: 'var(--forged-purple)',
+          borderRadius: 2,
+          transform: 'rotate(-35deg)',
+        }} />
 
         {/* Watch body */}
-        <div style={{ position: 'absolute', top: 24, left: 0, right: 0, bottom: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{
+          position: 'absolute',
+          top: 24,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
           <div style={{ position: 'relative', width: 150, height: 150 }}>
 
             {/* Purple ripple */}
@@ -30,7 +76,7 @@ export function PageLoader() {
               style={{
                 position: 'absolute',
                 inset: 0,
-                border: '2px solid #7c3aed',
+                border: '2px solid var(--forged-purple)',
                 borderRadius: '50%',
                 animation: 'swRipple 2.2s ease-out infinite',
               }}
@@ -40,7 +86,7 @@ export function PageLoader() {
               style={{
                 position: 'absolute',
                 inset: 0,
-                border: '2px solid #D4A853',
+                border: '2px solid var(--forged-gold)',
                 borderRadius: '50%',
                 animation: 'swRipple 2.2s ease-out 0.7s infinite',
               }}
@@ -52,7 +98,7 @@ export function PageLoader() {
                 position: 'absolute',
                 inset: 0,
                 borderRadius: '50%',
-                background: 'var(--forged-bg, #0F0A1F)',
+                background: 'var(--forged-bg)',
                 border: '3px solid rgba(255,255,255,0.1)',
                 boxShadow: 'inset 0 2px 12px rgba(0,0,0,0.4)',
               }}
@@ -104,7 +150,7 @@ export function PageLoader() {
                 cy="75"
                 r="64"
                 fill="none"
-                stroke="#7c3aed"
+                stroke="var(--forged-purple)"
                 strokeWidth={4}
                 strokeLinecap="round"
                 strokeDasharray="402"
@@ -128,8 +174,8 @@ export function PageLoader() {
                 transformOrigin: 'center',
               }}
             >
-              <line x1="75" y1="75" x2="75" y2="22" stroke="#D4A853" strokeWidth={2.5} strokeLinecap="round" />
-              <circle cx="75" cy="22" r="2" fill="#D4A853" />
+              <line x1="75" y1="75" x2="75" y2="22" stroke="var(--forged-gold)" strokeWidth={2.5} strokeLinecap="round" />
+              <circle cx="75" cy="22" r="2" fill="var(--forged-gold)" />
             </svg>
 
             {/* Center pivot dot */}
