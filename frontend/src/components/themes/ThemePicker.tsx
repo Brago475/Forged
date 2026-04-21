@@ -6,12 +6,14 @@ import {
   applyPalette,
   getPaletteById,
   type ThemePalette,
-} from '../themes/palettes'
+} from './palettes'
 
 /**
- * Swatch grid that lets the user pick 1 of 15 theme palettes.
- * Tapping a swatch applies the palette immediately and persists
- * the selection via localStorage. Active palette shows a gold ring.
+ * Named-row theme picker. Each palette shows as a row with
+ * two circles (primary + accent), the palette name, and a
+ * checkmark if active. Tapping applies instantly and persists.
+ *
+ * Layout: no card wrapper, spacing-only hierarchy per FORGE UI.
  */
 export function ThemePicker() {
   const [activeId, setActiveId] = useState<string>(loadPaletteId())
@@ -22,50 +24,78 @@ export function ThemePicker() {
     applyPalette(palette)
   }
 
+  const active = getPaletteById(activeId)
+
   return (
     <div>
-      <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-wider mb-2">
+      <p className="text-[10px] font-black text-forged-text2 uppercase tracking-widest mb-1">
         Theme color
       </p>
       <p className="text-[11px] text-forged-text2 mb-3 leading-relaxed">
-        Pick a palette. Applies instantly across the app.
+        Pick a palette. Applies instantly.
       </p>
-      <div className="grid grid-cols-5 gap-2">
+
+      <div className="flex flex-col gap-0.5">
         {PALETTES.map(p => {
           const isActive = p.id === activeId
           return (
             <button
               key={p.id}
               onClick={() => pick(p)}
-              title={p.name}
-              className={`relative aspect-square rounded-xl overflow-hidden transition-all
-                active:scale-95 hover:brightness-110
-                ${isActive ? 'ring-2 ring-offset-2 ring-offset-forged-surface' : ''}`}
-              style={{
-                backgroundColor: p.primary,
-                ['--tw-ring-color' as any]: p.accent,
-              }}
+              className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl
+                transition-all text-left active:scale-[0.99]
+                ${isActive
+                  ? 'bg-forged-bg'
+                  : 'hover:bg-forged-bg/60'}`}
             >
-              {/* Accent dot in bottom-right shows the paired secondary color */}
-              <span
-                className="absolute bottom-1.5 right-1.5 w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: p.accent }}
-              />
+              {/* Pair of circles: primary + accent */}
+              <div className="flex items-center flex-shrink-0">
+                <div
+                  className="w-5 h-5 rounded-full"
+                  style={{ backgroundColor: p.primary }}
+                />
+                <div
+                  className="w-4 h-4 rounded-full -ml-1"
+                  style={{ backgroundColor: p.accent }}
+                />
+              </div>
+
+              {/* Name */}
+              <span className={`flex-1 text-sm
+                ${isActive
+                  ? 'text-forged-text font-black'
+                  : 'text-forged-text2 font-bold'}`}>
+                {p.name}
+              </span>
+
+              {/* Active indicator */}
               {isActive && (
-                <span className="absolute inset-0 flex items-center justify-center">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none"
-                    stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                </span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none"
+                  stroke={p.accent} strokeWidth="3"
+                  strokeLinecap="round" strokeLinejoin="round"
+                  className="flex-shrink-0">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
               )}
             </button>
           )
         })}
       </div>
-      <p className="text-[10px] text-forged-text2 mt-3 text-center">
-        Active: <span className="text-forged-text font-black">{getPaletteById(activeId).name}</span>
-      </p>
+
+      <div className="flex items-center justify-between mt-4 pt-4 border-t border-forged-border">
+        <p className="text-[10px] font-bold text-forged-text2 uppercase tracking-widest">
+          Active
+        </p>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-black text-forged-text">{active.name}</span>
+          <div className="flex items-center">
+            <div className="w-3.5 h-3.5 rounded-full"
+              style={{ backgroundColor: active.primary }} />
+            <div className="w-3 h-3 rounded-full -ml-1"
+              style={{ backgroundColor: active.accent }} />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
