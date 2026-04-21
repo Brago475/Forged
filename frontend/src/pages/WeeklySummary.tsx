@@ -9,7 +9,7 @@ import {
   type WeeklyRecap,
   type WeekData,
 } from '../components/weekly/weeklyRecapLogic'
-
+import { PageLoader } from '../components/loading/PageLoader'
 // ══════════════════════════════════
 // ICONS
 // ══════════════════════════════════
@@ -179,11 +179,7 @@ forgedgyms.com`
       </Card>
 
       {loading ? (
-        <>
-          <div className="h-32 bg-forged-surface2 rounded-2xl animate-pulse" />
-          <div className="h-48 bg-forged-surface2 rounded-2xl animate-pulse" />
-          <div className="h-28 bg-forged-surface2 rounded-2xl animate-pulse" />
-        </>
+        <PageLoader />
       ) : !recap ? (
         <Card delay={120}>
           <p className="text-sm text-forged-text2 text-center py-4">No data for this week.</p>

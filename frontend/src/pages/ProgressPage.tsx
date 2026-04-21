@@ -13,7 +13,7 @@ import {
   generateInsights,
   type Insight,
 } from '../components/progress/progressInsights'
-import { PageHeaderSkeleton, CardSkeleton } from '../components/loading/PageSkeletons'
+import { PageLoader } from '../components/loading/PageLoader'
 
 // ══════════════════════════════════
 // ICONS
@@ -206,17 +206,7 @@ export default function ProgressPage() {
   })
   const heatmapActive = heatmapCells.filter(c => c.intensity > 0).length
 
-  if (loading) {
-    return (
-      <div className="flex flex-col gap-4 content-fade-in">
-        <PageHeaderSkeleton />
-        <CardSkeleton height={28} />
-        <CardSkeleton height={36} />
-        <CardSkeleton height={52} />
-        <CardSkeleton height={28} />
-      </div>
-    )
-  }
+  if (loading) return <PageLoader />
 
   return (
     <div className="flex flex-col gap-4">

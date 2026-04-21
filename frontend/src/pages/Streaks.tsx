@@ -8,7 +8,7 @@ import {
   getRecoveryMessage, hasFreezeBeenUsedThisMonth, useFreeze,
   type StreakData, type StreakType,
 } from '../components/streaks/streaksLogic'
-import { CardSkeleton } from '../components/loading/PageSkeletons'
+import { PageLoader } from '../components/loading/PageLoader'
 
 const I = {
   chevL: <><path d="M15 18l-6-6 6-6"/></>,
@@ -115,16 +115,7 @@ forgedgyms.com`
     loadData()
   }
 
-if (loading || !streak || !streaks) {
-    return (
-      <div className="flex flex-col gap-4 content-fade-in">
-        <Header onBack={onBack} />
-        <CardSkeleton height={64} />
-        <CardSkeleton height={32} />
-        <CardSkeleton height={40} />
-      </div>
-    )
-  }
+if (loading || !streak || !streaks) return <PageLoader />
 
   const heatmap = buildHeatmap(streak.activeDays, 12)
   const nextMilestone = findNextMilestone(streak.currentStreak)

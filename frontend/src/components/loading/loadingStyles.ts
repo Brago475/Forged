@@ -59,4 +59,29 @@ export const LOADING_STYLES = `
 .content-fade-in {
   animation: forgedContentFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
+  @keyframes swRipple {
+  0% { transform: scale(0.45); opacity: 0.7; }
+  100% { transform: scale(2.4); opacity: 0; }
+}
+
+@keyframes swRing {
+  0% { stroke-dashoffset: 402; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes swTick {
+  0% { transform: rotate(0deg); }
+  8.33% { transform: rotate(30deg); }
+  16.66% { transform: rotate(60deg); }
+  25% { transform: rotate(90deg); }
+  33.33% { transform: rotate(120deg); }
+  41.66% { transform: rotate(150deg); }
+  50% { transform: rotate(180deg); }
+  58.33% { transform: rotate(210deg); }
+  66.66% { transform: rotate(240deg); }
+  75% { transform: rotate(270deg); }
+  83.33% { transform: rotate(300deg); }
+  91.66% { transform: rotate(330deg); }
+  100% { transform: rotate(360deg); }
+}
 `

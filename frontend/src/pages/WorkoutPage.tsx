@@ -10,7 +10,7 @@ import {
   type Routine, type RoutineDay, type RoutineExercise, type ActiveWorkoutState,
   type ExerciseKind, type Intensity, type MuscleGroup, MUSCLE_GROUPS,
 } from '../components/workouts/workoutTypes'
-import { PageHeaderSkeleton, CardSkeleton } from '../components/loading/PageSkeletons'
+import { PageLoader } from '../components/loading/PageLoader'
 
 // ══════════════════════════════════
 // ICONS
@@ -213,15 +213,7 @@ function WorkoutHome({
   // History for PR detection on past logs
   const history = buildExerciseHistory(logs)
 
-  if (loading) {
-    return (
-      <div className="flex flex-col gap-4 content-fade-in">
-        <PageHeaderSkeleton />
-        <CardSkeleton height={44} />
-        <CardSkeleton height={32} />
-      </div>
-    )
-  }
+  if (loading) return <PageLoader />
 
   return (
     <div className="flex flex-col gap-4">

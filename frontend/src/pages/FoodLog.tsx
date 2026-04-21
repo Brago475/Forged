@@ -12,6 +12,7 @@ import { BarcodeScanModal } from '../components/food/BarcodeScanModal'
 import { PhotoFoodModal } from '../components/food/PhotoFoodModal'
 import type { CustomFood } from '../components/food/customFoodsStorage'
 import { InlineSpinner } from '../components/loading/InlineSpinner'
+import { PageLoader } from '../components/loading/PageLoader'
 // ══════════════════════════════════
 // ICONS
 // ══════════════════════════════════
@@ -440,18 +441,7 @@ interface FoodLogProps {
   }
 
   // ── Skeleton ──
-  if (loading && logs.length === 0) {
-    return (
-      <div className="flex flex-col gap-4">
-        <div className="h-7 w-32 bg-forged-surface2 rounded-xl animate-pulse" />
-        <div className="h-10 w-48 mx-auto bg-forged-surface2 rounded-xl animate-pulse" />
-        <div className="h-48 bg-forged-surface2 rounded-2xl animate-pulse" />
-        {[1, 2, 3, 4].map(i => (
-          <div key={i} className="h-28 bg-forged-surface2 rounded-2xl animate-pulse" />
-        ))}
-      </div>
-    )
-  }
+if (loading && logs.length === 0) return <PageLoader />
 
   return (
     <div className="flex flex-col gap-4">
