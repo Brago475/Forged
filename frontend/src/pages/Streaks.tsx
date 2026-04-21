@@ -58,21 +58,25 @@ export default function StreaksPage({ onBack }: { onBack: () => void }) {
   const [freezePrompt, setFreezePrompt] = useState<boolean>(false)
 
   useLoadingEffect(async () => {
-    const [workouts] = await Promise.all([
+    // Generate 84 dates (last 12 weeks)
+    const dates: string[] = []
+    for (let i = 0; i < 84; i++) {
+      const dt = new Date()
+      dt.setDate(dt.getDate() - i)
+      dates.push(dt.toISOString().split('T')[0])
+    }
+
+    // Fetch everything in parallel: workouts + all 84 days of food at once.
+    // Much faster than looping with sequential awaits.
+    const [workouts, ...foodResults] = await Promise.all([
       api.workout.getLogs(120),
+      ...dates.map(iso =>
+        api.food.getLogs(iso).catch(() => [] as FoodLog[])
+      ),
     ])
 
     const foodByDay = new Map<string, FoodLog[]>()
-    for (let i = 0; i < 84; i++) {
-      const dt = new Date(); dt.setDate(dt.getDate() - i)
-      const iso = dt.toISOString().split('T')[0]
-      try {
-        const logs = await api.food.getLogs(iso)
-        foodByDay.set(iso, logs)
-      } catch {
-        foodByDay.set(iso, [])
-      }
-    }
+    dates.forEach((iso, i) => foodByDay.set(iso, foodResults[i]))
 
     const goals = loadGoals()
     const logging = buildLoggingStreak(foodByDay)

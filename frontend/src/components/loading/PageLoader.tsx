@@ -76,13 +76,13 @@ export function PageLoader() {
           </textPath>
         </text>
 
-        {/* Center hole — uses theme bg for light/dark correctness */}
+        {/* Center hole — always dark to simulate a real plate (you see through to backdrop) */}
         <circle
           cx="100"
           cy="100"
           r="30"
-          fill="var(--bg)"
-          stroke="var(--border)"
+          fill="#09090B"
+          stroke="rgba(255, 255, 255, 0.15)"
           strokeWidth="2"
         />
 
