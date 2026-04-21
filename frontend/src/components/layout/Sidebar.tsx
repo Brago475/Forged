@@ -96,13 +96,15 @@ export function Sidebar({ active, onChange, collapsed, onToggle, onLogout }: Sid
 
         {/* Row with dropdown + theme */}
         <div className={`flex items-center gap-2 ${collapsed ? 'flex-col' : ''}`}>
-          <SettingsDropdown
-            onLogout={onLogout}
-            onProfile={() => onChange('profile')}
-            onSettings={() => onChange('settings' as TabId)}
-            onNavigate={(t) => onChange(t as TabId)}
-            dropUp
-          />
+          <div className="flex-shrink-0">
+            <SettingsDropdown
+              onLogout={onLogout}
+              onProfile={() => onChange('profile')}
+              onSettings={() => onChange('settings' as TabId)}
+              onNavigate={(t) => onChange(t as TabId)}
+              dropUp
+            />
+          </div>
           {!collapsed && (
             <button
               onClick={toggleTheme}
