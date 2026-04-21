@@ -8,7 +8,7 @@ import type { Macros } from '../components/dashboard/types'
 // Layout
 import { LOADING_STYLES } from '../components/loading/loadingStyles'
 import { BrandLoader } from '../components/loading/BrandLoader'
-import { DashboardSkeleton } from '../components/loading/DashboardSkeleton'
+import { PageLoader } from '../components/loading/PageLoader'
 import { Sidebar } from '../components/layout/Sidebar'
 import { BottomNav } from '../components/layout/BottomNav'
 import { PageTransition } from '../components/layout/PageTransition'
@@ -120,6 +120,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
       {/* Phase 1: brand loader on first app launch */}
       {showBrand && !showSkeleton && <BrandLoader />}
 
+      {/* Phase 2: plate loader (fullscreen overlay, same level as BrandLoader) */}
+      {showSkeleton && <PageLoader />}
+
       {/* Desktop sidebar */}
       {isDesktop && (
         <Sidebar
@@ -135,11 +138,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
         className="transition-all duration-300 pb-28 md:pb-6"
         style={{ marginLeft: sidebarWidth }}
       >
-        {/* Phase 2: skeleton bridge while data loads */}
-        {showSkeleton ? (
-          <DashboardSkeleton />
-        ) : (
-          !showBrand && (
+        {!showSkeleton && !showBrand && (
             <div className="max-w-2xl mx-auto px-4 pt-4">
               {/* Phase 3: page transitions */}
               <PageTransition tabKey={tab}>
@@ -169,7 +168,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 )}
               </PageTransition>
             </div>
-          )
+          
         )}
       </main>
 
