@@ -103,6 +103,7 @@ export function Sidebar({ active, onChange, collapsed, onToggle, onLogout }: Sid
               onSettings={() => onChange('settings' as TabId)}
               onNavigate={(t) => onChange(t as TabId)}
               dropUp
+              anchor="left"
             />
           </div>
           {!collapsed && (

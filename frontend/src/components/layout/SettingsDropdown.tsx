@@ -11,6 +11,13 @@ interface SettingsDropdownProps {
   onNavigate?: (tab: string) => void
   /** If true, opens upward (used in mobile bottom nav). */
   dropUp?: boolean
+  /**
+   * Which edge of the 3-dot button the menu anchors to.
+   * 'right' = menu extends LEFT (good for mobile bottom-right / desktop header top-right).
+   * 'left'  = menu extends RIGHT (good for desktop sidebar bottom-LEFT).
+   * Default: 'right'.
+   */
+  anchor?: 'left' | 'right'
 }
 
 /**
@@ -23,6 +30,7 @@ export function SettingsDropdown({
   onSettings,
   onNavigate,
   dropUp = false,
+  anchor = 'right',
 }: SettingsDropdownProps) {
   const [open, setOpen] = useState<boolean>(false)
   const ref = useRef<HTMLDivElement>(null)
@@ -50,7 +58,8 @@ export function SettingsDropdown({
         <div
           className={`absolute bg-forged-surface border border-forged-border
             rounded-xl shadow-xl z-[70] max-h-[70vh] overflow-y-auto
-            ${dropUp ? 'bottom-full mb-2 right-0' : 'top-full mt-2 right-0'}`}
+            ${dropUp ? 'bottom-full mb-2' : 'top-full mt-2'}
+            ${anchor === 'right' ? 'right-0' : 'left-0'}`}
           style={{
             animation: 'fadeSlide 0.15s ease-out',
             width: '220px',
