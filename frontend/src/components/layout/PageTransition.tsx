@@ -1,61 +1,40 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { DashboardSkeleton } from '../loading/DashboardSkeleton'
+import { useEffect, useState, type ReactNode } from 'react'
 
 interface PageTransitionProps {
   children: ReactNode
-  /** Stable key that changes when the user switches tabs. */
   tabKey: string
 }
 
-type Phase = 'out' | 'skeleton' | 'in'
-
 /**
- * Tab-switch transition: fade out (100ms) then skeleton bridge (300ms)
- * then stagger-in of the new tab's content. Smooths over abrupt swaps
- * and gives the brain a moment to register the context change.
+ * Tab-switch transition: soft cross-fade between tabs.
+ * No skeleton bridge - each tab handles its own loading.
  */
 export function PageTransition({ children, tabKey }: PageTransitionProps) {
-  const [phase, setPhase] = useState<Phase>('in')
   const [displayKey, setDisplayKey] = useState<string>(tabKey)
   const [content, setContent] = useState<ReactNode>(children)
-  const isFirstRender = useRef<boolean>(true)
+  const [fading, setFading] = useState<boolean>(false)
 
-  // Drive the fade-out to skeleton to in sequence when the tab changes.
   useEffect(() => {
-    if (isFirstRender.current) {
-      isFirstRender.current = false
+    if (tabKey === displayKey) {
+      setContent(children)
       return
     }
-    if (tabKey === displayKey) return
 
-    setPhase('out')
-
-    const fadeTimer = setTimeout(() => {
-      setPhase('skeleton')
+    setFading(true)
+    const swap = setTimeout(() => {
       setContent(children)
       setDisplayKey(tabKey)
+      setFading(false)
+    }, 150)
 
-      const revealTimer = setTimeout(() => setPhase('in'), 300)
-      return () => clearTimeout(revealTimer)
-    }, 100)
-
-    return () => clearTimeout(fadeTimer)
+    return () => clearTimeout(swap)
   }, [tabKey, displayKey, children])
-
-  // Keep content fresh when children update without a tab change.
-  useEffect(() => {
-    if (tabKey === displayKey) setContent(children)
-  }, [children, tabKey, displayKey])
-
-  if (phase === 'skeleton') {
-    return <DashboardSkeleton />
-  }
 
   return (
     <div
       style={{
-        opacity: phase === 'out' ? 0 : 1,
-        transition: phase === 'out' ? 'opacity 100ms ease' : 'none',
+        opacity: fading ? 0 : 1,
+        transition: 'opacity 150ms ease',
       }}
     >
       {content}

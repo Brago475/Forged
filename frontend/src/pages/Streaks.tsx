@@ -8,6 +8,7 @@ import {
   getRecoveryMessage, hasFreezeBeenUsedThisMonth, useFreeze,
   type StreakData, type StreakType,
 } from '../components/streaks/streaksLogic'
+import { CardSkeleton } from '../components/loading/PageSkeletons'
 
 const I = {
   chevL: <><path d="M15 18l-6-6 6-6"/></>,
@@ -114,13 +115,13 @@ forgedgyms.com`
     loadData()
   }
 
-  if (loading || !streak || !streaks) {
+if (loading || !streak || !streaks) {
     return (
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 content-fade-in">
         <Header onBack={onBack} />
-        <div className="h-64 bg-forged-surface2 rounded-2xl animate-pulse" />
-        <div className="h-32 bg-forged-surface2 rounded-2xl animate-pulse" />
-        <div className="h-40 bg-forged-surface2 rounded-2xl animate-pulse" />
+        <CardSkeleton height={64} />
+        <CardSkeleton height={32} />
+        <CardSkeleton height={40} />
       </div>
     )
   }

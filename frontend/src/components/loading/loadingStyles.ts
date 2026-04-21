@@ -35,7 +35,8 @@ export const LOADING_STYLES = `
 }
 
 @keyframes forgedContentFadeIn {
-  0% { opacity: 0; transform: translateY(4px); }
+  0% { opacity: 0; transform: translateY(6px); }
+  60% { opacity: 0.5; }
   100% { opacity: 1; transform: translateY(0); }
 }
 
@@ -56,6 +57,6 @@ export const LOADING_STYLES = `
 }
 
 .content-fade-in {
-  animation: forgedContentFadeIn 0.4s ease-out both;
+  animation: forgedContentFadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 `
