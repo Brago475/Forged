@@ -3,14 +3,24 @@
  * with ripples radiating outward and a progress ring filling.
  *
  * Uses CSS tokens (--forged-purple, --forged-gold) so it adapts
- * to every theme automatically. Purple ring + gold hand/accents
- * stay consistent with the app's current palette.
+ * to every theme automatically. Centered via viewport height
+ * so every page shows the loader in the same spot.
  */
 export function PageLoader() {
   return (
     <div
-      className="w-full flex items-center justify-center"
-      style={{ minHeight: '60vh' }}
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        pointerEvents: 'none',
+        zIndex: 40,
+      }}
     >
       <div style={{ position: 'relative', width: 160, height: 180 }}>
 
@@ -22,7 +32,7 @@ export function PageLoader() {
           transform: 'translateX(-50%)',
           width: 24,
           height: 10,
-          background: 'var(--forged-purple)',
+          background: 'var(--accent-purple)',
           borderRadius: '3px 3px 0 0',
         }} />
         <div style={{
@@ -32,7 +42,7 @@ export function PageLoader() {
           transform: 'translateX(-50%)',
           width: 12,
           height: 6,
-          background: 'var(--forged-gold)',
+          background: 'var(--accent-gold)',
           borderRadius: 2,
         }} />
 
@@ -43,7 +53,7 @@ export function PageLoader() {
           right: 18,
           width: 6,
           height: 14,
-          background: 'var(--forged-purple)',
+          background: 'var(--accent-purple)',
           borderRadius: 2,
           transform: 'rotate(35deg)',
         }} />
@@ -53,7 +63,7 @@ export function PageLoader() {
           left: 18,
           width: 6,
           height: 14,
-          background: 'var(--forged-purple)',
+          background: 'var(--accent-purple)',
           borderRadius: 2,
           transform: 'rotate(-35deg)',
         }} />
@@ -72,37 +82,31 @@ export function PageLoader() {
           <div style={{ position: 'relative', width: 150, height: 150 }}>
 
             {/* Purple ripple */}
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                border: '2px solid var(--forged-purple)',
-                borderRadius: '50%',
-                animation: 'swRipple 2.2s ease-out infinite',
-              }}
-            />
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              border: '2px solid var(--accent-purple)',
+              borderRadius: '50%',
+              animation: 'swRipple 2.2s ease-out infinite',
+            }} />
             {/* Gold ripple (offset) */}
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                border: '2px solid var(--forged-gold)',
-                borderRadius: '50%',
-                animation: 'swRipple 2.2s ease-out 0.7s infinite',
-              }}
-            />
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              border: '2px solid var(--accent-gold)',
+              borderRadius: '50%',
+              animation: 'swRipple 2.2s ease-out 0.7s infinite',
+            }} />
 
             {/* Watch face background */}
-            <div
-              style={{
-                position: 'absolute',
-                inset: 0,
-                borderRadius: '50%',
-                background: 'var(--forged-bg)',
-                border: '3px solid rgba(255,255,255,0.1)',
-                boxShadow: 'inset 0 2px 12px rgba(0,0,0,0.4)',
-              }}
-            />
+            <div style={{
+              position: 'absolute',
+              inset: 0,
+              borderRadius: '50%',
+              background: 'var(--bg)',
+              border: '3px solid rgba(255,255,255,0.1)',
+              boxShadow: 'inset 0 2px 12px rgba(0,0,0,0.4)',
+            }} />
 
             {/* Clock numbers + tick marks */}
             <svg
@@ -110,7 +114,7 @@ export function PageLoader() {
               style={{ position: 'absolute', inset: 0, width: '100%', height: '100%' }}
             >
               <g
-                fill="rgba(255,255,255,0.2)"
+                fill="rgba(255,255,255,0.25)"
                 fontFamily="-apple-system, sans-serif"
                 fontWeight={900}
                 fontSize={12}
@@ -150,7 +154,7 @@ export function PageLoader() {
                 cy="75"
                 r="64"
                 fill="none"
-                stroke="var(--forged-purple)"
+                stroke="var(--accent-purple)"
                 strokeWidth={4}
                 strokeLinecap="round"
                 strokeDasharray="402"
@@ -174,24 +178,22 @@ export function PageLoader() {
                 transformOrigin: 'center',
               }}
             >
-              <line x1="75" y1="75" x2="75" y2="22" stroke="var(--forged-gold)" strokeWidth={2.5} strokeLinecap="round" />
-              <circle cx="75" cy="22" r="2" fill="var(--forged-gold)" />
+              <line x1="75" y1="75" x2="75" y2="22" stroke="var(--accent-gold)" strokeWidth={2.5} strokeLinecap="round" />
+              <circle cx="75" cy="22" r="2" fill="var(--accent-gold)" />
             </svg>
 
             {/* Center pivot dot */}
-            <div
-              style={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -50%)',
-                width: 6,
-                height: 6,
-                background: '#FAFAF8',
-                borderRadius: '50%',
-                zIndex: 5,
-              }}
-            />
+            <div style={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: 6,
+              height: 6,
+              background: '#FAFAF8',
+              borderRadius: '50%',
+              zIndex: 5,
+            }} />
 
           </div>
         </div>

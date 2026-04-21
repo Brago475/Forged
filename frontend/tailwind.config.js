@@ -14,11 +14,11 @@ export default {
           text: 'var(--text)',
           text2: 'var(--text2)',
           text3: 'var(--text3)',
-          red: '#e74c3c',
-          blue: '#3498db',
-          green: '#2ecc71',
-          gold: '#f39c12',
-          purple: '#9b59b6',
+          red: 'var(--accent-red)',
+          blue: 'var(--accent-blue)',
+          green: 'var(--accent-green)',
+          gold: 'var(--accent-gold)',
+          purple: 'var(--accent-purple)',
         }
       }
     },
